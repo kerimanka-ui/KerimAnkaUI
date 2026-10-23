@@ -1,0 +1,66 @@
+KerimAnka UI Limited Use License 1.0
+
+Copyright (c) 2026 KerimAnka UI contributors.
+All rights reserved except as expressly permitted below.
+
+Project: https://github.com/kerimanka-ui/KerimAnkaUI
+
+1. Scope
+This license covers project-owned code, documentation and original artwork in
+KerimAnka UI and its companion modules, only to the extent the respective rights
+holders have rights to license those materials. It is a limited permission to
+use the software, not an open-source license or a transfer of ownership.
+
+2. Permissions
+You may download, install and use official copies free of charge; make personal
+backup copies; inspect the source; and modify it for your own private use.
+You may submit proposed fixes or improvements to the official project.
+Normal gameplay use, including monetized streams, videos and screenshots of the
+interface, is permitted. You may link to official downloads and project pages.
+Keep copyright and license notices in copies you make.
+
+3. Redistribution and reuse
+Unless separately authorized in writing by the relevant rights holder, you may
+not redistribute or publish the project or modified versions, include it in an
+addon collection or other product, or reuse its code or original artwork in
+another project. You may not sell, sublicense, or charge for access to those
+materials, or include them in a paid package or paid feature.
+These restrictions apply to free redistribution as well as commercial reuse.
+They do not prohibit activities expressly permitted in section 2.
+
+4. Official hosting and platform rights
+The project maintainers may distribute official releases through GitHub,
+CurseForge and other channels they authorize. The operators of those channels
+may host, reproduce and deliver the materials as needed for that authorized
+distribution under their applicable platform terms.
+Nothing here limits viewing, repository forking or other rights required by
+GitHub's applicable terms, or rights granted by law. A platform fork does not
+itself grant permission for other redistribution or reuse under section 3.
+
+5. Third-party materials and names
+Third-party materials retain their own licenses, notices and ownership. This
+license does not replace or restrict rights under those licenses. In particular,
+the bundled Ubuntu fonts retain Fonts/LICENCE.txt and LibSerialize retains
+LibSerialize-LICENSE.txt in the main KerimAnkaUI folder.
+World of Warcraft and Blizzard materials and marks remain subject to their
+respective owners' rights. No ownership of them, additional permission to use
+them, or endorsement by Blizzard is claimed or granted by this license.
+No separate right to use the KerimAnka UI name or logo to imply official status
+or endorsement is granted.
+
+6. Contributions
+Submission of a contribution does not by itself transfer copyright. Before
+submitting code or artwork, read CONTRIBUTING.md in the official repository.
+
+7. No warranty; liability
+TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE MATERIALS ARE PROVIDED "AS IS",
+WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. TO THAT SAME EXTENT,
+THE AUTHORS AND RIGHTS HOLDERS ARE NOT LIABLE FOR CLAIMS, DAMAGES OR OTHER
+LIABILITY ARISING FROM THE MATERIALS OR THEIR USE. This does not exclude any
+liability or statutory rights that cannot lawfully be excluded.
+
+8. Other permissions
+For redistribution or reuse outside this license, contact the maintainers
+through the official repository before proceeding. Silence is not permission.
+All rights not expressly granted remain reserved to their respective holders.

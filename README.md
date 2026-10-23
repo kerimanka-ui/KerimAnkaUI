@@ -76,5 +76,15 @@ GitHub Issues is the preferred channel for technical reports.
 ## Third-party notices
 
 The Ubuntu fonts and LibSerialize retain their included license notices.
-A project-wide license has not yet been selected for this publication draft.
-Do not treat the third-party licenses as a license for all project code or artwork.
+Third-party licenses do not apply to all project code or artwork.
+
+## License
+
+KerimAnka UI is free to use under the [KerimAnka UI Limited Use License 1.0](LICENSE).
+You may inspect the code and make changes for your own private use. Normal
+gameplay streams, videos and screenshots, including monetized content, are allowed.
+Redistribution, publication of modified versions, and reuse of project-owned code
+or original artwork in another project require prior written permission. This
+includes free redistribution and paid bundles. Platform rights and third-party
+licenses remain unaffected. This is not an open-source license.
+See LICENSE for the full terms and CONTRIBUTING.md before submitting changes.

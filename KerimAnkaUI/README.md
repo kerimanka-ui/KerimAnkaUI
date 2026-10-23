@@ -91,3 +91,12 @@ Do not post account credentials or an unreviewed copy of your WTF folder.
 
 Keep Fonts/LICENCE.txt with the bundled Ubuntu fonts and
 LibSerialize-LICENSE.txt with LibSerialize. These notices are part of the package.
+
+## License
+
+Free use and private modifications are permitted under the included LICENSE
+(KerimAnka UI Limited Use License 1.0). Redistribution, published modifications,
+and reuse of project-owned code or original artwork in another project require
+prior written permission. Normal gameplay streams, videos and screenshots,
+including monetized content, are allowed. Third-party licenses and applicable
+platform rights remain unaffected. See LICENSE for the full terms.
