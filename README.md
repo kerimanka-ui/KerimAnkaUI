@@ -5,7 +5,11 @@ ready layouts for all nine classes, and a shared settings panel in nine language
 
 [Downloads](https://github.com/kerimanka-ui/KerimAnkaUI/releases) ·
 [Report a bug or suggest a feature](https://github.com/kerimanka-ui/KerimAnkaUI/issues) ·
-[Twitch](https://www.twitch.tv/kerimanka)
+[Twitch](https://www.twitch.tv/kerimanka) ·
+[Changelog](CHANGELOG.md)
+
+Current version: **0.34.16**. Download the complete-suite ZIP from Releases;
+the first downloadable release is being prepared.
 
 KerimAnka UI brings class artwork, action-button backgrounds, unit frames,
 minimap presentation, quest tracking, experience and reputation displays,
@@ -69,16 +73,24 @@ For details, see [the included user guide](KerimAnkaUI/README.md).
 Bartender4 and Questie are optional. Details! is required only for the optional
 Details skin module; it is not bundled. Other third-party addons are not included.
 
-## Feedback
+## Contact and feedback
 
-Use this repository's Issues tab to report a reproducible bug or suggest an
-improvement. Include your addon version, client build, class, action-bar provider,
+Use [GitHub Issues](https://github.com/kerimanka-ui/KerimAnkaUI/issues) to report
+a reproducible bug or suggest a feature. Issues and their replies are public
+once the repository is public; do not post private information there. Include your addon version, client build, class, action-bar provider,
 steps to reproduce, and any Lua error. English reports are welcome.
 Review screenshots before posting and do not upload credentials or your entire
 WTF folder. The [contribution guide](CONTRIBUTING.md) explains what to include.
 
 Twitch: [KerimAnka](https://www.twitch.tv/kerimanka). Streams are in Turkish;
 GitHub Issues is the preferred channel for technical reports.
+
+For private inquiries, email
+[kerimanka.twitch@gmail.com](mailto:kerimanka.twitch@gmail.com).
+GitHub does not provide a general private messaging inbox.
+
+Version changes are recorded in [CHANGELOG.md](CHANGELOG.md). Each published
+release will also include release notes and an installable complete-suite ZIP.
 
 ## Optional support
 
