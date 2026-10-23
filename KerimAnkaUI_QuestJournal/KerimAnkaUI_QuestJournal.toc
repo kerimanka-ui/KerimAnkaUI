@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: KerimAnka UI: Quest Journal
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: Watched quests with zone grouping and scrolling. Configure in KerimAnka UI.
+## Author: Kerim Anka
+## Version: 0.33.70
+## Dependencies: KerimAnkaUI
+## OptionalDeps: Blizzard_ObjectiveTracker, Questie
+## SavedVariablesPerCharacter: ForeverQuestJournalDB
+
+KerimAnkaUI_QuestJournal.lua

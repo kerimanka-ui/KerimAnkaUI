@@ -1,0 +1,54 @@
+## Interface: 16001
+## Title: KerimAnka UI
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: Settings panel for the KerimAnka UI suite for World of Warcraft: Forever.
+## Author: Kerim Anka
+## Version: 0.34.15
+## SavedVariables: KerimAnkaUIDB
+## SavedVariablesPerCharacter: KerimAnkaUICharacterDB
+## OptionalDeps: MinimapButtonButton, Bartender4, Details, Questie, Clique, LibDataBroker-1.1, LibDBIcon-1.0
+
+Locales.lua
+Locales\en.lua
+Locales\de.lua
+Locales\tr.lua
+Locales\zhCN.lua
+Locales\frFR.lua
+Locales\itIT.lua
+Locales\esES.lua
+Locales\ptBR.lua
+Locales\ruRU.lua
+NameFonts.xml
+NameFonts.lua
+Core.lua
+Keyring.lua
+QuestieCompat.lua
+FPS.lua
+Presets\Hunter.lua
+Presets\Rogue.lua
+Presets\Paladin.lua
+Presets\Warrior.lua
+Presets\Druid.lua
+Presets\Priest.lua
+Presets\Mage.lua
+Presets\Shaman.lua
+Presets\Warlock.lua
+ClassPresets.lua
+ProfileLayouts.lua
+BagCompanions.lua
+BagShortcut.lua
+SoundGroups.lua
+Community.lua
+Window.lua
+UnitPreview.lua
+UnitOptions.lua
+ActionBarOptions.lua
+ActionRange.lua
+MinimapButtons.lua
+QuestOptions.lua
+DetailsOptions.lua
+RangeOptions.lua
+ThreatOptions.lua
+AspectOptions.lua
+Launcher.lua

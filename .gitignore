@@ -1,0 +1,19 @@
+# Local game data and credentials
+WTF/
+SavedVariables/
+.env
+.env.*
+!.env.example
+*.log
+# Local build outputs and experiments
+work/
+outputs/
+backups/
+KerimAnkaUI-Backups/
+*.zip
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+__pycache__/

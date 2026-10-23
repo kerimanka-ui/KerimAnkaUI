@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: KerimAnka UI: Threat
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: Target threat percentage. Configure in the KerimAnka UI panel.
+## Author: Kerim Anka
+## Version: 0.33.70
+## Dependencies: KerimAnkaUI
+## OptionalDeps: LibSharedMedia-3.0
+## SavedVariablesPerCharacter: ForeverThreatDB
+
+KerimAnkaUI_Threat.lua

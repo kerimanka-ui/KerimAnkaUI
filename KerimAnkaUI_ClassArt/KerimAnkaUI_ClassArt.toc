@@ -1,0 +1,24 @@
+## Interface: 16001
+## Title: KerimAnka UI: Class Art
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: Class artwork for action bars and the minimap, with per-character layouts.
+## Author: Kerim Anka
+## Version: 0.33.73
+## Dependencies: KerimAnkaUI
+## OptionalDeps: Bartender4
+## SavedVariables: ForeverHunterArtDB, ForeverClassArtMinimapDB
+## SavedVariablesPerCharacter: ForeverHunterArtCharacterDB, ForeverMinimapArtDB, ForeverHunterHUDDB
+
+BackingColor.lua
+ForeverMinimapArt.lua
+ForeverBarPanel.lua
+ForeverHunterPanel.lua
+PetBarPanel.lua
+ForeverRoguePanel.lua
+ShamanArt.lua
+MageArt.lua
+PriestArt.lua
+PaladinArt.lua
+DruidArt.lua
+KerimAnkaUI_ClassArt.lua

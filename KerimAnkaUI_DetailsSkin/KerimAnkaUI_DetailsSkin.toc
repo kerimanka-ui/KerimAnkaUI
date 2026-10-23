@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: KerimAnka UI: Details Skin
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: Optional Details! skin integration. Requires Details!. Configure in KerimAnka UI.
+## Author: Kerim Anka
+## Version: 0.33.73
+## Dependencies: KerimAnkaUI, Details
+## SavedVariablesPerCharacter: ForeverDetailsHunterDB
+
+Media\Geometry.lua
+KerimAnkaUI_DetailsSkin.lua

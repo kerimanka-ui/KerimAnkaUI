@@ -1,0 +1,13 @@
+## Interface: 16001
+## Title: KerimAnka UI: Aspect Alert
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: Hunter aspect reminders. Configure in the KerimAnka UI panel.
+## Author: Kerim Anka
+## Version: 0.33.70
+## Dependencies: KerimAnkaUI
+## SavedVariables: HunterAspectAlertDB
+## SavedVariablesPerCharacter: HunterAspectAlertCharacterDB
+
+KerimAnkaUI_AspectAlert.lua
+Options.lua

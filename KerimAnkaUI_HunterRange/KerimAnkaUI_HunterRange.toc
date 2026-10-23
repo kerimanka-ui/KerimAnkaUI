@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: KerimAnka UI: Hunter Range
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: Hunter range display. Configure in the KerimAnka UI panel.
+## Author: Kerim Anka
+## Version: 0.33.70
+## Dependencies: KerimAnkaUI
+## SavedVariablesPerCharacter: ForeverHunterRangeDB
+
+RangeLogic.lua
+KerimAnkaUI_HunterRange.lua

@@ -1,0 +1,93 @@
+# KerimAnka UI
+
+KerimAnka UI is a modular interface suite for World of Warcraft: Forever.
+This package targets the Forever client (Interface 16001). It is not a general
+Retail or Classic Era release.
+
+## Install
+
+Extract all nine KerimAnkaUI folders directly into the game client's
+Interface/AddOns directory. Do not place the containing release folder there.
+The main file should be Interface/AddOns/KerimAnkaUI/KerimAnkaUI.toc.
+Install the folders before starting the client for the first time.
+When updating an existing installation, replace the addon files and use /reload.
+If the client does not detect a newly added addon folder, restart the client.
+Keep your WTF folder and SavedVariables when updating; these contain your settings.
+
+## Get started
+
+Open the panel with /kaui, /kerimanka, or its minimap icon.
+The first-use guide leads you to Profiles. Choose the ready layout for your
+current class, read the confirmation, and confirm the application.
+Use the Reload UI button when prompted. The included ready layouts were tuned
+for 1920 x 1080; other resolutions or UI scales may need positioning adjustments.
+Applying a ready layout is optional. You can also enable and configure modules
+individually from the panel. Module loading changes take effect after /reload.
+
+All nine classes have a ready layout. Saved character records and named profiles
+can copy KerimAnka UI settings together with a captured Blizzard Edit Mode layout
+and a Bartender layout when available. Imported settings are copies; editing the
+destination character does not edit the source record. Panel appearance preferences
+are shared across the account. Read the confirmation before replacing a layout.
+
+## Modules and optional integrations
+
+The package contains the main panel and eight companion modules:
+- KerimAnkaUI_AspectAlert: Hunter aspect reminders.
+- KerimAnkaUI_BarBackdrop: backgrounds and borders for action buttons.
+- KerimAnkaUI_ClassArt: class artwork and themed minimap presentation.
+- KerimAnkaUI_DetailsSkin: optional skin integration for Details!.
+- KerimAnkaUI_HunterRange: Hunter range display.
+- KerimAnkaUI_QuestJournal: watched quests with grouping and scrolling.
+- KerimAnkaUI_Threat: target threat percentage.
+- KerimAnkaUI_UnitFrames: player, target, pet and target-of-target frames.
+
+Bartender4 is optional; supported Blizzard action bars can be used instead.
+Details! is required only for the optional Details skin module. The client’s own
+damage meter is configured through its supported interface where available.
+Questie is optional. Its separate tracker is disabled by default through this
+suite to avoid duplicate trackers; its map markers can still be used.
+Hunter Range and Aspect Alert are intended for Hunters.
+Third-party addons are not included in this download.
+
+## Positioning and appearance
+
+Ready layouts use locked positions. Unlock the relevant element in the panel
+before moving it, and lock it again afterwards. Unlocked unit frames move with
+Alt + left mouse drag. Use each option's help tooltip for other controls.
+/kaui center brings the settings window back to the center of the screen.
+
+## Languages
+
+English, German, Turkish, Simplified Chinese, French, Italian, Spanish,
+Brazilian Portuguese and Russian can be selected in the panel.
+Some client-provided names and optional integration text follow the game or
+third-party addon language. Report any remaining untranslated or unreadable text.
+
+## Sound controls
+
+Sound muting and custom FileDataID entries are saved per character.
+A custom entry takes effect when added. Listen temporarily allows that file to
+play; Stop Preview stops the preview, not all game audio. Removing a custom entry
+restores it unless another enabled preset in this suite also requests its mute.
+SoundKit IDs and item IDs are not sound FileDataIDs.
+
+The bow draw, gunfire and gun reload groups were tested in the Forever client.
+The wand group targets launch sounds; a short preparation sound may remain,
+and not every wand damage type has been individually verified.
+Other sound addons can affect the same files. A successful mute request does not
+prove that every sound associated with a weapon or spell uses that file.
+
+## Project and feedback
+
+Twitch: https://www.twitch.tv/kerimanka (streams are in Turkish).
+Project source and issue tracker: https://github.com/kerimanka-ui/KerimAnkaUI
+The in-game GitHub button will be updated after the repository is made public.
+When reporting a problem, include the addon version, client build, character
+class, Blizzard/Bartender bar choice, steps to reproduce, and any Lua error.
+Do not post account credentials or an unreviewed copy of your WTF folder.
+
+## Third-party notices
+
+Keep Fonts/LICENCE.txt with the bundled Ubuntu fonts and
+LibSerialize-LICENSE.txt with LibSerialize. These notices are part of the package.

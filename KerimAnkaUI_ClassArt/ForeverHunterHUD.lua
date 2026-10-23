@@ -1,0 +1,2 @@
+-- Retired Hunter-only native-frame decoration experiment.
+-- Not loaded by the TOC. ForeverHunterHUDDB remains the shared pet backing storage.

@@ -1,0 +1,31 @@
+## Interface: 16001
+## Title: KerimAnka UI: Unit Frames
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: Class-themed player, target, pet and target-of-target frames.
+## Author: Kerim Anka
+## Version: 0.33.76
+## Dependencies: KerimAnkaUI
+## OptionalDeps: Clique, Bartender4
+## SavedVariablesPerCharacter: ForeverLeatherUnitsDB
+
+HunterGeometry.lua
+WarlockGeometry.lua
+ShamanGeometry.lua
+MageGeometry.lua
+DruidGeometry.lua
+PriestGeometry.lua
+WarriorGeometry.lua
+PaladinGeometry.lua
+PetGeometry.lua
+WarlockLabelLayout.lua
+ShamanLabelLayout.lua
+MageLabelLayout.lua
+DruidLabelLayout.lua
+PriestLabelLayout.lua
+WarriorLabelLayout.lua
+PaladinLabelLayout.lua
+RaidMarker.lua
+PetHappiness.lua
+CombatWidgets.lua
+KerimAnkaUI_UnitFrames.lua
