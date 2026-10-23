@@ -8,14 +8,29 @@ ready layouts for all nine classes, and a shared settings panel in nine language
 [Twitch](https://www.twitch.tv/kerimanka) ·
 [Changelog](CHANGELOG.md)
 
-Current version: **0.34.16**. Download the complete-suite ZIP from Releases;
-the first downloadable release is being prepared.
+Current version: **0.34.16**.
+[Download the latest release](https://github.com/kerimanka-ui/KerimAnkaUI/releases/latest)
+and choose the attached complete-suite ZIP.
 
 KerimAnka UI brings class artwork, action-button backgrounds, unit frames,
 minimap presentation, quest tracking, experience and reputation displays,
 threat, sound controls, and profile management into one settings panel.
 
+## Class designs and ready layouts
+
+KerimAnka UI includes class-specific action bar artwork and ready layouts for
+**Warrior, Paladin, Hunter, Rogue, Priest, Shaman, Mage, Warlock and Druid**.
+The package includes all nine classes; it is not limited to Hunters.
+
+Open **Profiles**, choose your current class's ready layout, review the
+confirmation and apply it. The preset sets up the class-themed appearance and
+layout together. Ready layouts are tuned for 1920 x 1080; other resolutions or
+UI scales may need adjustments.
+
 ## Screenshots
+
+**The screenshots below show the Hunter design as an example. Each of the nine
+classes listed above has its own themed design and ready layout.**
 
 ### Hunter ready layout
 
@@ -52,10 +67,9 @@ may need positioning adjustments. Retail and Classic Era compatibility is not cl
 
 ## Download and installation
 
-Official download packages will be listed on the
-[GitHub Releases page](https://github.com/kerimanka-ui/KerimAnkaUI/releases).
-No downloadable release has been published yet. A CurseForge link will be added
-once the project has an approved page there.
+Download the current installable package from
+[GitHub Releases](https://github.com/kerimanka-ui/KerimAnkaUI/releases/latest).
+A CurseForge link will be added once the project has an approved page there.
 Prefer the explicitly attached complete-suite ZIP to GitHub's automatic
 source-code archives. A source archive contains this repository inside an extra
 folder; that containing folder does not belong in Interface/AddOns.
