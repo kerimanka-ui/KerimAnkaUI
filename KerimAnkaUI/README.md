@@ -82,7 +82,8 @@ prove that every sound associated with a weapon or spell uses that file.
 
 Twitch: https://www.twitch.tv/kerimanka (streams are in Turkish).
 Project source and issue tracker: https://github.com/kerimanka-ui/KerimAnkaUI
-The in-game GitHub button will be updated after the repository is made public.
+Use the in-game GitHub button to select and copy the project address.
+While the repository is private, access is limited to authorized accounts.
 When reporting a problem, include the addon version, client build, character
 class, Blizzard/Bartender bar choice, steps to reproduce, and any Lua error.
 Do not post account credentials or an unreviewed copy of your WTF folder.

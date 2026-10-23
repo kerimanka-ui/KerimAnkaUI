@@ -3,6 +3,10 @@
 A modular interface suite for World of Warcraft: Forever, with class-themed artwork,
 ready layouts for all nine classes, and a shared settings panel in nine languages.
 
+[Downloads](https://github.com/kerimanka-ui/KerimAnkaUI/releases) ·
+[Report a bug or suggest a feature](https://github.com/kerimanka-ui/KerimAnkaUI/issues) ·
+[Twitch](https://www.twitch.tv/kerimanka)
+
 KerimAnka UI brings class artwork, action-button backgrounds, unit frames,
 minimap presentation, quest tracking, experience and reputation displays,
 threat, sound controls, and profile management into one settings panel.
@@ -44,7 +48,10 @@ may need positioning adjustments. Retail and Classic Era compatibility is not cl
 
 ## Download and installation
 
-An installable release will be provided through the project's Releases page.
+Official download packages will be listed on the
+[GitHub Releases page](https://github.com/kerimanka-ui/KerimAnkaUI/releases).
+No downloadable release has been published yet. A CurseForge link will be added
+once the project has an approved page there.
 Prefer the explicitly attached complete-suite ZIP to GitHub's automatic
 source-code archives. A source archive contains this repository inside an extra
 folder; that containing folder does not belong in Interface/AddOns.
@@ -72,6 +79,13 @@ WTF folder. The [contribution guide](CONTRIBUTING.md) explains what to include.
 
 Twitch: [KerimAnka](https://www.twitch.tv/kerimanka). Streams are in Turkish;
 GitHub Issues is the preferred channel for technical reports.
+
+## Optional support
+
+KerimAnka UI is free to use. If you would like to support its development, you
+can [buy me a coffee](https://buymeacoffee.com/kerimcandan).
+Support is entirely optional and does not unlock addon features or priority
+support. The external payment page may display the creator's public name.
 
 ## Third-party notices
 

@@ -1,6 +1,6 @@
 local _,K=...
--- Public project links only. GitHub stays unset until the repository exists.
-K.communityLinks={github=nil,twitch="https://www.twitch.tv/kerimanka"}
+-- Official project links. Repository visibility is managed on GitHub.
+K.communityLinks={github="https://github.com/kerimanka-ui/KerimAnkaUI",twitch="https://www.twitch.tv/kerimanka"}
 local popup,dismiss
 function K.CloseCommunity()
  if popup then popup:Hide() end
