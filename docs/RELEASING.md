@@ -1,19 +1,21 @@
 # Publishing a version
 
-1. Verify the target-client behavior and update version metadata and CHANGELOG.md.
-2. Build the installable ZIP with exactly the nine addon folders at its root.
-   Keep repository-only files, screenshots, local game data and credentials out.
-3. Check every ZIP entry against the reviewed source, license notices and TOCs.
-4. Commit the reviewed source and documentation. Tag that exact commit with the
-   release version, for example v0.34.16.
-5. Create a GitHub release as a draft, attach the checked complete-suite ZIP and
-   SHA256SUMS.txt, and add user-facing notes and compatibility limitations.
-6. Publish the completed release and mark it latest when appropriate. Verify the
-   download as an unauthenticated visitor after the repository is public.
-7. Upload the same checked ZIP to CurseForge with its matching game version and
-   release notes. Its source link alone does not upload an installable package.
+1. Build one reviewed complete-suite ZIP with the nine addon folders at its root.
+2. Include both normal Forever TOCs (16001) and Classic Era `_Vanilla.toc` loaders (11509).
+3. Verify TOC/XML/assets, Lua syntax, version metadata, licenses and client isolation.
+4. Commit source and documentation, tag the same commit, then upload the ZIP and SHA256SUMS to a draft GitHub release.
+5. Publish and verify the downloaded asset hash before reporting completion.
+6. Submit that same package to CurseForge with the matching client/game-version metadata.
+   No automatic CurseForge publishing workflow is configured; GitHub alone is not a file upload there.
 
-GitHub Packages is not used for this addon. Releases contains the installable
-downloads. Wiki documentation and automated distribution can be added later;
-there is no automatic CurseForge publishing configuration in this repository.
-Never put service tokens, game SavedVariables or local installation paths here.
+Preserve user WTF/SavedVariables. Never include game records, credentials or local test artifacts.
+UI-scale adaptation is not part of 0.35.0. Classic additions must not be claimed as already ported to Forever.
+
+For 0.35.0, `.github/workflows/release-0.35.0.yml` validates the reviewed file
+manifest, builds the ZIP and publishes the tagged GitHub release when its version
+marker is pushed to main. It does not publish to CurseForge.
+
+The version-scoped bootstrap sends only changed files as verified transport
+chunks. Its workflow checks the manifest, commits the normal readable source
+and binary assets, then builds and publishes the complete suite. Unchanged
+artwork is reused from Git; this is not a patch-only download.

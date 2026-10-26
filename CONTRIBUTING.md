@@ -1,7 +1,7 @@
 # Feedback and contributions
 
 Before opening an issue, check whether the same problem has already been reported.
-For a bug, include the KerimAnka UI version, Forever client build, class and faction,
+For a bug, include the KerimAnka UI version, client edition (Forever or Classic Era) and build, class and faction,
 Blizzard or Bartender4 action bars, exact reproduction steps, expected behavior,
 actual behavior, and any complete Lua error. Mention relevant optional addons.
 

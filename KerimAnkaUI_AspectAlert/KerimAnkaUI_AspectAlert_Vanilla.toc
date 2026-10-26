@@ -1,0 +1,13 @@
+## Interface: 11509
+## Title: KerimAnka UI: Aspect Alert [Classic Era]
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: KerimAnka UI companion module for Classic Era.
+## Author: Kerim Anka
+## Version: 0.35.0
+## Dependencies: KerimAnkaUI
+## SavedVariables: KAClassic_HunterAspectAlertDB
+## SavedVariablesPerCharacter: KAClassic_HunterAspectAlertCharacterDB
+
+ClassicEra\KerimAnkaUI_AspectAlert.lua
+ClassicEra\Options.lua

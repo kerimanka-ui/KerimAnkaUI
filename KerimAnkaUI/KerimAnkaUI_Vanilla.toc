@@ -1,0 +1,65 @@
+## Interface: 11509
+## Title: KerimAnka UI [Classic Era]
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: Shared settings and ready layouts for KerimAnka UI on Classic Era.
+## Author: Kerim Anka
+## Version: 0.35.0
+## SavedVariables: KAClassic_KerimAnkaUIDB
+## SavedVariablesPerCharacter: KAClassic_KerimAnkaUICharacterDB
+## OptionalDeps: MinimapButtonButton, Bartender4, Details, Questie, Clique, LibDataBroker-1.1, LibDBIcon-1.0
+
+ClassicEra\Locales.lua
+ClassicEra\Locales\en.lua
+ClassicEra\Locales\de.lua
+ClassicEra\Locales\tr.lua
+ClassicEra\Locales\zhCN.lua
+ClassicEra\Locales\frFR.lua
+ClassicEra\Locales\itIT.lua
+ClassicEra\Locales\esES.lua
+ClassicEra\Locales\ptBR.lua
+ClassicEra\Locales\ruRU.lua
+ClassicEra\NameFonts.xml
+ClassicEra\NameFonts.lua
+ClassicEra\Core.lua
+ClassicEra\Keyring.lua
+ClassicEra\QuestieCompat.lua
+ClassicEra\FPS.lua
+ClassicEra\ClassPresets.lua
+ClassicEra\ProfileLayouts.lua
+ClassicEra\BagCompanions.lua
+ClassicEra\BagShortcut.lua
+ClassicEra\SoundGroups.lua
+ClassicEra\Community.lua
+ClassicEra\Window.lua
+ClassicEra\UnitPreview.lua
+ClassicEra\UnitOptions.lua
+ClassicEra\ActionBarOptions.lua
+ClassicEra\ActionRange.lua
+ClassicEra\MinimapButtons.lua
+ClassicEra\QuestOptions.lua
+ClassicEra\DetailsOptions.lua
+ClassicEra\RangeOptions.lua
+ClassicEra\ThreatOptions.lua
+ClassicEra\AspectOptions.lua
+ClassicEra\Launcher.lua
+ClassicEra\Diagnostics.lua
+
+ClassicEra\ClassicBags.lua
+ClassicEra\ClassicItemRecords.lua
+ClassicEra\ClassicBank.lua
+ClassicEra\ClassicMerchant.lua
+
+ClassicEra\ClassicSwingEngine.lua
+ClassicEra\ClassicSwingTimer.lua
+
+ClassicEra\ClassicMinimapControls.lua
+
+ClassicEra\ClassicPlayerCast.lua
+
+ClassicEra\ClassicLayoutLocales.lua
+ClassicEra\ClassicLayoutAdapters.lua
+ClassicEra\ClassicLayoutQuickOptions.lua
+ClassicEra\ClassicLayoutPreviews.lua
+ClassicEra\ClassicLayoutElements.lua
+ClassicEra\ClassicLayoutEditor.lua

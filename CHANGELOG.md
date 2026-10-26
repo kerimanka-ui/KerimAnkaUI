@@ -3,6 +3,17 @@
 This log records user-facing changes. Git commits provide the detailed history.
 Earlier development builds are not exhaustively reconstructed here.
 
+## 0.35.0 — 2026-10-26
+
+- Added Classic Era support alongside Forever, with separate client loaders and saved settings.
+- Added Classic ready layouts for all nine classes, including backed-up Blizzard Edit Mode and optional Bartender4 transfers.
+- Added a unified layout editor with quick settings, previews, save/cancel and access to disabled elements.
+- Added combined bags and bank views, item cooldown counters and recorded character inventories.
+- Added Classic main-hand/off-hand/ranged swing timers, portable Rogue combo points and a configurable player cast bar.
+- Added energy ticks, mana ticks/five-second-rule indicators and independent target-of-target name scaling.
+- Added minimap coordinates and clock/day-night positioning controls, plus optional World latency beside FPS (off by default).
+- Improved name scaling, multilingual text and custom class-panel color coverage.
+
 ## 0.34.16 — 2026-10-23
 
 - Connected the in-game GitHub button to the official KerimAnkaUI repository.
@@ -34,8 +45,8 @@ Earlier development builds are not exhaustively reconstructed here.
 
 ## Current compatibility and limitations
 
-- Targets the World of Warcraft: Forever client, Interface 16001. Retail and
-  Classic Era compatibility is not claimed.
+- Supports Forever (Interface 16001) and Classic Era (Interface 11509). Retail
+  support is not claimed.
 - Ready layouts are tuned for 1920 x 1080. Other resolutions or UI scales may
   require adjustment.
 - Nine panel languages are available. Native game text and optional integration

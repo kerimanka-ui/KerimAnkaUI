@@ -4,7 +4,7 @@
 ## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Notes: Class artwork for action bars and the minimap, with per-character layouts.
 ## Author: Kerim Anka
-## Version: 0.33.73
+## Version: 0.35.0
 ## Dependencies: KerimAnkaUI
 ## OptionalDeps: Bartender4
 ## SavedVariables: ForeverHunterArtDB, ForeverClassArtMinimapDB

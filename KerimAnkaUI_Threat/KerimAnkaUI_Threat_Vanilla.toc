@@ -1,0 +1,12 @@
+## Interface: 11509
+## Title: KerimAnka UI: Threat [Classic Era]
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: KerimAnka UI companion module for Classic Era.
+## Author: Kerim Anka
+## Version: 0.35.0
+## Dependencies: KerimAnkaUI
+## OptionalDeps: LibSharedMedia-3.0
+## SavedVariablesPerCharacter: KAClassic_ForeverThreatDB
+
+ClassicEra\KerimAnkaUI_Threat.lua

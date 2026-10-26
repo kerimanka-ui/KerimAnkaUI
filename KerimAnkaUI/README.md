@@ -1,8 +1,8 @@
 # KerimAnka UI
 
-KerimAnka UI is a modular interface suite for World of Warcraft: Forever.
-This package targets the Forever client (Interface 16001). It is not a general
-Retail or Classic Era release.
+KerimAnka UI supports World of Warcraft: Forever (Interface 16001) and
+Classic Era (Interface 11509), using separate loaders and saved settings.
+Retail support is not claimed. This package contains all nine addon folders.
 
 ## Install
 
@@ -57,6 +57,28 @@ before moving it, and lock it again afterwards. Unlocked unit frames move with
 Alt + left mouse drag. Use each option's help tooltip for other controls.
 /kaui center brings the settings window back to the center of the screen.
 
+## Classic Era additions
+
+Right-click the minimap launcher or choose Edit Positions in the panel to open
+the layout editor. Drag an element to move it; right-click for quick settings.
+Use Save and Exit to retain changes or Cancel to restore the starting layout.
+Disabled elements remain discoverable in the editor. Combat closes the editor.
+
+Classic includes combined bags and bank views, recorded inventory, item cooldown
+counters, configurable swing timers, Rogue combo points, a player cast bar,
+energy/mana tick indicators and minimap coordinates. World latency beside FPS
+is optional and off by default; enable it in the FPS or editor quick settings.
+
+The nine ready layouts are class-specific. Applying one backs up current
+settings and transfers its captured Blizzard layout and optional Bartender
+profile. A managed character-specific Blizzard layout is reused for repeated
+applications rather than creating a new layout every time. UI language remains
+your own preference and starts in English for a new installation.
+
+Classic ready layouts were prepared at 1920 x 1080 and 100% UI scale. Automatic
+adaptation of saved positions when changing the game's UI scale is deferred.
+The new Classic-only features have not been added to the Forever loader.
+
 ## Languages
 
 English, German, Turkish, Simplified Chinese, French, Italian, Spanish,
@@ -83,7 +105,7 @@ prove that every sound associated with a weapon or spell uses that file.
 Twitch: https://www.twitch.tv/kerimanka (streams are in Turkish).
 Project source and issue tracker: https://github.com/kerimanka-ui/KerimAnkaUI
 Use the in-game GitHub button to select and copy the project address.
-While the repository is private, access is limited to authorized accounts.
+The repository and release downloads are public.
 When reporting a problem, include the addon version, client build, character
 class, Blizzard/Bartender bar choice, steps to reproduce, and any Lua error.
 Do not post account credentials or an unreviewed copy of your WTF folder.

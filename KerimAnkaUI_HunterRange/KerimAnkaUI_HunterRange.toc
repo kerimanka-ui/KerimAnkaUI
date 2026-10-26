@@ -4,7 +4,7 @@
 ## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Notes: Hunter range display. Configure in the KerimAnka UI panel.
 ## Author: Kerim Anka
-## Version: 0.33.70
+## Version: 0.35.0
 ## Dependencies: KerimAnkaUI
 ## SavedVariablesPerCharacter: ForeverHunterRangeDB
 

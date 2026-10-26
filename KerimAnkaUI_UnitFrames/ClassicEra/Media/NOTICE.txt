@@ -1,0 +1,4 @@
+BlizzardRogueCombo.blp contains original Blizzard Entertainment World of Warcraft interface artwork.
+Source: locally installed World of Warcraft Forever 1.60.1.70532, FileDataID 8474117 (Interface/HUD/UIRogueComboPoints2xC60.blp).
+Blizzard artwork remains the property of Blizzard Entertainment; it is not original KerimAnka UI artwork and is not covered by the project-owned artwork license.
+The Classic-only renderer references the original sprite coordinates and implements its own point display logic.

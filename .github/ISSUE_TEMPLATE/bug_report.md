@@ -8,7 +8,7 @@ assignees: ""
 
 **Version and setup**
 - KerimAnka UI version:
-- Forever client build:
+- Client edition (Forever / Classic Era) and build:
 - Class and faction:
 - Action bars: Blizzard / Bartender4
 - Relevant optional addons:

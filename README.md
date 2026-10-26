@@ -1,6 +1,6 @@
 # KerimAnka UI
 
-A modular interface suite for World of Warcraft: Forever, with class-themed artwork,
+A modular interface suite for World of Warcraft: Forever and Classic Era, with class-themed artwork,
 ready layouts for all nine classes, and a shared settings panel in nine languages.
 
 [Downloads](https://github.com/kerimanka-ui/KerimAnkaUI/releases) ·
@@ -8,7 +8,7 @@ ready layouts for all nine classes, and a shared settings panel in nine language
 [Twitch](https://www.twitch.tv/kerimanka) ·
 [Changelog](CHANGELOG.md)
 
-Current version: **0.34.16**.
+Current version: **0.35.0**.
 [Download the latest release](https://github.com/kerimanka-ui/KerimAnkaUI/releases/latest)
 and choose the attached complete-suite ZIP.
 
@@ -43,14 +43,31 @@ classes listed above has its own themed design and ready layout.**
 [Class Art settings](docs/screenshots/hunter-class-art.png) ·
 [Unit Frames preview and settings](docs/screenshots/hunter-unit-frames.png)
 
-These are original in-game captures. The world is shown at night, and native
+These screenshots show the Forever client. The world is shown at night, and native
 game text follows the player’s German client language.
 
 ## Compatibility
 
-This project targets the World of Warcraft: Forever client (Interface 16001).
-The ready layouts were tuned for 1920 x 1080. Other resolutions and UI scales
-may need positioning adjustments. Retail and Classic Era compatibility is not claimed.
+Supports **Forever (Interface 16001)** and **Classic Era (Interface 11509)**.
+The same complete-suite ZIP includes separate client loaders. Classic Era uses
+separate saved settings; its new features have not been ported to Forever yet.
+Retail support is not claimed.
+
+Ready layouts are tuned for **1920 x 1080**, with the Classic layouts prepared
+at **100% UI scale**. Other resolutions or UI scales may need manual positioning;
+automatic rescaling of saved layouts is not included.
+
+## New for Classic Era
+
+- Ready layouts for all nine classes, with optional Bartender4 and Blizzard layout transfer.
+- In-game layout editing with quick settings, previews and save/cancel.
+- Combined bags and bank, item cooldown counters and saved inventory views.
+- Main-hand, off-hand and ranged swing timers; Rogue combo points; player cast bar.
+- Energy and mana tick indicators, minimap coordinates and movable clock/day-night controls.
+- Optional World latency (MS) beside FPS, disabled by default.
+
+These Classic additions use their own code path. Existing Forever functionality
+is retained; this release does not claim the new Classic features for Forever.
 
 ## Main features
 
@@ -69,7 +86,8 @@ may need positioning adjustments. Retail and Classic Era compatibility is not cl
 
 Download the current installable package from
 [GitHub Releases](https://github.com/kerimanka-ui/KerimAnkaUI/releases/latest).
-A CurseForge link will be added once the project has an approved page there.
+GitHub Releases contains the reviewed installable ZIP. A GitHub source update
+alone does not publish a new CurseForge file.
 Prefer the explicitly attached complete-suite ZIP to GitHub's automatic
 source-code archives. A source archive contains this repository inside an extra
 folder; that containing folder does not belong in Interface/AddOns.

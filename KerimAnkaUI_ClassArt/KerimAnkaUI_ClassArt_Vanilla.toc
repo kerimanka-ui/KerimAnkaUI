@@ -1,0 +1,24 @@
+## Interface: 11509
+## Title: KerimAnka UI: Class Art [Classic Era]
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: KerimAnka UI companion module for Classic Era.
+## Author: Kerim Anka
+## Version: 0.35.0
+## Dependencies: KerimAnkaUI
+## OptionalDeps: Bartender4
+## SavedVariables: KAClassic_ForeverHunterArtDB, KAClassic_ForeverClassArtMinimapDB
+## SavedVariablesPerCharacter: KAClassic_ForeverHunterArtCharacterDB, KAClassic_ForeverMinimapArtDB, KAClassic_ForeverHunterHUDDB
+
+ClassicEra\BackingColor.lua
+ClassicEra\ForeverMinimapArt.lua
+ClassicEra\ForeverBarPanel.lua
+ClassicEra\ForeverHunterPanel.lua
+ClassicEra\PetBarPanel.lua
+ClassicEra\ForeverRoguePanel.lua
+ClassicEra\ShamanArt.lua
+ClassicEra\MageArt.lua
+ClassicEra\PriestArt.lua
+ClassicEra\PaladinArt.lua
+ClassicEra\DruidArt.lua
+ClassicEra\KerimAnkaUI_ClassArt.lua

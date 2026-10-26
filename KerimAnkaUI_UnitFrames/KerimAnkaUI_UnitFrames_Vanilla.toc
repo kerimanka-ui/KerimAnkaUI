@@ -1,0 +1,38 @@
+## Interface: 11509
+## Title: KerimAnka UI: Unit Frames [Classic Era]
+## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
+## Notes: KerimAnka UI companion module for Classic Era.
+## Author: Kerim Anka
+## Version: 0.35.0
+## Dependencies: KerimAnkaUI
+## OptionalDeps: Clique, Bartender4
+## SavedVariablesPerCharacter: KAClassic_ForeverLeatherUnitsDB
+
+ClassicEra\HunterGeometry.lua
+ClassicEra\WarlockGeometry.lua
+ClassicEra\ShamanGeometry.lua
+ClassicEra\MageGeometry.lua
+ClassicEra\DruidGeometry.lua
+ClassicEra\PriestGeometry.lua
+ClassicEra\WarriorGeometry.lua
+ClassicEra\PaladinGeometry.lua
+ClassicEra\PetGeometry.lua
+ClassicEra\WarlockLabelLayout.lua
+ClassicEra\ShamanLabelLayout.lua
+ClassicEra\MageLabelLayout.lua
+ClassicEra\DruidLabelLayout.lua
+ClassicEra\PriestLabelLayout.lua
+ClassicEra\WarriorLabelLayout.lua
+ClassicEra\PaladinLabelLayout.lua
+ClassicEra\RaidMarker.lua
+ClassicEra\PetHappiness.lua
+ClassicEra\CombatWidgets.lua
+ClassicEra\KerimAnkaUI_UnitFrames.lua
+
+ClassicEra\PortableCombo.lua
+
+ClassicEra\ClassicEnergyTick.lua
+
+ClassicEra\ClassicManaTickEngine.lua
+ClassicEra\ClassicManaTick.lua
