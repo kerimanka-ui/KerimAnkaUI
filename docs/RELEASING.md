@@ -1,21 +1,24 @@
 # Publishing a version
 
-1. Build one reviewed complete-suite ZIP with the nine addon folders at its root.
-2. Include both normal Forever TOCs (16001) and Classic Era `_Vanilla.toc` loaders (11509).
-3. Verify TOC/XML/assets, Lua syntax, version metadata, licenses and client isolation.
-4. Commit source and documentation, tag the same commit, then upload the ZIP and SHA256SUMS to a draft GitHub release.
-5. Publish and verify the downloaded asset hash before reporting completion.
-6. Submit that same package to CurseForge with the matching client/game-version metadata.
-   No automatic CurseForge publishing workflow is configured; GitHub alone is not a file upload there.
+1. Build a reviewed complete-suite ZIP with the nine addon folders at its root.
+2. Include Forever TOCs (16001) and Classic Era `_Vanilla.toc` loaders (11509).
+3. Verify source, assets, versions, licenses and separate client settings.
+4. Publish the reviewed source and a matching GitHub release/tag; verify the downloaded ZIP.
+5. The configured GitHub push webhook notifies CurseForge. Automatic packaging is set to tagged commits only.
+6. Verify the CurseForge build log, generated ZIP, release type and game-version labels before calling publication complete.
 
-Preserve user WTF/SavedVariables. Never include game records, credentials or local test artifacts.
-UI-scale adaptation is not part of 0.35.0. Classic additions must not be claimed as already ported to Forever.
+## CurseForge package layout
 
-For 0.35.0, `.github/workflows/release-0.35.0.yml` validates the reviewed file
-manifest, builds the ZIP and publishes the tagged GitHub release when its version
-marker is pushed to main. It does not publish to CurseForge.
+`.pkgmeta` moves all nine addon folders to the ZIP root and excludes repository tools and documentation. The root `KerimAnkaUI-Suite.toc` declares Forever 1.60.1 and Classic Era 1.15.9 for package discovery; this repository-only file is excluded from the installable ZIP. Keep it synchronized with supported client versions.
 
-The version-scoped bootstrap sends only changed files as verified transport
-chunks. Its workflow checks the manifest, commits the normal readable source
-and binary assets, then builds and publishes the complete suite. Unchanged
-artwork is reused from Git; this is not a patch-only download.
+The webhook credential belongs only in the private GitHub webhook configuration, never in source, release files or logs. SSL verification remains enabled and only push events are subscribed.
+
+The packaging test `v0.35.0-cf-beta2` succeeded: nine addon folders, 544 files and both game-version labels. The downloaded content matched 0.35.0 after text line-ending normalization. A successful Beta test is not a stable CurseForge release. Do not move an existing tag to republish it; use a new release tag or upload a reviewed stable ZIP with the correct metadata.
+
+## Completed 0.35.0 transport
+
+The temporary `.release-payload/0.35.0` transport chunks, materialization script, version marker and one-time publication workflow were removed after the readable source and complete GitHub release were verified. They are not needed for normal builds or CurseForge packaging. They remain recoverable from Git history.
+
+`tools/package_release.py` and the reviewed `release/0.35.0.json` manifest remain available to reproduce the complete 0.35.0 ZIP.
+
+Preserve user WTF/SavedVariables. Never include game records, credentials or local test artifacts. UI-scale adaptation is deferred. Classic additions must not be claimed as already ported to Forever.
