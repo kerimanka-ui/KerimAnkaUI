@@ -1,0 +1,665 @@
+{
+  "version": "0.35.0",
+  "baseCommit": "a6e90e38a5fb21746a358fe123a1074940751b8c",
+  "payloadSha256": "07b8807107c3caa2bdefb32d96a3bd7743e18684d07957609af2248c8c065000",
+  "parts": [
+    ".release-payload/0.35.0/part-001.b64",
+    ".release-payload/0.35.0/part-002.b64",
+    ".release-payload/0.35.0/part-003.b64",
+    ".release-payload/0.35.0/part-004.b64",
+    ".release-payload/0.35.0/part-005.b64",
+    ".release-payload/0.35.0/part-006.b64",
+    ".release-payload/0.35.0/part-007.b64",
+    ".release-payload/0.35.0/part-008.b64",
+    ".release-payload/0.35.0/part-009.b64",
+    ".release-payload/0.35.0/part-010.b64",
+    ".release-payload/0.35.0/part-011.b64",
+    ".release-payload/0.35.0/part-012.b64",
+    ".release-payload/0.35.0/part-013.b64",
+    ".release-payload/0.35.0/part-014.b64",
+    ".release-payload/0.35.0/part-015.b64",
+    ".release-payload/0.35.0/part-016.b64",
+    ".release-payload/0.35.0/part-017.b64",
+    ".release-payload/0.35.0/part-018.b64",
+    ".release-payload/0.35.0/part-019.b64",
+    ".release-payload/0.35.0/part-020.b64",
+    ".release-payload/0.35.0/part-021.b64",
+    ".release-payload/0.35.0/part-022.b64",
+    ".release-payload/0.35.0/part-023.b64",
+    ".release-payload/0.35.0/part-024.b64",
+    ".release-payload/0.35.0/part-025.b64",
+    ".release-payload/0.35.0/part-026.b64",
+    ".release-payload/0.35.0/part-027.b64",
+    ".release-payload/0.35.0/part-028.b64",
+    ".release-payload/0.35.0/part-029.b64",
+    ".release-payload/0.35.0/part-030.b64",
+    ".release-payload/0.35.0/part-031.b64",
+    ".release-payload/0.35.0/part-032.b64",
+    ".release-payload/0.35.0/part-033.b64",
+    ".release-payload/0.35.0/part-034.b64",
+    ".release-payload/0.35.0/part-035.b64",
+    ".release-payload/0.35.0/part-036.b64",
+    ".release-payload/0.35.0/part-037.b64",
+    ".release-payload/0.35.0/part-038.b64",
+    ".release-payload/0.35.0/part-039.b64",
+    ".release-payload/0.35.0/part-040.b64",
+    ".release-payload/0.35.0/part-041.b64",
+    ".release-payload/0.35.0/part-042.b64",
+    ".release-payload/0.35.0/part-043.b64",
+    ".release-payload/0.35.0/part-044.b64",
+    ".release-payload/0.35.0/part-045.b64",
+    ".release-payload/0.35.0/part-046.b64",
+    ".release-payload/0.35.0/part-047.b64",
+    ".release-payload/0.35.0/part-048.b64",
+    ".release-payload/0.35.0/part-049.b64",
+    ".release-payload/0.35.0/part-050.b64",
+    ".release-payload/0.35.0/part-051.b64",
+    ".release-payload/0.35.0/part-052.b64",
+    ".release-payload/0.35.0/part-053.b64",
+    ".release-payload/0.35.0/part-054.b64",
+    ".release-payload/0.35.0/part-055.b64",
+    ".release-payload/0.35.0/part-056.b64",
+    ".release-payload/0.35.0/part-057.b64",
+    ".release-payload/0.35.0/part-058.b64",
+    ".release-payload/0.35.0/part-059.b64",
+    ".release-payload/0.35.0/part-060.b64",
+    ".release-payload/0.35.0/part-061.b64",
+    ".release-payload/0.35.0/part-062.b64",
+    ".release-payload/0.35.0/part-063.b64",
+    ".release-payload/0.35.0/part-064.b64",
+    ".release-payload/0.35.0/part-065.b64",
+    ".release-payload/0.35.0/part-066.b64",
+    ".release-payload/0.35.0/part-067.b64",
+    ".release-payload/0.35.0/part-068.b64"
+  ],
+  "files": [
+    {
+      "path": ".github/FUNDING.yml",
+      "sha256": "59197a7dd0e453c05138c43ddcd2bafb9bc4c7912771a0821a9051895c2c87a3"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.md",
+      "sha256": "410d94b60a3c532e8e741f8543c458a36b07ad405e88ae1ccb67175bf3a3bc2c"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "645c622c7d2e687a0494d437f7cf73c20660fdac207ec9f6742444b66b524279"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "sha256": "3291671c6502694aebf2a2e706b74007549a0d5bd77f6835232236eb9dc0c406"
+    },
+    {
+      "path": "docs/RELEASING.md",
+      "sha256": "8995e8bb025c305a38d0765c3f330275d68c9e1181bd649abf88832b69aa6bcd"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ActionBarOptions.lua",
+      "sha256": "6ce9df4a2c78f5311c04e7e71228fa2294f99ceff5e32ac189949626d89b693a"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ActionRange.lua",
+      "sha256": "a0b7ce484ee0b98ba30bdbc4e3ec4ac401316040bad2866ded3a76ecad66508b"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/AspectOptions.lua",
+      "sha256": "e3ba28185b11a8e92158dac0297866174799929c17973050a0d0125d1ecc4577"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/BagCompanions.lua",
+      "sha256": "d7fdd29d0fc366d17062b53fdfd2454f379613debd8952f5ad4f9be95d4d8ee4"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/BagShortcut.lua",
+      "sha256": "7961e5499d3b4c8977c26fff2fffec05538656dc206aa072d0b51deb68d4ee87"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/CastMedia/Channel.tga",
+      "sha256": "9138594386bc8d4d890010d72058f1d45c092aa0255e9c25c0f0ff981f966095"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/CastMedia/FullChannel.tga",
+      "sha256": "da2329cab6e0ac44643c105578cb5d9dac508938826a9347bf84b43d06924a52"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/CastMedia/FullStandard.tga",
+      "sha256": "4976a19f38bb506102472d0dc7fdf0c0e52ba36cc6b4c0d22797e6f9caba4796"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/CastMedia/Interrupted.tga",
+      "sha256": "0e22116abbf20a5d89923d9a96d0b74d7fa54115eca4276265daa0bb9cea16c4"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/CastMedia/PlayerCast.blp",
+      "sha256": "bebf84583ade3ec3a925d11ff97d8d9cab3e357dc33bf7b0c0de91ac22373877"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/CastMedia/Shield.tga",
+      "sha256": "0fc1677d71e153135a2ac86760c8cc5889a015e660c44c1465c34666ee4aced6"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/CastMedia/Standard.tga",
+      "sha256": "26c5311828c1e7e26a9c43cd95aedf840019f1f84fa2b2f04ae9e9ced5ac2824"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicBags.lua",
+      "sha256": "faa4df772f16f81804f583c0464a764ad4c2d88a7a74a94a128d62a39b25d659"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicBank.lua",
+      "sha256": "71d88a48313b9a234c85d210ae434cf91b3234bd427352077fb19f32d0b6b9f1"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicItemRecords.lua",
+      "sha256": "4e70bb6c621863a406d2b38ec28a2f65cffb52a0116d635711b335778f392bc9"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicLayoutAdapters.lua",
+      "sha256": "32129bbdb970cc0230d0b9a4e41e43be9da170671263ff7c29cb56a9310511c6"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicLayoutEditor.lua",
+      "sha256": "39ef8db1e539d44eecc289495f2f7602e0811be8394db222afb8d3eff322a6f5"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicLayoutElements.lua",
+      "sha256": "065759ac6b4af069acf6eddd0eb6a2c476602fd423f840aa4f86633e2c90faa2"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicLayoutLocales.lua",
+      "sha256": "6a5450e4266f8639d159854107329c4b9baf14d05d04f603b1c07b1d3adb95a0"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicLayoutPreviews.lua",
+      "sha256": "0ea8c2c680ea92948a365c4f5ff320fe1d29f18df281fc597ad691861bdf4ea6"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicLayoutQuickOptions.lua",
+      "sha256": "cef523ea329af53c8e8ce6f7f5e88703312b3adda69eb21c5643e932ac5b5ca6"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicMerchant.lua",
+      "sha256": "dff36e477ea2fa4dc2728cf27ed3e7f210a2df71260b44c429889c18ebf6ac15"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicMinimapControls.lua",
+      "sha256": "232539c79cf386003a621014176d2a5be075aaf24ceba88753f319f81f131643"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicPlayerCast.lua",
+      "sha256": "11142ee5ac14563a0ea327c43797e15834f3b4229422caa42d5b777c93a25b1f"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicSwingEngine.lua",
+      "sha256": "9dfebadf4c69c465d143eaf95d9ebc7b0caab3a427d719922878ca5d5675e650"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassicSwingTimer.lua",
+      "sha256": "90178a64ba23147b9d36efa039a2a9defdd973603c6bc3d926829acc5fe9d132"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ClassPresets.lua",
+      "sha256": "5558812bd2e36e71c78cb835cf6d4dd9b8ae676fd8e4d72001a50db691e6d6ad"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Community.lua",
+      "sha256": "46e7ea82ed210bccafeb35fb523a12e61da405659a68da43960f31bd08ad3d03"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Core.lua",
+      "sha256": "f7bc134ffa9df24ba3c696a3f85894adebd618cda21cca895a94aed4e10e9aad"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/DetailsOptions.lua",
+      "sha256": "0471bacbdda9b153209e7ba5ec137a1b30f0509b240b49574b1e5547c9be9221"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Diagnostics.lua",
+      "sha256": "69f773e74e2fb9430bed842742a41c2ecaa40411f935bd30bd7e8fdf9d651b52"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/FPS.lua",
+      "sha256": "c2d4f3de9096dd5779019f1f9a148296b419111cb8cd23670839ba18c131eac1"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Keyring.lua",
+      "sha256": "dea66f717ac09e014d86c48acf5f5fce001927e505fd3e2334103f06cd5fbcf7"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Launcher.lua",
+      "sha256": "4f8f4db579208e1afbcc977584cd3c7503f8ae8c89ffcb58de6864e03da74f65"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Locales/de.lua",
+      "sha256": "1fdac941400615cf4a59e22bcc88536a6d3d6f6a102ef22f98e29819defd651a"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Locales/en.lua",
+      "sha256": "be424d2a0022d967afeadc709e4aa6aace1325a38833a87e06260aed2e894e1b"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Locales/esES.lua",
+      "sha256": "71cf788461847403202cc73cec3dd58687842f06b574969ec76f2f2c0c639073"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Locales/frFR.lua",
+      "sha256": "007bd82648aca1a387199cdf6094dfc8f16ee1edff476899ea0fa8c3dc218184"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Locales/itIT.lua",
+      "sha256": "d51d3a0f95115e7e7d727fa09593d1451f2d3f695552a506e6ccbf21fc12f06e"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Locales/ptBR.lua",
+      "sha256": "0f6fc4ac27f3ca9787fe675dad7c56e6c9fc498f4f1ed8bc7e0a9f711936288c"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Locales/ruRU.lua",
+      "sha256": "7ce9483ca37e3a4df81206414baa0dfe6774b17f6379e02d33e02d370695c241"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Locales/tr.lua",
+      "sha256": "dd18dabf886bf4b34ccd030473c3c8a74030a5bd4aec333ab62fcdb244cd34f0"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Locales/zhCN.lua",
+      "sha256": "434cbca1dff55b3490d6a8b78a0ffce103da06eb8846ec6c4d1e06edc54e58af"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Locales.lua",
+      "sha256": "451d83116bacf897c4b53796f6676138dec1b777b633f3f61ada23a6d874bc73"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/MinimapButtons.lua",
+      "sha256": "cb1f7222a2ad89f6aac4cb69f5f134c7ca6f0e6202cb505fcb2a462405d8bf83"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/NameFonts.lua",
+      "sha256": "398974b971abfb5b40435c2be6dce47e0ab101e4f9a2156b3ecd9a972d2f21dd"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/NameFonts.xml",
+      "sha256": "3624a897a4eae7cd47e07d8a1eb3e4743d53958213bdc8d39175f879afd061b5"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ProfileLayouts.lua",
+      "sha256": "e559329898d1209db605f34f8ecb1ac83af543b9034a50b48f71ed679b946379"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/QuestieCompat.lua",
+      "sha256": "1c88546795a3ac05a13716179e92ba8e5158b0f576b0e961b6780e85e1460aef"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/QuestOptions.lua",
+      "sha256": "78d7cf966184a87a41efd05a8534dce3a95c989f2dcc3b27dbf84970300696cb"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/RangeOptions.lua",
+      "sha256": "98cd9f4d76f2c10c5c8e99e601515d0f25fb012c0db6e03f21a4a01276dbb31e"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/SoundGroups.lua",
+      "sha256": "281c367c66534a9ebd97b6de95d7a566f344cbcfa407c0cb3637deacef580f14"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/SwingMedia/Fill-mainhand.tga",
+      "sha256": "5b6e2688a10f8be0e3b2153363e6bcfea08125eb1cecf0f27614282773c20144"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/SwingMedia/Fill-offhand.tga",
+      "sha256": "ee54e36829b5899f923deed36777ff196504cbd1732ef41c706b79274a75aaf3"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/SwingMedia/Fill-ranged.tga",
+      "sha256": "e6f791342b304de19c9659d68c8f3efa93fcf85231de4a53cdcd047749200bd8"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/SwingMedia/SwingTimer.tga",
+      "sha256": "2315f7905ade8c077840d0af322a88f7d6291b57814a5ffba3a8429b97624223"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/ThreatOptions.lua",
+      "sha256": "54b2a16736c9f49abc56a8407c17ce7834e7360602cb82222418bdea4b595f81"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/UnitOptions.lua",
+      "sha256": "7bc050a59f5521dc9a5fb3cab26fd143aea23b7bd41d36efc41147936a0a022a"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/UnitPreview.lua",
+      "sha256": "ad4e4241ca67dcedf5ee8d48864ee94072a0c420353c04dd50a3b345a43ab12a"
+    },
+    {
+      "path": "KerimAnkaUI/ClassicEra/Window.lua",
+      "sha256": "fd8394acf47160a877e537876a08a10d6b8310b19ac20e4bcb20ab7a531bdd81"
+    },
+    {
+      "path": "KerimAnkaUI/Community.lua",
+      "sha256": "62542f079a08e918047cc78546ed215dc07961f83114c178c4ae5ae38e3308df"
+    },
+    {
+      "path": "KerimAnkaUI/Core.lua",
+      "sha256": "c490febe23736bd72211c43276288955e834b601b742cd8477e40c01822ecc7c"
+    },
+    {
+      "path": "KerimAnkaUI/KerimAnkaUI.toc",
+      "sha256": "f950a9922eac6c7cfbe406ab202b3484414be8bd371ae05fa4249e25ed832687"
+    },
+    {
+      "path": "KerimAnkaUI/KerimAnkaUI_Vanilla.toc",
+      "sha256": "18a28f85a3627ace9b133e91a6e2373dc4ece7b32a4fd230ca672ef4894e9084"
+    },
+    {
+      "path": "KerimAnkaUI/LICENSE",
+      "sha256": "41394d7768bcf1d3e664b5cd1b8d335bdc167e1d66a620ae116568cae695b3b9"
+    },
+    {
+      "path": "KerimAnkaUI/README.md",
+      "sha256": "b9ef1702bc2c04e9eb3a0d43eb66988b6fcbc8afd837e22f9fa61eef3e7fc368"
+    },
+    {
+      "path": "KerimAnkaUI_AspectAlert/ClassicEra/KerimAnkaUI_AspectAlert.lua",
+      "sha256": "6c7eaf68bbae8eff74955582824be13969c012e85cc769f52a58512212944f73"
+    },
+    {
+      "path": "KerimAnkaUI_AspectAlert/ClassicEra/Options.lua",
+      "sha256": "80a4df6183127ebb89ec36a3b9808e86ebf14d224215af06e87232498cb2dbc8"
+    },
+    {
+      "path": "KerimAnkaUI_AspectAlert/KerimAnkaUI_AspectAlert.toc",
+      "sha256": "27e39ef99549aae2edafd5142073109bf00fc9c6afc36b07f4b2d865ee05f102"
+    },
+    {
+      "path": "KerimAnkaUI_AspectAlert/KerimAnkaUI_AspectAlert_Vanilla.toc",
+      "sha256": "0f8d41ea5a67a1b882e8abd66e583021d2456a0228756b9b2cb02c48b2892f59"
+    },
+    {
+      "path": "KerimAnkaUI_AspectAlert/LICENSE",
+      "sha256": "41394d7768bcf1d3e664b5cd1b8d335bdc167e1d66a620ae116568cae695b3b9"
+    },
+    {
+      "path": "KerimAnkaUI_BarBackdrop/ClassicEra/KerimAnkaUI_BarBackdrop.lua",
+      "sha256": "c5ee3e84d92e955f7cce4a9dbbd0682749b678ecf452bf168a019d7c80341cb4"
+    },
+    {
+      "path": "KerimAnkaUI_BarBackdrop/KerimAnkaUI_BarBackdrop.toc",
+      "sha256": "d36acb9facd7e26cc54a6c068dcf64a51e826b3630e6d72453e329ec7267d049"
+    },
+    {
+      "path": "KerimAnkaUI_BarBackdrop/KerimAnkaUI_BarBackdrop_Vanilla.toc",
+      "sha256": "e74753a3748f24870a93ad48b3f08e1e1f1ea2d46277a3e4c58437b9fa6910d6"
+    },
+    {
+      "path": "KerimAnkaUI_BarBackdrop/LICENSE",
+      "sha256": "41394d7768bcf1d3e664b5cd1b8d335bdc167e1d66a620ae116568cae695b3b9"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/BackingColor.lua",
+      "sha256": "c2e4f3cb8823bec7f16e25e446c80c05fd9c275be0e5d8a1de4212c03f43ac3c"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/DruidArt.lua",
+      "sha256": "df5341499fcfc00e49bfa6fbb9e403299051a6f0701bc739609c8115383d2364"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/ForeverBarPanel.lua",
+      "sha256": "36c9514e917a70992da738d360988f3abfd2310d73473628d8edef968ee391ad"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/ForeverHunterPanel.lua",
+      "sha256": "08a50d17407db19dc89644d778d9992344876563214edeb399ee9a4d6bbd2f86"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/ForeverMinimapArt.lua",
+      "sha256": "4ac859d7cb8d870ec431c2e24ebb60640f23fe38c5da8014ffb9b41162844320"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/ForeverRoguePanel.lua",
+      "sha256": "498c5f6f4ba436b72af2164f71523a483b5576358827332c94b0e9efd1b3f3e0"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/KerimAnkaUI_ClassArt.lua",
+      "sha256": "c999d2932c6d29d5161ef22baaf2385a6cc5de16456ea8f7786c45bc7a2b22db"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/MageArt.lua",
+      "sha256": "3184f501ed8f76929c3108241acf11d03acf60563fe1a7ea6f7211ca022b3082"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/PaladinArt.lua",
+      "sha256": "82ca85c0fbe94d61f79075234fb1000b175dafb30bbd1c70f72acec553d233b3"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/PetBarPanel.lua",
+      "sha256": "6654ac768115f22939b601f4a30fb84a6e2cf7cb4766310a6598abb22f6d3a12"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/PriestArt.lua",
+      "sha256": "bb2a164d134e79e769bb1b463d56ac9f7054a0d80f104dd0e6b48326f84dd9e7"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/ClassicEra/ShamanArt.lua",
+      "sha256": "b1f352ec399473180064d6ddf5da6306c8f3c08d351b8b54acb19359f4173845"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/KerimAnkaUI_ClassArt.toc",
+      "sha256": "ca2925d06a37da9d640b6d9c2faff71a4360170673c84a75c43e618ab0403457"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/KerimAnkaUI_ClassArt_Vanilla.toc",
+      "sha256": "f0513e3cc869eed50426c81fa08ed9b05e90098b3e77a0033ab9154d26c5087c"
+    },
+    {
+      "path": "KerimAnkaUI_ClassArt/LICENSE",
+      "sha256": "41394d7768bcf1d3e664b5cd1b8d335bdc167e1d66a620ae116568cae695b3b9"
+    },
+    {
+      "path": "KerimAnkaUI_DetailsSkin/ClassicEra/KerimAnkaUI_DetailsSkin.lua",
+      "sha256": "b4134b6179a9e0659787694a71f43aa9f9013030698958ab6b9892fe33f65a56"
+    },
+    {
+      "path": "KerimAnkaUI_DetailsSkin/ClassicEra/Media/Geometry.lua",
+      "sha256": "7ebf5683846365877b732f36934beaecbbc3f2b33d2c6c9cab140c455496098c"
+    },
+    {
+      "path": "KerimAnkaUI_DetailsSkin/KerimAnkaUI_DetailsSkin.toc",
+      "sha256": "d14fe401412d49ac54d522e0e8e0e3eb0dd0be55ba378dd80d6b07e40d547de8"
+    },
+    {
+      "path": "KerimAnkaUI_DetailsSkin/KerimAnkaUI_DetailsSkin_Vanilla.toc",
+      "sha256": "672764418b9b45a02df0ad35c522dbc14835fbcdff57fda41f1ea9cd034000b9"
+    },
+    {
+      "path": "KerimAnkaUI_DetailsSkin/LICENSE",
+      "sha256": "41394d7768bcf1d3e664b5cd1b8d335bdc167e1d66a620ae116568cae695b3b9"
+    },
+    {
+      "path": "KerimAnkaUI_HunterRange/ClassicEra/KerimAnkaUI_HunterRange.lua",
+      "sha256": "1505b76d7ed1156cd7ec5a817142c7b8f15c259fb3d44bd4ed7003edd67bbeb3"
+    },
+    {
+      "path": "KerimAnkaUI_HunterRange/ClassicEra/RangeLogic.lua",
+      "sha256": "d0257ff8067adc4dc74443ce4ff95c990bbce8bcb146b453186800fca1348e7a"
+    },
+    {
+      "path": "KerimAnkaUI_HunterRange/KerimAnkaUI_HunterRange.toc",
+      "sha256": "8dc05682d379fdb5db7c96edea211a4fb3d05d8ec0247cd00e8d65dd48baf7d5"
+    },
+    {
+      "path": "KerimAnkaUI_HunterRange/KerimAnkaUI_HunterRange_Vanilla.toc",
+      "sha256": "270de0f704c6917831e07dd172a7ffab15e62a9370cc6e8440efb3e18b470eed"
+    },
+    {
+      "path": "KerimAnkaUI_HunterRange/LICENSE",
+      "sha256": "41394d7768bcf1d3e664b5cd1b8d335bdc167e1d66a620ae116568cae695b3b9"
+    },
+    {
+      "path": "KerimAnkaUI_QuestJournal/ClassicEra/KerimAnkaUI_QuestJournal.lua",
+      "sha256": "24f78eb02fa19bf79db42c204a22026d35fb4956ac2bcfdb973bcd68c17dd433"
+    },
+    {
+      "path": "KerimAnkaUI_QuestJournal/KerimAnkaUI_QuestJournal.toc",
+      "sha256": "30ef99ffd9a4123a8adaf5b999241f423b7e60da9a059f24e89fa591be10e368"
+    },
+    {
+      "path": "KerimAnkaUI_QuestJournal/KerimAnkaUI_QuestJournal_Vanilla.toc",
+      "sha256": "9af16655fdc4091010f7931daf9a5c56eff98b4308b6a4b7cf24be2ec2357e2f"
+    },
+    {
+      "path": "KerimAnkaUI_QuestJournal/LICENSE",
+      "sha256": "41394d7768bcf1d3e664b5cd1b8d335bdc167e1d66a620ae116568cae695b3b9"
+    },
+    {
+      "path": "KerimAnkaUI_Threat/ClassicEra/KerimAnkaUI_Threat.lua",
+      "sha256": "4f7ffe72be484681da8620199dc6da74f2d88513f13ff08a31c03eff88bd70fc"
+    },
+    {
+      "path": "KerimAnkaUI_Threat/KerimAnkaUI_Threat.toc",
+      "sha256": "351fa227793177147adf582879eb39b20d0cadb19fe252972930b907f9e9b525"
+    },
+    {
+      "path": "KerimAnkaUI_Threat/KerimAnkaUI_Threat_Vanilla.toc",
+      "sha256": "5a1d79f537068e19c8590eadc5521dc365cc3f2bd8294a0c2c2e836c81623ea0"
+    },
+    {
+      "path": "KerimAnkaUI_Threat/LICENSE",
+      "sha256": "41394d7768bcf1d3e664b5cd1b8d335bdc167e1d66a620ae116568cae695b3b9"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/ClassicEnergyTick.lua",
+      "sha256": "8381748f7789916026a4be06598c9b99b20084b17e36bcb03eb8e3ab4009f693"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/ClassicManaTick.lua",
+      "sha256": "734f6eab1952465c858a25adb623f79e1fddf09823fce35f13853c5159583ae0"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/ClassicManaTickEngine.lua",
+      "sha256": "5307cabe8c92a474323c80309bc4673bd92394a6cbcbe046e162f3d33322a53f"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/CombatWidgets.lua",
+      "sha256": "54d98c20bac6be17e0b04bcf17c80fa7d716eba6ed76e5b25e7b8caadfc9b45a"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/DruidGeometry.lua",
+      "sha256": "eaed02900e338f3921641993f907c4e1fdf64d1ca952732b568d61fdfe039bde"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/DruidLabelLayout.lua",
+      "sha256": "6d3f07966a255fa6f45aa57a674e4e8bc74671689fd4446e29b1f52b6b052f09"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/HunterGeometry.lua",
+      "sha256": "f37ae0dc7fa0f7639d0516312e59b1951dae724ceb75242e17791dfbd2280da6"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/KerimAnkaUI_UnitFrames.lua",
+      "sha256": "d87c146c8c0f0b8ade77fef57bcbd6136b5754c725dc667d28b5645da0a03d19"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/MageGeometry.lua",
+      "sha256": "88402c19763b94b4b1d83928d56ecdec9b4d0a0524a23c5974c9b53073d8f56a"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/MageLabelLayout.lua",
+      "sha256": "48495779050ea691a002db69dd52a99848613d70eb7220e4de12c536b04f778b"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/Media/BlizzardRogueCombo.blp",
+      "sha256": "b1ef938bbb042ffb82eb219f881db077b7891c621a5a20bc9f2c805078fa7675"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/Media/NOTICE.txt",
+      "sha256": "a490ce519560b0f15e82b06a33fe61a7767a7e37ff216774413015510594bfc4"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/PaladinGeometry.lua",
+      "sha256": "7de00661e675815b89d1d05c814a6989aed523055936581eae8d6f310568fd45"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/PaladinLabelLayout.lua",
+      "sha256": "fcdb788abec907cbe0ca202489c9264bb86083f46b9465180cf2946df1c2b568"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/PetGeometry.lua",
+      "sha256": "e999058e771a9764e85b15e1c65f1edb7f95ab2b0099e0bbf3115cbcdf9fac73"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/PetHappiness.lua",
+      "sha256": "f218d2cac0efd126e68bb8054c034139890fd2d088f80d00f8cb2ffc34da1600"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/PortableCombo.lua",
+      "sha256": "4d514fe82fb6f7270b5f1838cc25f2e3b2c2c52228416403025c21ea72e52af3"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/PriestGeometry.lua",
+      "sha256": "e24ae20f8a97613b9f522fd992f65834f4f8cf168aedbaf516d92872ca92ff25"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/PriestLabelLayout.lua",
+      "sha256": "12088d5d24d27bd7c6522a5514ae2de8b16e4cedf9702aea540c9ca4aca25de8"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/RaidMarker.lua",
+      "sha256": "fa21231622ff487bdd9a52a212e034eeafa0ac89930c45ab644435784bc6e38e"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/ShamanGeometry.lua",
+      "sha256": "8149aae94d28bdc796f856fa3bf61b06861805ffed5095b4b7f4c6f3a49be6c8"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/ShamanLabelLayout.lua",
+      "sha256": "329acb4d1c54cadd480ccc4872fa0ad761f082c81bc0fbd10dac8ed3b5c34e77"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/WarlockGeometry.lua",
+      "sha256": "86403ac0edde074dc9f9aee6b379f8f8f47cbe2d1cb1654783e1f45f4dfc673b"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/WarlockLabelLayout.lua",
+      "sha256": "c9b2a66f2c64acb37e61c8b111512c974bc77d6253c2db33d5b5ba15a673cfb1"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/WarriorGeometry.lua",
+      "sha256": "58ef4074121b7d604712e082b325a9ca7c18ce6bba38a9add2b19545aa6d06c4"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/ClassicEra/WarriorLabelLayout.lua",
+      "sha256": "72f5ed387c74b6e25aa70894b1cb2411221e2c9af4c70bba02c68c88fa6aad95"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/KerimAnkaUI_UnitFrames.toc",
+      "sha256": "0db2b7f56a18a8049e43e21a077a3e59f2e8f0414e8765811504ee90d3a13361"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/KerimAnkaUI_UnitFrames_Vanilla.toc",
+      "sha256": "ac096a9d8a86a879c7429441724d06e18beb18fa86656e8fa0670a6f07c9df07"
+    },
+    {
+      "path": "KerimAnkaUI_UnitFrames/LICENSE",
+      "sha256": "41394d7768bcf1d3e664b5cd1b8d335bdc167e1d66a620ae116568cae695b3b9"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "41394d7768bcf1d3e664b5cd1b8d335bdc167e1d66a620ae116568cae695b3b9"
+    },
+    {
+      "path": "README.md",
+      "sha256": "893a31ab347122ef8dfe34ee910fb6325ec92f93d2ba5ee2b9a932f9ac512135"
+    },
+    {
+      "path": "release/0.35.0-notes.md",
+      "sha256": "f84c001227a2313f8cfd5f53d7678f7842aa7b60586d8d04a825f6e1d1857f11"
+    },
+    {
+      "path": "release/0.35.0.json",
+      "sha256": "59392a4a264dfb0a18fac971a5e8de925aed3697b8228cb6c65e4151c1ee54c0"
+    },
+    {
+      "path": "tools/package_release.py",
+      "sha256": "157750d669fb96b8ca53469e4220e7664ec47f9a96a17c1b55148b268100d5cd"
+    }
+  ]
+}
