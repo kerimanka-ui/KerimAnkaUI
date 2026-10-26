@@ -1,0 +1,27 @@
+# Package the nine installable addons as siblings, never as nested addons.
+package-as: KerimAnkaUI-Suite
+enable-nolib-creation: no
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
+ignore:
+  - docs
+  - tools
+  - release
+  - README.md
+  - CONTRIBUTING.md
+  - CHANGELOG.md
+  - LICENSE
+
+move-folders:
+  KerimAnkaUI-Suite/KerimAnkaUI: KerimAnkaUI
+  KerimAnkaUI-Suite/KerimAnkaUI_AspectAlert: KerimAnkaUI_AspectAlert
+  KerimAnkaUI-Suite/KerimAnkaUI_BarBackdrop: KerimAnkaUI_BarBackdrop
+  KerimAnkaUI-Suite/KerimAnkaUI_ClassArt: KerimAnkaUI_ClassArt
+  KerimAnkaUI-Suite/KerimAnkaUI_DetailsSkin: KerimAnkaUI_DetailsSkin
+  KerimAnkaUI-Suite/KerimAnkaUI_HunterRange: KerimAnkaUI_HunterRange
+  KerimAnkaUI-Suite/KerimAnkaUI_QuestJournal: KerimAnkaUI_QuestJournal
+  KerimAnkaUI-Suite/KerimAnkaUI_Threat: KerimAnkaUI_Threat
+  KerimAnkaUI-Suite/KerimAnkaUI_UnitFrames: KerimAnkaUI_UnitFrames
