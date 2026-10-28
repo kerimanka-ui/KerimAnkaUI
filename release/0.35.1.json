@@ -9,7 +9,7 @@
   ],
   "archiveHashes": {
     "KerimAnkaUI-0.35.1-complete-suite.zip": "1623b3d1610a39bbfe842765afa29af49ea96467b7f0e496407983cda4a27f2e",
-    "KerimAnkaBags-ClassicEra-0.35.1.zip": "97100c91ad71261fbe25f9ba27876f092c74fd43b82d81d5e7c3e42de3704def"
+    "KerimAnkaBags-ClassicEra-0.35.1.zip": "47c5b50db2a5f0dfd8bb02557597d61230eb50079ec3a397d20b9739fb642f99"
   },
   "productMembers": {
     "suite": [
@@ -2293,11 +2293,11 @@
       },
       {
         "path": "KerimAnkaUI_Bags/KerimAnkaUI_Bags.toc",
-        "sha256": "ba7cae48dbfefcb17be162235760ac8fa347b2c6152dfd682216c40611819f41"
+        "sha256": "36cf6e11622156be49e911e87875c0b9ee4a95cd717e7031b73c715b63de8634"
       },
       {
         "path": "KerimAnkaUI_Bags/KerimAnkaUI_Bags_Vanilla.toc",
-        "sha256": "ba7cae48dbfefcb17be162235760ac8fa347b2c6152dfd682216c40611819f41"
+        "sha256": "36cf6e11622156be49e911e87875c0b9ee4a95cd717e7031b73c715b63de8634"
       },
       {
         "path": "KerimAnkaUI_Bags/LICENSE",
