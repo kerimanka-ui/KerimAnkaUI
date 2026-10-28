@@ -30,6 +30,14 @@ def validate_members(product, names):
     if roots != set(allowed):
         raise ValueError('Missing product roots: ' + str(set(allowed) - roots))
 
+def canonical_content(name, data):
+    # Old Git blobs may retain CRLF even after adding eol=lf attributes.
+    # Normalize text at the package boundary; never alter binary media.
+    p = Path(name)
+    if p.suffix.lower() in {'.lua', '.toc', '.xml', '.md', '.txt', '.json', '.py', '.yml', '.yaml', '.sh'} or p.name in {'LICENSE', 'LICENCE', '.pkgmeta', '.gitignore', '.gitattributes'}:
+        return data.removeprefix(b'\xef\xbb\xbf').replace(b'\r\n', b'\n')
+    return data
+
 def collect(root, roots):
     entries = {}
     for folder in roots:
@@ -47,7 +55,7 @@ def collect(root, roots):
                 rel = p.relative_to(root).as_posix()
                 if any(v.startswith('.') for v in p.relative_to(source).parts):
                     raise ValueError('Unexpected hidden file: ' + rel)
-                entries[rel] = p.read_bytes()
+                entries[rel] = canonical_content(rel, p.read_bytes())
     return entries
 
 def validate_bags(entries):
