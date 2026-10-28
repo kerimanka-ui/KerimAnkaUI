@@ -1,5 +1,11 @@
 name: Release reviewed KerimAnka products
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing reviewed release tag, for example v0.35.1'
+        required: true
+        type: string
   push:
     tags: ['v[0-9]*']
 permissions:
@@ -10,6 +16,8 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-24.04
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
     permissions:
       contents: write
     steps:
@@ -19,9 +27,9 @@ jobs:
       - name: Build suite and independent Bags from this tag
         run: python3 tools/package_products.py --release --output dist
       - name: Verify reviewed archive hashes
-        run: python3 tools/check_product_release.py --tag "$GITHUB_REF_NAME" --output dist
+        run: python3 tools/check_product_release.py --tag "$RELEASE_TAG" --output dist
       - name: Publish distinct GitHub release assets
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: python3 tools/publish_product_release.py --tag "$GITHUB_REF_NAME" --output dist
+        run: python3 tools/publish_product_release.py --tag "$RELEASE_TAG" --output dist
