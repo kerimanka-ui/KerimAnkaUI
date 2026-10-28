@@ -49,6 +49,35 @@ class ProductBoundaryTests(unittest.TestCase):
                 self.assertFalse(any('MUST_NOT_SHIP' in n for n in archive.namelist()))
             self.assertFalse(report['uploaded'])
 
+    def test_mixed_git_line_endings_produce_identical_packages(self):
+        temporary_root = ROOT / 'dist'
+        temporary_root.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=temporary_root.resolve()) as temp:
+            root = Path(temp) / 'source'; root.mkdir()
+            (root / 'packaging').mkdir()
+            (root / 'packaging/products.json').write_text((ROOT / 'packaging/products.json').read_text())
+            for name in products.SUITE_ROOTS:
+                folder = root / name; folder.mkdir()
+                (folder / (name + '.toc')).write_bytes(b'## Version: 0.35.1\r\n')
+            (root / 'KerimAnkaUI/KerimAnkaUI_Vanilla.toc').write_bytes(b'## Version: 0.35.1\r\n')
+            code = root / 'KerimAnkaUI/Example.lua'
+            code.write_bytes(b'local value = 1\r\nreturn value\r\n')
+            license = root / 'KerimAnkaUI/LICENSE'
+            license.write_bytes(b'Example license\r\n')
+            image = root / 'KerimAnkaUI/Example.tga'
+            binary = b'\x00\xffBINARY\r\nBYTES\x00'
+            image.write_bytes(binary)
+            first = products.build(root, Path(temp) / 'a', 'suite')
+            for path in root.rglob('*'):
+                if path.is_file() and path != image:
+                    path.write_bytes(path.read_bytes().replace(b'\r\n', b'\n'))
+            second = products.build(root, Path(temp) / 'b', 'suite')
+            self.assertEqual(first['sha256'], second['sha256'])
+            with zipfile.ZipFile(Path(temp) / 'a' / first['archive']) as archive:
+                self.assertEqual(archive.read('KerimAnkaUI/Example.lua'), b'local value = 1\nreturn value\n')
+                self.assertEqual(archive.read('KerimAnkaUI/LICENSE'), b'Example license\n')
+                self.assertEqual(archive.read('KerimAnkaUI/Example.tga'), binary)
+
     def test_native_packager_exclusions(self):
         meta = (ROOT / '.pkgmeta').read_text()
         for path in ['KerimAnkaUI_Bags', 'tools', 'packaging', 'tests', 'dist', 'outputs', 'work']:
