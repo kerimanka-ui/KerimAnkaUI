@@ -1,6 +1,7 @@
 -- Classic-only live bank presentation using Blizzard's native bank controls.
 if not WOW_PROJECT_CLASSIC or WOW_PROJECT_ID~=WOW_PROJECT_CLASSIC then return end
 local _,K=...
+local T=K.InventoryText
 local M={};K.ClassicBank=M
 local panel,holder,footer,cost,search,sortButton,moneyText
 local sortContext
@@ -15,7 +16,8 @@ end
 local function Columns()
  local c=Config();return math.max(6,math.min(14,math.floor(tonumber(c and c.columns) or 10)))
 end
-local function Width() return math.max(280,Columns()*38+28) end
+local function Cell()return 34+K.ClassicInventoryStyle.ItemGap()end
+local function Width() return math.max(280,Columns()*Cell()+28) end
 local function Enabled() return K.ClassicBags and K.ClassicBags.Enabled() end
 local function MaxBags() return math.max(0,math.min(7,tonumber(NUM_BANKBAGSLOTS) or 6)) end
 local function BankBag(id) return type(id)=='number' and id>=5 and id<=4+MaxBags() end
@@ -80,7 +82,7 @@ local function Ensure()
  panel:SetScript('OnDragStop',function(self) self:StopMovingOrSizing() end)
  panel:SetScript('OnHide',function() if not closing then M.Close(true) end end)
  panel:SetScript('OnMouseWheel',function(_,delta) offset=offset-delta;M.Refresh() end)
- local title=panel:CreateFontString(nil,'OVERLAY','GameFontNormal');title:SetPoint('TOPLEFT',14,-13);title:SetText('KerimAnka UI - Bank');title:SetWidth(Width()-110)
+ local title=panel:CreateFontString(nil,'OVERLAY','GameFontNormal');K.InventoryFont(title);title:SetPoint('TOPLEFT',14,-13);K.InventoryLabel(title,'KerimAnka UI - Bank');title:SetWidth(Width()-110)
  panel.kaTitle=title
  for _,delta in ipairs({-1,1}) do
   local change=delta
@@ -93,20 +95,20 @@ local function Ensure()
  end
  local close=CreateFrame('Button',nil,panel,'UIPanelCloseButton');close:SetPoint('TOPRIGHT',1,1);close:SetScript('OnClick',function() M.Close(true) end)
  holder=CreateFrame('Frame',nil,panel);holder:SetID(-1);holder:SetAllPoints(panel)
- footer=panel:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');footer:SetPoint('BOTTOMLEFT',14,12)
- cost=panel:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');cost:SetPoint('BOTTOMLEFT',14,43)
+ footer=panel:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');K.InventoryFont(footer);footer:SetPoint('BOTTOMLEFT',14,12)
+ cost=panel:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');K.InventoryFont(cost);cost:SetPoint('BOTTOMLEFT',14,43)
  search=CreateFrame('EditBox','KerimAnkaUIClassicBankSearch',panel,'InputBoxTemplate');search:SetPoint('TOPLEFT',20,-83);search:SetSize(272,22);search:SetAutoFocus(false)
  search:SetScript('OnTextChanged',function() offset=0;M.Refresh() end);search:SetScript('OnEscapePressed',function(self) self:SetText('');self:ClearFocus() end);search:SetScript('OnEnterPressed',function(self) self:ClearFocus() end)
  local clear=CreateFrame('Button','KerimAnkaUIClassicBankSearchClear',panel,'UIPanelButtonTemplate');clear:SetSize(22,22);clear:SetPoint('TOPRIGHT',-14,-83);clear:SetText('X')
  clear:SetScript('OnClick',function() search:SetText('');search:ClearFocus() end)
- sortButton=CreateFrame('Button','KerimAnkaUIClassicBankSort',panel,'UIPanelButtonTemplate');sortButton:SetSize(68,22);sortButton:SetPoint('TOPRIGHT',-42,-83);sortButton:SetText('Sort')
+ sortButton=CreateFrame('Button','KerimAnkaUIClassicBankSort',panel,'UIPanelButtonTemplate');sortButton:SetSize(68,22);sortButton:SetPoint('TOPRIGHT',-42,-83);K.InventoryLabel(sortButton,'Sort')
  sortContext={ids={-1},Valid=function() return active and panel:IsShown() and BankFrame and BankFrame:IsShown() and Enabled() end,
-  Refresh=function() M.Refresh() end,Label=function(running) sortButton:SetText(running and 'Stop' or 'Sort') end}
+  Refresh=function() M.Refresh() end,Label=function(running) sortButton:SetText(running and T('Stop') or T('Sort')) end}
  for i=1,MaxBags() do sortContext.ids[#sortContext.ids+1]=4+i end
  sortButton:SetScript('OnClick',function() K.ClassicBags.Sort(sortContext) end)
- sortButton:SetScript('OnEnter',function(self) GameTooltip:SetOwner(self,'ANCHOR_LEFT');GameTooltip:SetText('Sort bank');GameTooltip:AddLine('Combine stacks and sort the bank and its bags. Outside combat only. Click again to stop.',1,.82,0,true);GameTooltip:Show() end)
+ sortButton:SetScript('OnEnter',function(self) GameTooltip:SetOwner(self,'ANCHOR_LEFT');GameTooltip:SetText(T('Sort bank'));GameTooltip:AddLine(T('Combine stacks and sort the bank and its bags. Outside combat only. Click again to stop.'),.9,.9,.86,true);K.InventoryTooltip(GameTooltip);GameTooltip:Show() end)
  sortButton:SetScript('OnLeave',function() GameTooltip:Hide() end)
- moneyText=panel:CreateFontString('KerimAnkaUIClassicBankMoney','OVERLAY','GameFontHighlightSmall');moneyText:SetPoint('BOTTOMRIGHT',-14,12)
+ moneyText=panel:CreateFontString('KerimAnkaUIClassicBankMoney','OVERLAY','GameFontHighlightSmall');K.InventoryFont(moneyText);moneyText:SetPoint('BOTTOMRIGHT',-14,12)
  UISpecialFrames=UISpecialFrames or {};table.insert(UISpecialFrames,'KerimAnkaUIClassicLiveBank')
  return true
 end
@@ -129,6 +131,7 @@ local function TakeControls()
  end
 end
 function M.Refresh()
+ if panel then K.ClassicInventoryStyle.Apply(panel,2)end
  if not active or not panel or not panel:IsShown() then return end
  if not Enabled() then M.Close(false);return end
  TakeControls()
@@ -165,21 +168,21 @@ function M.Refresh()
  end
  local rowCount=math.max(1,math.ceil(#list/columns));offset=math.max(0,math.min(offset,math.max(0,rowCount-8)))
  local shownRows=math.min(8,rowCount)
- panel:SetHeight(190+extra+shownRows*38)
+ panel:SetHeight(190+extra+shownRows*Cell())
  for i=offset*columns+1,math.min(#list,(offset+8)*columns) do
   local e=list[i];local b=e.button;local n=i-offset*columns-1;b.kaBankVisible=true
-  b:SetSize(37,37);b:SetScale(34/37);b:ClearAllPoints();b:SetPoint('TOPLEFT',panel,'TOPLEFT',(14+(n%columns)*38)/(34/37),(-119-math.floor(n/columns)*38)/(34/37))
+  b:SetSize(37,37);b:SetScale(34/37);b:ClearAllPoints();b:SetPoint('TOPLEFT',panel,'TOPLEFT',(14+(n%columns)*Cell())/(34/37),(-119-math.floor(n/columns)*Cell())/(34/37))
   K.ClassicBags.PaintInventoryButton(b,e.bag,e.slot);b:Show()
  end
  for _,group in pairs(items) do for _,b in pairs(group) do if not b.kaBankVisible then b:Hide() end end end
- footer:SetText(string.format('%d / %d slots free',free,total))
+ footer:SetText(string.format(T('%d / %d slots free'),free,total))
  local money=GetMoney and GetMoney() or 0
  moneyText:SetText(GetCoinTextureString and GetCoinTextureString(money) or string.format('%dg %ds %dc',math.floor(money/10000),math.floor(money/100)%100,money%100))
  local moneyWidth=math.min(width-120,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth() or 80)+12))
  moneyText:SetWidth(moneyWidth);footer:SetWidth(math.max(70,width-moneyWidth-38))
  sortButton:SetAlpha(InCombatLockdown() and .45 or 1)
  local purchased,full=GetNumBankSlots();local nextCost=not full and GetBankSlotCost(purchased) or 0
- cost:SetText(full and 'All bank bag slots purchased' or ('Next bag slot: '..(GetCoinTextureString and GetCoinTextureString(nextCost) or tostring(nextCost))))
+ cost:SetText(full and T('All bank bag slots purchased') or (T('Next bag slot: ')..(GetCoinTextureString and GetCoinTextureString(nextCost) or tostring(nextCost))))
  if BankFramePurchaseButton then BankFramePurchaseButton:SetShown(not full) end
 end
 function M.Open()
@@ -201,7 +204,7 @@ local function QueueRefresh(open)
  elseif active then M.Refresh() end end)
 end
 local events=CreateFrame('Frame')
-for _,e in ipairs({'BANKFRAME_OPENED','BANKFRAME_CLOSED','BAG_UPDATE_DELAYED','PLAYERBANKSLOTS_CHANGED','PLAYERBANKBAGSLOTS_CHANGED','PLAYER_MONEY','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','ADDON_LOADED'}) do events:RegisterEvent(e) end
+for _,e in ipairs({'QUEST_LOG_UPDATE','BANKFRAME_OPENED','BANKFRAME_CLOSED','BAG_UPDATE_DELAYED','PLAYERBANKSLOTS_CHANGED','PLAYERBANKBAGSLOTS_CHANGED','PLAYER_MONEY','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','ADDON_LOADED'}) do events:RegisterEvent(e) end
 events:SetScript('OnEvent',function(_,event)
  if event=='BANKFRAME_OPENED' then QueueRefresh(true)
  elseif event=='BANKFRAME_CLOSED' then M.Close(false)

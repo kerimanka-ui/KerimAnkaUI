@@ -1,0 +1,28 @@
+{
+  "versionFile": "KerimAnkaUI/KerimAnkaUI_Vanilla.toc",
+  "products": {
+    "suite": {
+      "archiveName": "KerimAnkaUI",
+      "curseforgeProjectId": 1761131,
+      "roots": [
+        "KerimAnkaUI",
+        "KerimAnkaUI_AspectAlert",
+        "KerimAnkaUI_BarBackdrop",
+        "KerimAnkaUI_ClassArt",
+        "KerimAnkaUI_DetailsSkin",
+        "KerimAnkaUI_HunterRange",
+        "KerimAnkaUI_QuestJournal",
+        "KerimAnkaUI_Threat",
+        "KerimAnkaUI_UnitFrames"
+      ]
+    },
+    "bags": {
+      "archiveName": "KerimAnkaBags-ClassicEra",
+      "curseforgeProjectId": null,
+      "generator": "tools/bags/generate.py",
+      "roots": [
+        "KerimAnkaUI_Bags"
+      ]
+    }
+  }
+}

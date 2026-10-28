@@ -1,11 +1,9 @@
 # Package the nine installable addons as siblings, never as nested addons.
 package-as: KerimAnkaUI-Suite
 enable-nolib-creation: no
-
 manual-changelog:
   filename: CHANGELOG.md
   markup-type: markdown
-
 ignore:
   - KerimAnkaUI-Suite.toc
   - docs
@@ -15,7 +13,12 @@ ignore:
   - CONTRIBUTING.md
   - CHANGELOG.md
   - LICENSE
-
+  - packaging
+  - tests
+  - dist
+  - outputs
+  - work
+  - KerimAnkaUI_Bags
 move-folders:
   KerimAnkaUI-Suite/KerimAnkaUI: KerimAnkaUI
   KerimAnkaUI-Suite/KerimAnkaUI_AspectAlert: KerimAnkaUI_AspectAlert

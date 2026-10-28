@@ -17,3 +17,8 @@ KerimAnkaUI-Backups/
 .DS_Store
 Thumbs.db
 __pycache__/
+
+# Generated product archives and Python caches
+dist/
+__pycache__/
+*.pyc

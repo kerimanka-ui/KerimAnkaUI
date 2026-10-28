@@ -123,16 +123,22 @@ function Q.Group(name)
   end
  elseif name=='micro'or name=='inventory'then
   api=K.InventoryMenus;if not api then return end
-  g=Group(name,function()return K.db end,api.Refresh)
+  g=Group(name,function()return K.db end,function()api.Refresh();K.ClassicInventoryStyle.Refresh()end)
   if name=='micro'then Number(g,api,'microSize','imIconSize',18,48,1);Number(g,api,'microGap','imGap',0,16,1)
   else
-   Number(g,api,'bagSize','imBagSize',18,48,1);Number(g,api,'bagGap','imGap',0,16,1)
-   for _,e in ipairs({{'bagBackground','imBagBackground'},{'bagFrame','imBagFrame'},{'bagIconBorder','imBagIconBorder'},{'bagJunk','imJunk'},{'bagQuality','imQuality'}})do Flag(g,api,e[1],e[2])end
+   Number(g,api,'bagSize','imBagSize',18,48,1);Number(g,api,'bagGap','imBagShortcutGap',0,16,1)
+   for _,e in ipairs({{'bagBackground','imBagBackground'},{'bagFrame','imBagFrame'},{'bagIconBorder','imBagIconBorder'},{'bagJunk','imJunk'},{'bagQuality','imQuality'},{'bagQuest','imQuestItems'},{'bagEmptySlots','imEmptySlots'}})do Flag(g,api,e[1],e[2])end
   end
  elseif name=='bags'then
   api=K.ClassicBags;if not api then return end
   g=Group(name,function()return Root('classicBags')end,api.Refresh)
-  g.Add('columns','qeColumns',6,14,1,function()return Root('classicBags').columns or 10 end,function(v)Root('classicBags').columns=v;api.Refresh();return true end)
+  g.API(K.InventoryMenus,'bagDesign','imBagDesign',nil,nil,nil,{{1,'imBagDesign1'},{2,'imBagDesign2'},{3,'imBagDesign3'}})
+  Flag(g,K.InventoryMenus,'bagQuest','imQuestItems')
+  Flag(g,K.InventoryMenus,'bagEmptySlots','imEmptySlots')
+  Number(g,K.InventoryMenus,'bagItemGap','imItemGap',0,16,1)
+  Number(g,K.InventoryMenus,'bagGap','imBagShortcutGap',0,16,1)
+  g.keys.bagDesign=nil;g.keys.bagQuest=nil;g.keys.bagEmptySlots=nil;g.keys.bagItemGap=nil;g.keys.bagGap=nil;g.inventoryKeys=true
+  g.Add('columns','qeColumns',api.MinimumColumns(),14,1,api.GetColumns,api.SetColumns)
   g.Add('shelfHidden','qeHideBagIcons',nil,nil,nil,function()return Root('classicBags').shelfHidden==true end,api.SetShelfHidden)
  elseif name=='range'or name=='threat'then
   api=name=='range'and ForeverHunterRangeAPI or ForeverThreatAPI;if not api or not api.GetSettings()then return end
@@ -201,14 +207,17 @@ function Q.Capture(name)
  local g=Q.Group(name);local d=g and g.scope();if not d then return end
  if name=='swing'then g.keys.enabled=true;g.keys.hands=true elseif name=='micro'then g.keys.microEnabled=true elseif name=='cast'or name=='experience'or name=='range'or name=='threat'or name=='aspect'then g.keys.enabled=true end
  local values={};for key in pairs(g.keys)do if d[key]~=nil then values[key]=Copy(d[key])end end
- return {values=values}
+ local inventory;if g.inventoryKeys then inventory={bagDesign=K.db.bagDesign,bagQuest=K.db.bagQuest,bagEmptySlots=K.db.bagEmptySlots,bagItemGap=K.db.bagItemGap,bagGap=K.db.bagGap}end
+ return {values=values,inventory=inventory}
 end
 function Q.Restore(name,snapshot)
  local g=Q.Group(name);local d=g and g.scope()
  if not d or type(snapshot)~='table'or type(snapshot.values)~='table'then return false end
  if name=='swing'then g.keys.enabled=true;g.keys.hands=true elseif name=='micro'then g.keys.microEnabled=true elseif name=='cast'or name=='experience'or name=='range'or name=='threat'or name=='aspect'then g.keys.enabled=true end
  for key in pairs(g.keys)do d[key]=Copy(snapshot.values[key])end
+ if g.inventoryKeys then local v=snapshot.inventory or{};K.db.bagDesign=v.bagDesign;K.db.bagQuest=v.bagQuest;K.db.bagEmptySlots=v.bagEmptySlots;K.db.bagItemGap=v.bagItemGap;K.db.bagGap=v.bagGap end
  if g.refresh then g.refresh()end
+ if g.inventoryKeys and K.ClassicInventoryStyle then K.ClassicInventoryStyle.Refresh()end
  return true
 end
 function Q.Set(id,index,value)

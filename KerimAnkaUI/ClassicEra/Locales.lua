@@ -51,6 +51,7 @@ function K.ApplyTextFont(region,size,bold,flags,native)
  spec.size=size or 13;spec.bold=bold;spec.flags=flags or "";spec.native=native
  fonts[region]=spec;Apply(region,spec)
 end
+function K.ReleaseTextFont(region)fonts[region]=nil end
 function K.RefreshPanelFonts()
  if K.SoundShortcut then K.SoundShortcut.Refresh() end
  if K.FPS then K.FPS.Refresh() end

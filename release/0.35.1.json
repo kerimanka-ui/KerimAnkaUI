@@ -1,0 +1,2412 @@
+{
+  "version": "0.35.1",
+  "suiteCurseforgeProjectId": 1761131,
+  "bagsCurseforgeProjectId": null,
+  "sourceBase": "c0f5de2619191594cc91eaf222cae1fb261a050a",
+  "releaseType": "release",
+  "independentClients": [
+    "classic_era"
+  ],
+  "archiveHashes": {
+    "KerimAnkaUI-0.35.1-complete-suite.zip": "1623b3d1610a39bbfe842765afa29af49ea96467b7f0e496407983cda4a27f2e",
+    "KerimAnkaBags-ClassicEra-0.35.1.zip": "97100c91ad71261fbe25f9ba27876f092c74fd43b82d81d5e7c3e42de3704def"
+  },
+  "productMembers": {
+    "suite": [
+      {
+        "path": "KerimAnkaUI/ActionBarOptions.lua",
+        "sha256": "7104a2be164607a8a48db87780a12e4c134f0551684541e79d7f545bcb89de46"
+      },
+      {
+        "path": "KerimAnkaUI/ActionRange.lua",
+        "sha256": "5060daf884b20b387f8c1a2ca120df6a62d868a2cb77c8d0534da71408edda12"
+      },
+      {
+        "path": "KerimAnkaUI/AspectOptions.lua",
+        "sha256": "4d57e62ba7cc4b28222bbe797f9b3fb31bc29f1c56b2b8db34781004ab52eea8"
+      },
+      {
+        "path": "KerimAnkaUI/BagCompanions.lua",
+        "sha256": "8063676fa5b0706cef07222a76d2657648d1f9f4541f0fc4287fe5c166c4e230"
+      },
+      {
+        "path": "KerimAnkaUI/BagShortcut.lua",
+        "sha256": "f8f9882e4bb0157c3426879b8881b643007eeaab9d29b2431a8d537d81a65d61"
+      },
+      {
+        "path": "KerimAnkaUI/ClassPresets.lua",
+        "sha256": "9ddca6208ff92c05f9b005a344d63021f87ce5b6e2d8d1fa48e1edbf81dc2d44"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ActionBarOptions.lua",
+        "sha256": "df18c75d63d92468268ed4b16ba634d22fd022ee2535a13d096531c60b572974"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ActionRange.lua",
+        "sha256": "a0b7ce484ee0b98ba30bdbc4e3ec4ac401316040bad2866ded3a76ecad66508b"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/AspectOptions.lua",
+        "sha256": "710cc7959942b1f0d90819756ef67eae31dabcc319ccb35663a78ffb2de03ff3"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/BagCompanions.lua",
+        "sha256": "11bc7d322145c118fd0ec5da27418df1038e81f411eef774f5bfd99fb1a2bca0"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/BagMedia/ClassicFrame.tga",
+        "sha256": "5738b08e35c7b9d19e03b58bb807312b3d7c86c584577626b3928b962a8e4855"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/BagMedia/ControlAtlas.tga",
+        "sha256": "f99b54954123014092ce0f54d3cc4118b74b27c903d9d1194fb2535350a8c5c7"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/BagMedia/IconAtlas.tga",
+        "sha256": "b2426e105d0d3fdc6f30d08dfb4f58fb09233b079b84dfbd95b3c1d7cc68e5ab"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/BagMedia/LeatherFrame.tga",
+        "sha256": "e946257f24356b189ed31ba5d2241e38ad9c5d8eda8b5da6dfda05f43e90e1bf"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/BagMedia/NotoSerif-Regular.ttf",
+        "sha256": "c8f669ceb2c9c60ccf55198b305e08a997ffca79a38cc7eeb551e643cbe66505"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/BagMedia/OFL-NotoSerif.txt",
+        "sha256": "0dab92d0544f7b233403f14b84a663bdbfa746982eda629e7f4f9ffe1b036feb"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/BagShortcut.lua",
+        "sha256": "d30d9c2c01349c804b07eb33169564b44c8a93bfea0101b8ce4dc4ee7c71cb03"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/CastMedia/Channel.tga",
+        "sha256": "9138594386bc8d4d890010d72058f1d45c092aa0255e9c25c0f0ff981f966095"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/CastMedia/FullChannel.tga",
+        "sha256": "da2329cab6e0ac44643c105578cb5d9dac508938826a9347bf84b43d06924a52"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/CastMedia/FullStandard.tga",
+        "sha256": "4976a19f38bb506102472d0dc7fdf0c0e52ba36cc6b4c0d22797e6f9caba4796"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/CastMedia/Interrupted.tga",
+        "sha256": "0e22116abbf20a5d89923d9a96d0b74d7fa54115eca4276265daa0bb9cea16c4"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/CastMedia/PlayerCast.blp",
+        "sha256": "bebf84583ade3ec3a925d11ff97d8d9cab3e357dc33bf7b0c0de91ac22373877"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/CastMedia/Shield.tga",
+        "sha256": "0fc1677d71e153135a2ac86760c8cc5889a015e660c44c1465c34666ee4aced6"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/CastMedia/Standard.tga",
+        "sha256": "26c5311828c1e7e26a9c43cd95aedf840019f1f84fa2b2f04ae9e9ced5ac2824"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassPresets.lua",
+        "sha256": "5558812bd2e36e71c78cb835cf6d4dd9b8ae676fd8e4d72001a50db691e6d6ad"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicBagDesigns.lua",
+        "sha256": "461b1e8aa6bc7e5c1ed2a3458ead1d737732337f75f460af1247d1e6d70e8958"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicBags.lua",
+        "sha256": "7773ae90e4d306ec2b62da51d00d05ca7401954d3774341b45fd1b543a6118eb"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicBank.lua",
+        "sha256": "a21bab8f5f325a749f64a81081e8bf33e323592f550e22394306886bc05706e9"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicInventoryStyle.lua",
+        "sha256": "af998f8dcad3c8cb342d83120def3fec1762c48014b82a17ba4ad39f066b4ac7"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicItemRecords.lua",
+        "sha256": "82f18bb6de98f13fcf1960443331fd0d718979a07481ab6cb6fa75cf98988487"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicLayoutAdapters.lua",
+        "sha256": "636c0a4f17d3f808b59469da55cee983307a5cf11674696364f07cbe1dca0f67"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicLayoutEditor.lua",
+        "sha256": "39ef8db1e539d44eecc289495f2f7602e0811be8394db222afb8d3eff322a6f5"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicLayoutElements.lua",
+        "sha256": "eaa6980d0356e329d9ef4a9c6e85e9228e038ccba021ff68e3b45766b6cd31fe"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicLayoutLocales.lua",
+        "sha256": "6a5450e4266f8639d159854107329c4b9baf14d05d04f603b1c07b1d3adb95a0"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicLayoutPreviews.lua",
+        "sha256": "0ea8c2c680ea92948a365c4f5ff320fe1d29f18df281fc597ad691861bdf4ea6"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicLayoutQuickOptions.lua",
+        "sha256": "83ca1e0e70f33f10e1e07b6e54fcbdab4cdd688a8810aa5e952cda58293094db"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicMerchant.lua",
+        "sha256": "dff36e477ea2fa4dc2728cf27ed3e7f210a2df71260b44c429889c18ebf6ac15"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicMinimapControls.lua",
+        "sha256": "232539c79cf386003a621014176d2a5be075aaf24ceba88753f319f81f131643"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicPlayerCast.lua",
+        "sha256": "11142ee5ac14563a0ea327c43797e15834f3b4229422caa42d5b777c93a25b1f"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicSwingEngine.lua",
+        "sha256": "9dfebadf4c69c465d143eaf95d9ebc7b0caab3a427d719922878ca5d5675e650"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ClassicSwingTimer.lua",
+        "sha256": "90178a64ba23147b9d36efa039a2a9defdd973603c6bc3d926829acc5fe9d132"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Community.lua",
+        "sha256": "f0ae7b3a2a61c281639c89fa106e0931976d069b304687d9ab2b40432f124c72"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Core.lua",
+        "sha256": "15ebda0416ab233da0515f4058a3cc767885feed38009b75a5735aae6a05ec09"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/DetailsOptions.lua",
+        "sha256": "cfd20d91c14190b5ec739102e6853925f4f622f28abd308f1e38e25fcae305c2"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Diagnostics.lua",
+        "sha256": "69f773e74e2fb9430bed842742a41c2ecaa40411f935bd30bd7e8fdf9d651b52"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/FPS.lua",
+        "sha256": "c2d4f3de9096dd5779019f1f9a148296b419111cb8cd23670839ba18c131eac1"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Keyring.lua",
+        "sha256": "794da8deaeca918748af69237f554bc553527ed8dedcffc5fd3349d9e6637907"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Launcher.lua",
+        "sha256": "4f8f4db579208e1afbcc977584cd3c7503f8ae8c89ffcb58de6864e03da74f65"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Locales.lua",
+        "sha256": "7c38e437a1dcbd37a46b15ae69d5d5d60b7a48981257a0ee20f567bde211b275"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Locales/de.lua",
+        "sha256": "8768c72ec2b85479524ce0c88a9d6e908e6df874800aebd841c93dad6b523e56"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Locales/en.lua",
+        "sha256": "ec2ac5bd9545a60eb157623347a256c5c818004d2c29b0af25742fc6203b28b9"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Locales/esES.lua",
+        "sha256": "db2896e10d8980b040b830ffc868be0a2aff3438b22ef254332bb521635043ee"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Locales/frFR.lua",
+        "sha256": "f97060d3816c0e3e5614beb9d90b3f9468c893a5e8904c62a72bf38a33d8ac9c"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Locales/itIT.lua",
+        "sha256": "284c2c063494f5a92ed6063d560859a9ca4c322fc55877419ae561cddcac6e2a"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Locales/ptBR.lua",
+        "sha256": "2d774cdcb6a376f5d6de8018473e7f057e7e7db98071b70911367e8dddcd374f"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Locales/ruRU.lua",
+        "sha256": "5fb7c9f4741ef1d3dc34963149b19709d000dde4145bafd97724352e905c4aac"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Locales/tr.lua",
+        "sha256": "371759df6ae6690bc3abca6ad4ce5408eaa198d8313b805ad0212c7815abcda8"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Locales/zhCN.lua",
+        "sha256": "aa018b6b6c3ac9fe9867db0765a341c68329301263f0b760ff1c2aa20460689b"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/MinimapButtons.lua",
+        "sha256": "ed740c897f0212590b3b32e348bf1571476e635540538d5f5d8f0452adf94275"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/NameFonts.lua",
+        "sha256": "7bf4f523014a1186b8122042e7fbdf462a9078678acce303159cb22a88162082"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/NameFonts.xml",
+        "sha256": "ff2c7cd83176abc26aa41e185297ba68468d6aac1a75d18886cb14b94b1a5dcb"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ProfileLayouts.lua",
+        "sha256": "e559329898d1209db605f34f8ecb1ac83af543b9034a50b48f71ed679b946379"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/QuestOptions.lua",
+        "sha256": "78d7cf966184a87a41efd05a8534dce3a95c989f2dcc3b27dbf84970300696cb"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/QuestieCompat.lua",
+        "sha256": "1c88546795a3ac05a13716179e92ba8e5158b0f576b0e961b6780e85e1460aef"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/RangeOptions.lua",
+        "sha256": "461a84ec184c3a25f1719126c06c45ebe6596cbb00ff1f5632ccbf4e4acbf53a"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/SoundGroups.lua",
+        "sha256": "484b01df36ec7bc4ed20157618b655212f9721ae9fad4cf2e45284d74b182816"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/SwingMedia/Fill-mainhand.tga",
+        "sha256": "5b6e2688a10f8be0e3b2153363e6bcfea08125eb1cecf0f27614282773c20144"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/SwingMedia/Fill-offhand.tga",
+        "sha256": "ee54e36829b5899f923deed36777ff196504cbd1732ef41c706b79274a75aaf3"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/SwingMedia/Fill-ranged.tga",
+        "sha256": "e6f791342b304de19c9659d68c8f3efa93fcf85231de4a53cdcd047749200bd8"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/SwingMedia/SwingTimer.tga",
+        "sha256": "2315f7905ade8c077840d0af322a88f7d6291b57814a5ffba3a8429b97624223"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/ThreatOptions.lua",
+        "sha256": "fe81f378ef61603f177975718425baf7c8d03787eb1983499c5e2f184d9f48e6"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/UnitOptions.lua",
+        "sha256": "7bc050a59f5521dc9a5fb3cab26fd143aea23b7bd41d36efc41147936a0a022a"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/UnitPreview.lua",
+        "sha256": "ad4e4241ca67dcedf5ee8d48864ee94072a0c420353c04dd50a3b345a43ab12a"
+      },
+      {
+        "path": "KerimAnkaUI/ClassicEra/Window.lua",
+        "sha256": "faf4b13c3bc28789fcf69cfbb920090c5453e83684d5e68ebfd0bc752d162c12"
+      },
+      {
+        "path": "KerimAnkaUI/Community.lua",
+        "sha256": "8cd7324335e3f5cf35a91e2e5bdd21da4cbc3bc5508778c09b4ec015349f294e"
+      },
+      {
+        "path": "KerimAnkaUI/Core.lua",
+        "sha256": "1d8083c34b944201547caeef2b3dd72667f6013295834fa7ddd83be608372667"
+      },
+      {
+        "path": "KerimAnkaUI/DetailsOptions.lua",
+        "sha256": "baca370861d8948757bc21fdb7531ea193a79bd9f2934f2042d723f7e0c76182"
+      },
+      {
+        "path": "KerimAnkaUI/FPS.lua",
+        "sha256": "65b3a391ddc251b172e1490d2a64588b0548ee693656340d7dd7ec1866f43d84"
+      },
+      {
+        "path": "KerimAnkaUI/Fonts/LICENCE.txt",
+        "sha256": "2a3d40d4133eb828437b32384ee57acf4ca8f6b9d2333626b5b4d8042bf276fa"
+      },
+      {
+        "path": "KerimAnkaUI/Fonts/Ubuntu-B.ttf",
+        "sha256": "c90e629e932f768909bdce1481ccd259d8aff1490a4bc1cf94d5413492317336"
+      },
+      {
+        "path": "KerimAnkaUI/Fonts/Ubuntu-R.ttf",
+        "sha256": "52c1afa489ae7bfd893af6cdd9f1af258005703600449e70d338caabcff507e5"
+      },
+      {
+        "path": "KerimAnkaUI/KerimAnkaUI.toc",
+        "sha256": "bf93d4515f5ece1468522aa3a0378cfc241929710d1d7eb043688ec58c67c445"
+      },
+      {
+        "path": "KerimAnkaUI/KerimAnkaUI_Vanilla.toc",
+        "sha256": "e74591c70f984f660ad2352bf7115494c1a7879f49c43e6cc99e5208bdc79783"
+      },
+      {
+        "path": "KerimAnkaUI/Keyring.lua",
+        "sha256": "69e7df4db82c360eeae1797429b22b7e1b0d850d6fb645f5311e65e5c62c52f4"
+      },
+      {
+        "path": "KerimAnkaUI/LICENSE",
+        "sha256": "23b2df0fd72976575ad9b4168f4a53b9fadb7793e62c0f98b644bda700029971"
+      },
+      {
+        "path": "KerimAnkaUI/Launcher.lua",
+        "sha256": "8a1075606adb1ed64da1e0a62a46586da479c47d42a4668f823e8efe566bda60"
+      },
+      {
+        "path": "KerimAnkaUI/LibSerialize-LICENSE.txt",
+        "sha256": "d16d04503f5b5a3a7e363bb23c04ec2f69042a63ec14ac03f28300b8fe09e120"
+      },
+      {
+        "path": "KerimAnkaUI/Locales.lua",
+        "sha256": "09ded95eba3038896a244463a9df2f48f9b3b28e1de78d1878c282045854acea"
+      },
+      {
+        "path": "KerimAnkaUI/Locales/de.lua",
+        "sha256": "dae6abdf8ea4367f35aa2cfef63d6957b7bd89ae2467a71ef7d0dbf287c1bee0"
+      },
+      {
+        "path": "KerimAnkaUI/Locales/en.lua",
+        "sha256": "dcfbdbfbf9083d0ae50a11f8243fe4c343aa5f0537074c9f3a1faff4ef3b0949"
+      },
+      {
+        "path": "KerimAnkaUI/Locales/esES.lua",
+        "sha256": "8ec006faf8044dd68602f4ec12d2e9a43ffb74fe86d8cc53425a28b50c902366"
+      },
+      {
+        "path": "KerimAnkaUI/Locales/frFR.lua",
+        "sha256": "7923ddc3974281cd214d0f8b26f557602a382c26ce4b3d3bf4b8793f5df53fd8"
+      },
+      {
+        "path": "KerimAnkaUI/Locales/itIT.lua",
+        "sha256": "74292e75ca1a6a2966b4e3b3200c289deeaf5dca0f233e4b17dba47729054c2c"
+      },
+      {
+        "path": "KerimAnkaUI/Locales/ptBR.lua",
+        "sha256": "acb92577fb0fc16252e8ead54488ba56704ce06f2fc3267f6185c39703cba069"
+      },
+      {
+        "path": "KerimAnkaUI/Locales/ruRU.lua",
+        "sha256": "8c479f236e3f78fe455a2c8955a489e4af83d28558c59b17d07a7f6e03ffaafd"
+      },
+      {
+        "path": "KerimAnkaUI/Locales/tr.lua",
+        "sha256": "8e25b3ea011fbe691e9a668826a4fea194a61aad984bf25e0c8df0e033a4a7b8"
+      },
+      {
+        "path": "KerimAnkaUI/Locales/zhCN.lua",
+        "sha256": "989020d8ffed06741f6968b20ed47361aa362da896ea33c8cec3a75eb90023a0"
+      },
+      {
+        "path": "KerimAnkaUI/Media/BagShortcut.tga",
+        "sha256": "e81193673bb7d44de275e676785356e7186b942d9c162caa81b00b49e3b42c27"
+      },
+      {
+        "path": "KerimAnkaUI/Media/CardGlow.tga",
+        "sha256": "019dc9f28c69c8c39511d1f801ba0187223a76c4597a63e94089e123c7eacf64"
+      },
+      {
+        "path": "KerimAnkaUI/Media/Circle.tga",
+        "sha256": "e46b9252f3be01ec71be80acc0aa0d5956b23cdecd17a9f1768092fdd6abb4b8"
+      },
+      {
+        "path": "KerimAnkaUI/Media/Close.tga",
+        "sha256": "74535877b51493d143e00e6bc1ab216ce8bff3a981684ac1eda1f89c0e1137ef"
+      },
+      {
+        "path": "KerimAnkaUI/Media/CommunityGitHub.tga",
+        "sha256": "7bb0db8af126f816407e0649f7575a21c41004735514d3e65e53c45238cc16ee"
+      },
+      {
+        "path": "KerimAnkaUI/Media/CommunityTwitch.tga",
+        "sha256": "9cec894980feade1bf655a1c725c971273aed69ca286a8e87e54e3296ae04981"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DamageMeterBL.tga",
+        "sha256": "9054821ed092fb8532aa45501b11fc6844f358a15c4b60bd2bd60cc34f37655b"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DamageMeterBR.tga",
+        "sha256": "0770b09b212c0d5235408d608ca58b04da191b335911379e1ea479482fd4c088"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DamageMeterBottom.tga",
+        "sha256": "3126333d8a14d8321936e606aa8cad2664e2bb84bae23887dbdc7a2c606cd44e"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DamageMeterLeft.tga",
+        "sha256": "3d5c126144c7dbf4bc426534e9a57fdf8b207bebea15fb07d5d5200a15497a64"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DamageMeterRight.tga",
+        "sha256": "61c84256576539c493c138850620c04b82b8d4181cd3ec06212691da5b248859"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DamageMeterTL.tga",
+        "sha256": "8036be4849d1787fa492764fe6019ca402f14a1a1255710c374cb7873e14b95f"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DamageMeterTR.tga",
+        "sha256": "50766f70e4aa1ab2634d42cad76e83d335afcebbc90ed1447cd5b809345fdcc0"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DamageMeterTop.tga",
+        "sha256": "8219e5259eb716e82cbbf433a547f77ff304fdfbb991ab0aca20860fa1402eaa"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DruidMeter/BL.tga",
+        "sha256": "0a790d5a1ecd4ff3e93f0becd6834e36de96361c76b72c561c326c28f6ebb192"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DruidMeter/BR.tga",
+        "sha256": "a73bcae212580f25d35b07fa5ddd12983ec6cdfc43c8f2e1b0a70adecb1793eb"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DruidMeter/Bottom.tga",
+        "sha256": "9e55631a64317f5239fa3881d81f533dfc9858eeb3ba19a1a96f240802bb8412"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DruidMeter/Left.tga",
+        "sha256": "35a4eeed40d42b88b58ae3bab7d878edef5bbd06808f566aa98ff3ea0ef8b9e9"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DruidMeter/Right.tga",
+        "sha256": "f4ab6b336bf0fa87ff8a6e36ae211516ac39d0552942249d1528084d7734ef9c"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DruidMeter/TL.tga",
+        "sha256": "1bd093c4db574aa87c99807017de6aefdd67f6054b5659565899bf891025d6e0"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DruidMeter/TR.tga",
+        "sha256": "e0c45b218e7a9f829fee5a57c959859f822b5eb9d1b1720e4d79a0b18ca946cc"
+      },
+      {
+        "path": "KerimAnkaUI/Media/DruidMeter/Top.tga",
+        "sha256": "bf29019f160af5f4ed7e297a29d078169dd604fa65791dcdc3b78574dbc98cec"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ExperiencePlainBL.tga",
+        "sha256": "340af2bfe92f2284774ecfc400e5bf0d58ec4b02447c68c9d76849c45b9b9e03"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ExperiencePlainBR.tga",
+        "sha256": "ddbd9c62b5d420bdbcc8931e55a9301e90d8381b7d32e6031c610c8aa6be3fdd"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ExperiencePlainTL.tga",
+        "sha256": "46d2d86d9c9854369d786d142e977f5824b75b0c7e2854ffd198bb8a757fbd19"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ExperiencePlainTR.tga",
+        "sha256": "d6db1d4481b88053dfe0a46a2fad1b659dd2a1b04f134a0bf0d1baa4cfafa6b3"
+      },
+      {
+        "path": "KerimAnkaUI/Media/IconDrawerRound.tga",
+        "sha256": "be3a48ec5394898c4145a26af493f72e4a59c9207c36a738156f83c1988d09f5"
+      },
+      {
+        "path": "KerimAnkaUI/Media/IconDrawerSquare.tga",
+        "sha256": "2ec1c36bbba0dc8879ec3a4151844d88151f4b5faffe84ae9bd3b3eec7f9c03f"
+      },
+      {
+        "path": "KerimAnkaUI/Media/MageMeter/BL.tga",
+        "sha256": "f7f718bad1afbaea8b571d11851cde8ac89e3052f5495767fdb3d0fc1b15f3c3"
+      },
+      {
+        "path": "KerimAnkaUI/Media/MageMeter/BR.tga",
+        "sha256": "5a4135eeadcef324733a6ca5c7ae7b756f3c5418c99c0aaccda4d1cc77d7a940"
+      },
+      {
+        "path": "KerimAnkaUI/Media/MageMeter/Bottom.tga",
+        "sha256": "68b5ebb32f8cd55d74741137ef96450696a0fc793ff195cba5c6799a7befd4e1"
+      },
+      {
+        "path": "KerimAnkaUI/Media/MageMeter/Left.tga",
+        "sha256": "3a49410a0dd5c1e55ccd64754eac343fd18ded04085fa0e52edf8fc908ccbcc8"
+      },
+      {
+        "path": "KerimAnkaUI/Media/MageMeter/Right.tga",
+        "sha256": "ac7a3666714ee5eb8799de49f308e4b15aad55336152361223a732147a9e477c"
+      },
+      {
+        "path": "KerimAnkaUI/Media/MageMeter/TL.tga",
+        "sha256": "b3be84149da1e6d75d95a29763862b786c96d7c8242e2dfc073bc4e4a0d3ee30"
+      },
+      {
+        "path": "KerimAnkaUI/Media/MageMeter/TR.tga",
+        "sha256": "31690b80b12c98caf35471f77d75a8b4c919f06c7221bea33c64aae4078d5f2d"
+      },
+      {
+        "path": "KerimAnkaUI/Media/MageMeter/Top.tga",
+        "sha256": "13fd95b94eccbc7d6e95ef58cdc08286f768eb1de55e50d45426c0ab0ecc4ae4"
+      },
+      {
+        "path": "KerimAnkaUI/Media/Minus.tga",
+        "sha256": "3c13c812b035f7301f1cf2458147e9d1296e71de335d3a5e2b7222c06cd0ef09"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterAlliance/BL.tga",
+        "sha256": "89e99ec3215ee2e30e25bb1370b1bd671fdd342b68f53e75cdb3265fe010f1d2"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterAlliance/BR.tga",
+        "sha256": "dd296e0dc9be3e96b323a20b4784ea50c0d0399960b444e778262dec16ea4aef"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterAlliance/Bottom.tga",
+        "sha256": "fa2223a8b9c5acb7a3fd38bc4e2e3f975cf3828dbc50fb7a1d9a09d3c11db19b"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterAlliance/Left.tga",
+        "sha256": "77091b2eaf4c5006adc7a89dac64292773a2ac0fd87747716eef060fa6814171"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterAlliance/Right.tga",
+        "sha256": "84a4c86021265f3e06e653c1846bcaaa2f27cf88789edec917cce5f649ceefbd"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterAlliance/TL.tga",
+        "sha256": "6b52402b35e41debfc34d8196de1fabd167f290817d89edb7aa68bf22361a4da"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterAlliance/TR.tga",
+        "sha256": "1f64b9c206c25e1a37afc8b8c2ca6f0c28e0a624fa198011821163bdfdc888cb"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterAlliance/Top.tga",
+        "sha256": "7774402e3046e911c9cc420ed15f36909c00a84ebaba731d0642c2c7a25aed6f"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterHorde/BL.tga",
+        "sha256": "73d5272ad73d86990607d450cbb054f110c4f1bdb39493cbd4b7678804a70061"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterHorde/BR.tga",
+        "sha256": "27a158eb73289f46ea117edbce0075f8754f7bac48dc2cbaf0d69ca4383aceba"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterHorde/Bottom.tga",
+        "sha256": "2c46cd1f3a0c0e16dd77aa52b2e47c328a9813d99a08c53f4be55305d26a1395"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterHorde/Left.tga",
+        "sha256": "d5783ab882447974c81a00e2894ed0e1ed9c34f5fae19bf3eeb2e41a6e079ea1"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterHorde/Right.tga",
+        "sha256": "9ff3dff2aa5aa25df56e80978d5f14d4d3e9f27186802fb1c87bd905022e8cce"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterHorde/TL.tga",
+        "sha256": "eab9356948acfe04231db83fbbf23b04f0fb4158393812398992c14dda2b3696"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterHorde/TR.tga",
+        "sha256": "f1309eae7eab55950a0924bc623f5cc73de28666b30a9f2c2092bd0a4d8f8f59"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PaladinMeterHorde/Top.tga",
+        "sha256": "5498c6ebcde738746e5d362ac436079958601c1c51257954335c4ac129f40c1f"
+      },
+      {
+        "path": "KerimAnkaUI/Media/Phoenix.tga",
+        "sha256": "2b816a280b3220ad55483731aff03a7e9f390a4eefb94c3770dd3b62853f62f2"
+      },
+      {
+        "path": "KerimAnkaUI/Media/Plus.tga",
+        "sha256": "15de5a68be21d841eb794bcb380a7993cad61439c7ada3170498f20c91f334b2"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PriestMeter/BL.tga",
+        "sha256": "d3acc76693a5bcfe453bd48e375a47eb934a3409d6a391dc301e19e643ae4429"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PriestMeter/BR.tga",
+        "sha256": "d51cb8e791b5b20c24d6bfe52fc137cad48d034fe839486008d3951c86b4753a"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PriestMeter/Bottom.tga",
+        "sha256": "cb50ec9114ac6933c2910a779fa53dd71d1dc5173b7c2329f84973020306e8ef"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PriestMeter/Left.tga",
+        "sha256": "7cf943e06f364f1edb2801cf78bbff646de4ec50c836d1f4ff68c4f4fac667f3"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PriestMeter/Right.tga",
+        "sha256": "2d7e0b4bb8571695771aeb644f2b5b490fd553aa9fcb41743b27b867d54675b2"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PriestMeter/TL.tga",
+        "sha256": "01e2cce24e0c4164eed304614d82e9a6a6ef65043abc9516ef61edf432f0dfeb"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PriestMeter/TR.tga",
+        "sha256": "e1585c74299b0054bd14eae7798c092dd82a3c70c841a39bfbf6429d6d1bf3b3"
+      },
+      {
+        "path": "KerimAnkaUI/Media/PriestMeter/Top.tga",
+        "sha256": "2e6ec2399b7dc451f170402bad04135d3b2950c9dc05f5b8992ed6194979709d"
+      },
+      {
+        "path": "KerimAnkaUI/Media/RogueMeter/BL.tga",
+        "sha256": "5ca77782b4029979a41ebe031563bbbeb7bcd4321fbe14cf1a87a4e035152312"
+      },
+      {
+        "path": "KerimAnkaUI/Media/RogueMeter/BR.tga",
+        "sha256": "a9b23adcb28f54dc2b56ac7c7a6fe53e22f23d507577278ad31b04c810579f4d"
+      },
+      {
+        "path": "KerimAnkaUI/Media/RogueMeter/Bottom.tga",
+        "sha256": "c9093f27666497c0c3bbddfb73ccf5586efecf61899a987163b1f72709266226"
+      },
+      {
+        "path": "KerimAnkaUI/Media/RogueMeter/Left.tga",
+        "sha256": "c46ba1229649d54079e2ce2e93fa7da82f9ae09cc8afaff5d7e797754e6aa3b7"
+      },
+      {
+        "path": "KerimAnkaUI/Media/RogueMeter/Right.tga",
+        "sha256": "7dd18742c5885e264431eb06232c243f707aa6733287e6ad96e542bbd1b97095"
+      },
+      {
+        "path": "KerimAnkaUI/Media/RogueMeter/TL.tga",
+        "sha256": "ec7852a7416ee2fa1cc54ad3af0ee0b48f2febc37a8974579b0a5aecf3467f14"
+      },
+      {
+        "path": "KerimAnkaUI/Media/RogueMeter/TR.tga",
+        "sha256": "3b0e3e91b0c7b8294502163287f558544fa1dcdb1e8e63c66d72e75ba75cfd31"
+      },
+      {
+        "path": "KerimAnkaUI/Media/RogueMeter/Top.tga",
+        "sha256": "3029860d457c88e5feaa98b050f0a0d41e3eec9d3ae84af018c15d0bb71b2e4b"
+      },
+      {
+        "path": "KerimAnkaUI/Media/RoundedBorder.tga",
+        "sha256": "65cb5bccdf6b6e06bd0e24d7e6425a7683aa60458595229ad359b7eca243931b"
+      },
+      {
+        "path": "KerimAnkaUI/Media/RoundedFill.tga",
+        "sha256": "48982b4a333dba0d9925e07b29e9d40ab11d1a3e5d37b031773265f2d3cb7d02"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ShamanMeter/BL.tga",
+        "sha256": "023603a4b095e99420b491c802ecb288af7bd6c9532dab6bb68e3438521100e5"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ShamanMeter/BR.tga",
+        "sha256": "7963e57635b84033572cc83e735f873355b1cc4ab5008e99501b5712c83ba678"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ShamanMeter/Bottom.tga",
+        "sha256": "81969e14b6d2b9a8b93b6fdf0514f529cea967396f366556cc449a7ad6a18764"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ShamanMeter/Left.tga",
+        "sha256": "7fe942a894c25e44496ff6e83f6c73334acb8c034b8083c6705d3dac613c5f70"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ShamanMeter/Right.tga",
+        "sha256": "2fc5d71fee092d9ef4a1a40906040d7cb797a16434ef796bd095ea5486730346"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ShamanMeter/TL.tga",
+        "sha256": "40ac37125e818fa6c3674068559e76841d109474da86f0229d6097034c01e74f"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ShamanMeter/TR.tga",
+        "sha256": "7e2e086480a41b6b25aa536d76015634c655b64b4f5c522c7d46d088f4d4ea6e"
+      },
+      {
+        "path": "KerimAnkaUI/Media/ShamanMeter/Top.tga",
+        "sha256": "a8a059ac247a491b6e8c0ac8d0d3cd5bac6856e096cc0aa19ed0aa218b3ebd51"
+      },
+      {
+        "path": "KerimAnkaUI/Media/SoundShortcut.tga",
+        "sha256": "92ea9a0d7c74f0a8b66959a7c6261e960ea9925dcba023be7719e01dbf93142d"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarlockMeter/BL.tga",
+        "sha256": "fdc4aff532035ef31395f1f2bd8f7272c875dc9d6a3c1075d4098bdf645c9068"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarlockMeter/BR.tga",
+        "sha256": "d6223648ba394a77e34544c9a8b373f9de48e6222bf82b1ad827bbf877fb1396"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarlockMeter/Bottom.tga",
+        "sha256": "cbf6377b81cb2fd9fbca60daafea34f7ede6751f325faba3f1429374e16f842f"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarlockMeter/Left.tga",
+        "sha256": "da3e7f8024c68d0a04658617891029759ca3d98c991cd6ea064c43185571e218"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarlockMeter/Right.tga",
+        "sha256": "10ae2e8d4a96ff14413945c30c2897eaab96bb645bbee23714ae163768ac2707"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarlockMeter/TL.tga",
+        "sha256": "24077769caca770fa65a1c8a014c00daa82a1a34bc88acf56c7491d6576c8da2"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarlockMeter/TR.tga",
+        "sha256": "80ecedb3990ea76e001c26a102840696ad85aa0b519fbe683d4d36fb7754ad84"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarlockMeter/Top.tga",
+        "sha256": "2e5b282fd9d86208ee369b5cca2c4ac0475cdcdb00a2fd609188daadbec3b7f9"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterAlliance/BL.tga",
+        "sha256": "f924e1484372e72aaadbec80981cfba01dbd0c2795822efec08c746deb365d68"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterAlliance/BR.tga",
+        "sha256": "157b2801d7d9cdbd7f602333b7b370f9a1c8cb3e6fe3f643b68b7eafd55c0287"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterAlliance/Bottom.tga",
+        "sha256": "760f1df36fb12ce10ec4974159d22ef02d1bce8c8fa19d61af4c711d0e4c0d82"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterAlliance/Left.tga",
+        "sha256": "e6de4f5b0b301c7a4bde2187a612cfd2c96e7c1a938030cbb896b5331997a64e"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterAlliance/Right.tga",
+        "sha256": "677b331cc3931f89fb5063558292f784f196c0ea5692518d667983a607a07f43"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterAlliance/TL.tga",
+        "sha256": "3f85b44beb4f0ad5677732911f6501b04a11db19a11348fb6a6c5b5dafd93bff"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterAlliance/TR.tga",
+        "sha256": "fa296c8f6a14e22aedb749cbafe7383ed4480c22db0a4eb5ed02f3944cafd125"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterAlliance/Top.tga",
+        "sha256": "e1d3574c16bbe0649294bfc0f44e7d5362c5f433441bf4cf7319e74675503615"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterHorde/BL.tga",
+        "sha256": "6e71c46af6e934c479ee15ddaec9c2897cb2b51489ddcd2009e9b958e8a4a2ba"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterHorde/BR.tga",
+        "sha256": "ecd2a48f8d33051e76810893947adea3045a9e000a933b7f5da833b12d59e354"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterHorde/Bottom.tga",
+        "sha256": "b88986b6df09db93a6fbfb32df5e54e65d8f5e3b330dfbc367251c086689faf8"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterHorde/Left.tga",
+        "sha256": "78e57b2983d6a7f3fd7a339af685658164642426e84e7b3a5187ae747b47bb05"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterHorde/Right.tga",
+        "sha256": "d7998ed4925a9d77795e4f3fdff70d3a3dd964c1f54bcf4cc74ed035159b9db8"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterHorde/TL.tga",
+        "sha256": "d02acb3595d5f62b0665ae3cc14c10930829bb84bfa99af0b49ebbb18d7d0138"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterHorde/TR.tga",
+        "sha256": "344f2044bd654ff151ef9816f19a0d29c3d59af94d31100f648cb6d6d6ab03d6"
+      },
+      {
+        "path": "KerimAnkaUI/Media/WarriorMeterHorde/Top.tga",
+        "sha256": "f02042da8869e6113e73357415570e1b85aa94688d560229c2fd794a0549460e"
+      },
+      {
+        "path": "KerimAnkaUI/MinimapButtons.lua",
+        "sha256": "ebc3332f221fda5ff98d58e8fddf6ab6dd118774f6d46123c6e27311694fa1a1"
+      },
+      {
+        "path": "KerimAnkaUI/NameFonts.lua",
+        "sha256": "6580ae7c2ff15b0dd68958e2ffec21a5b3af6f9421840122fadb5025b5169d13"
+      },
+      {
+        "path": "KerimAnkaUI/NameFonts.xml",
+        "sha256": "ff2c7cd83176abc26aa41e185297ba68468d6aac1a75d18886cb14b94b1a5dcb"
+      },
+      {
+        "path": "KerimAnkaUI/Presets/Druid.lua",
+        "sha256": "452ee0afe889165eb0f056152ac972a6bda924b64b0ce57489fb35b385c3754a"
+      },
+      {
+        "path": "KerimAnkaUI/Presets/Hunter.lua",
+        "sha256": "f282ff20c611d532ac38fbf33aeaaac503668f8d2469ffdb872e3dd027af46ab"
+      },
+      {
+        "path": "KerimAnkaUI/Presets/Mage.lua",
+        "sha256": "30b2d33f7bc6ba478b9ff8e9861b70af956a1a12122f41cfe4ccacc0fda4323a"
+      },
+      {
+        "path": "KerimAnkaUI/Presets/Paladin.lua",
+        "sha256": "87298aa5c033e084069b13e527dee76660b97324081424bbde0313aaef7dd28a"
+      },
+      {
+        "path": "KerimAnkaUI/Presets/Priest.lua",
+        "sha256": "2170f785c30c6ca6fa6b00a22db2a58acf7c19feceddecb940d98f51af869e22"
+      },
+      {
+        "path": "KerimAnkaUI/Presets/Rogue.lua",
+        "sha256": "a075729ee43c1f053b033af9c90c1eed5652623207e3750edc2524e825c5e6c1"
+      },
+      {
+        "path": "KerimAnkaUI/Presets/Shaman.lua",
+        "sha256": "8c7cf61b6ab6cb056c1cbfc2ffb45b23b509cfb0f543aab012a79428f24f7397"
+      },
+      {
+        "path": "KerimAnkaUI/Presets/Warlock.lua",
+        "sha256": "080f424b466a815490369716232c1c7c13fb6d8bc726b10cc6ae4927d2958fc0"
+      },
+      {
+        "path": "KerimAnkaUI/Presets/Warrior.lua",
+        "sha256": "1074987e8f0d36f5ae83d97a1e678d586a00b3452e2c4e32edd359e95f38501e"
+      },
+      {
+        "path": "KerimAnkaUI/ProfileLayouts.lua",
+        "sha256": "b2943ed67dd707c493e9f504abc97dba9d33d8b8a59b68879f9dda79b0f07bb3"
+      },
+      {
+        "path": "KerimAnkaUI/QuestOptions.lua",
+        "sha256": "2d8502a728590221b37d62a2c9f3fb65320240d40b3077a973a0dd822430246c"
+      },
+      {
+        "path": "KerimAnkaUI/QuestieCompat.lua",
+        "sha256": "9c7bbebc82725d79b3fa96d75f4d2c7d64ddba1ec623c8b77eb861a575e21440"
+      },
+      {
+        "path": "KerimAnkaUI/README.md",
+        "sha256": "e4a70c46a43eb225f0396a16cfe9edc0d909f4d57d52f9a3b352e7ced49fb491"
+      },
+      {
+        "path": "KerimAnkaUI/RangeOptions.lua",
+        "sha256": "9a4d0ee29ed826ca3011bf4bbe1f52a8b01c2ea798767b8b4a74b9b08cacb29b"
+      },
+      {
+        "path": "KerimAnkaUI/SoundGroups.lua",
+        "sha256": "2769b4db8572006034da63b622f8c18789abdaf7acece9fb0a7549c9ae938648"
+      },
+      {
+        "path": "KerimAnkaUI/ThreatOptions.lua",
+        "sha256": "575c3d5939a8eda3fac55077ec839de95cff866e1130f5e05b93d302a9627581"
+      },
+      {
+        "path": "KerimAnkaUI/UnitOptions.lua",
+        "sha256": "d5efdfbabadb5052f8edb7232b8ba4f5a28e64f533de530078ad4d7cdf147391"
+      },
+      {
+        "path": "KerimAnkaUI/UnitPreview.lua",
+        "sha256": "ea45cfe0af9766fd31b1d649f32c28a65a6ca682e12694ef100417aaa8767464"
+      },
+      {
+        "path": "KerimAnkaUI/Window.lua",
+        "sha256": "ed1de0b04d8a8bc68e883c9669427a8c33ad3cf47f92e6fb7b71f3ddcb6981f2"
+      },
+      {
+        "path": "KerimAnkaUI_AspectAlert/ClassicEra/KerimAnkaUI_AspectAlert.lua",
+        "sha256": "e5b34af4654e653fb7125cfac821a3fdd7882d56566bbecb518d7cd54b7ad21d"
+      },
+      {
+        "path": "KerimAnkaUI_AspectAlert/ClassicEra/Options.lua",
+        "sha256": "2f70294389c4de814f8d7cfd8cb3df1b7d3a5d445fba3e99636bff96170e0b83"
+      },
+      {
+        "path": "KerimAnkaUI_AspectAlert/KerimAnkaUI_AspectAlert.lua",
+        "sha256": "c4e406c65407c880bd7e7b9b41ab5607c8986644c1489314942cd6465efa830a"
+      },
+      {
+        "path": "KerimAnkaUI_AspectAlert/KerimAnkaUI_AspectAlert.toc",
+        "sha256": "a71d2acdf3459b5173de7331cc56190eca03e2116f040acc9b63bed41d29985e"
+      },
+      {
+        "path": "KerimAnkaUI_AspectAlert/KerimAnkaUI_AspectAlert_Vanilla.toc",
+        "sha256": "a12839c24172932bea987d99f400c2f3eb33e4185888dd74467309cde13fbbe8"
+      },
+      {
+        "path": "KerimAnkaUI_AspectAlert/LICENSE",
+        "sha256": "23b2df0fd72976575ad9b4168f4a53b9fadb7793e62c0f98b644bda700029971"
+      },
+      {
+        "path": "KerimAnkaUI_AspectAlert/Options.lua",
+        "sha256": "8ed5ac0c3f1b79fe7ac88dd2131f5231e4e12c61f753f88db768ba30c9c3c558"
+      },
+      {
+        "path": "KerimAnkaUI_BarBackdrop/ClassicEra/KerimAnkaUI_BarBackdrop.lua",
+        "sha256": "c5ee3e84d92e955f7cce4a9dbbd0682749b678ecf452bf168a019d7c80341cb4"
+      },
+      {
+        "path": "KerimAnkaUI_BarBackdrop/KerimAnkaUI_BarBackdrop.lua",
+        "sha256": "9ee7254616ae42965a6494b70a8ea5775bf76ab0951e6e8c7cec79f00054209c"
+      },
+      {
+        "path": "KerimAnkaUI_BarBackdrop/KerimAnkaUI_BarBackdrop.toc",
+        "sha256": "6b5254e600f6a831026603a2ca4568d3ae59476034af85f7bbaf2f32b3332626"
+      },
+      {
+        "path": "KerimAnkaUI_BarBackdrop/KerimAnkaUI_BarBackdrop_Vanilla.toc",
+        "sha256": "20dcd4c939ea4c6eb8ddb761c6ab195627c0b0982b0236fd7cd649d5d9b4de7f"
+      },
+      {
+        "path": "KerimAnkaUI_BarBackdrop/LICENSE",
+        "sha256": "23b2df0fd72976575ad9b4168f4a53b9fadb7793e62c0f98b644bda700029971"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/BackingColor.lua",
+        "sha256": "f40daaa6959aef51a4a3e5848f5a508d53252b28c82febb59674d65fd365feb6"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/BackingColor.lua",
+        "sha256": "c2e4f3cb8823bec7f16e25e446c80c05fd9c275be0e5d8a1de4212c03f43ac3c"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/DruidArt.lua",
+        "sha256": "df5341499fcfc00e49bfa6fbb9e403299051a6f0701bc739609c8115383d2364"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/ForeverBarPanel.lua",
+        "sha256": "36c9514e917a70992da738d360988f3abfd2310d73473628d8edef968ee391ad"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/ForeverHunterPanel.lua",
+        "sha256": "08a50d17407db19dc89644d778d9992344876563214edeb399ee9a4d6bbd2f86"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/ForeverMinimapArt.lua",
+        "sha256": "4ac859d7cb8d870ec431c2e24ebb60640f23fe38c5da8014ffb9b41162844320"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/ForeverRoguePanel.lua",
+        "sha256": "57b4d29c6090fdb9efbaafe18a39aa3648554e6a3166eecc0a766411ac38095f"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/KerimAnkaUI_ClassArt.lua",
+        "sha256": "c999d2932c6d29d5161ef22baaf2385a6cc5de16456ea8f7786c45bc7a2b22db"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/MageArt.lua",
+        "sha256": "3184f501ed8f76929c3108241acf11d03acf60563fe1a7ea6f7211ca022b3082"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/PaladinArt.lua",
+        "sha256": "6ae745e67c2601375fb97e81f3fb07a3630c21ab06d5c573008106765875925b"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/PetBarPanel.lua",
+        "sha256": "2f228eed28cd56bf38952a5d6a6163a32443ce4f5bf81d5278503f508f03bb4e"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/PriestArt.lua",
+        "sha256": "bb2a164d134e79e769bb1b463d56ac9f7054a0d80f104dd0e6b48326f84dd9e7"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ClassicEra/ShamanArt.lua",
+        "sha256": "b1f352ec399473180064d6ddf5da6306c8f3c08d351b8b54acb19359f4173845"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/DruidArt.lua",
+        "sha256": "198e361c7f616a027e78926fd8bfca72ddea1c45820d17a9b3a859e990adba01"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/DruidGrove.tga",
+        "sha256": "031a232c359091352f5922d81ae14b7ae3f3a225ebaae3cb83aef24c5ee8fec8"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/DruidMinimap.tga",
+        "sha256": "b11fd7b0b69f8881202da6dcfc4ab0840096e6ba97a386bdd44d77aa8f898900"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/DruidMoon.tga",
+        "sha256": "07a475c82def2404603f24a80bcd993f44aad5d533a813be5400aa2433d1b1a2"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/DruidSeasons.tga",
+        "sha256": "38d2489054ae684dc6d63035992abcea3c54aaa70c105e537037f44e32be9c12"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/DruidWild.tga",
+        "sha256": "71fd9c92dc5a08e7a8d8787c674655848f11fbb34f659460e1f6ba94f61b9aed"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ForeverBarPanel.lua",
+        "sha256": "809bde057f12e535db7e2b51782188e1e3a6a1aaaa7f460b532ad8d89eebcfdd"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ForeverHunterHUD.lua",
+        "sha256": "2c1f819f284fc7c79006972c9524b0c189224545dbdfd5cd9a1bdb47a89c01b7"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ForeverHunterPanel.lua",
+        "sha256": "0c3fc4e8ed53fc837dfa2040fb3c7bbf49a9d5a2f340fbe6f5ccd47f46636cdf"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ForeverMinimapArt.lua",
+        "sha256": "ed556f18fd038e92c6203b003a151c186d4c33474c24c131fe3eed319f7a8a8a"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ForeverRoguePanel.lua",
+        "sha256": "31bd863f399f5fb75118a9455bb6872c708876789116378c0f758d71e3b6311c"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ForgedIron.tga",
+        "sha256": "12c82fe729adf024caf347247f18c0ee6ec253511f502ff13e2fb216e6d5bd70"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/HunterBacking.tga",
+        "sha256": "ce841abc0fe5ed58c1990d3a1ff94f0bbe647faf6d00811f811cc5b2acc395f7"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/HunterFrame.tga",
+        "sha256": "5265e82272906bc74d8e562b1fc16b5952b748d84183574dc00322f9f354bc56"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/HunterHUDFrame.tga",
+        "sha256": "1ff4cc73405d44252c8ea92dff7d77542f2bd9c8d7e8e494320ec2077d9f6f57"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/HunterMinimap.tga",
+        "sha256": "553ca79fdd39cab4e55042f180c4c37ad071630ed65569977067c3d521f66a43"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/HunterMinimapMatte.tga",
+        "sha256": "eeb948d09309c64b14852b16dd262c7b5957f377987c79a2787b1107b72ab4fb"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/HunterSimpleMetal.tga",
+        "sha256": "7f9f25245d756d5c605427ddd52aa2c1ce5d48fccbd07f5b6ca6ce1bb31e904c"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/HunterTopRail.tga",
+        "sha256": "4070ca649880a0489d4bf21e4add2e0287d518ece1ac1b6c26ef249e7b0e7693"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/IronTopRail.tga",
+        "sha256": "c1f908c6e257c0d10b82ec38ebafa2a219c624cd1ee2ed2b8e755290d563ea7c"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/KerimAnkaUI_ClassArt.lua",
+        "sha256": "77051e8e09aae4fedb4380a14a9d2fd9965ea20d7fa245c749f42d40322c098a"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/KerimAnkaUI_ClassArt.toc",
+        "sha256": "dde53baed5a33806dffafb81e2f9025dbcb45c855586084629fef52a13fec315"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/KerimAnkaUI_ClassArt_Vanilla.toc",
+        "sha256": "94d69860bd3949c4ddf1ba49d43c9d84d068c5218cb116d3660455f61dc352a2"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/LICENSE",
+        "sha256": "23b2df0fd72976575ad9b4168f4a53b9fadb7793e62c0f98b644bda700029971"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/MageAcademy.tga",
+        "sha256": "7633bd253f05b0443132e2124d1e161c73970df1ce788fbe469bbc378475b4e9"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/MageArcane.tga",
+        "sha256": "13ff6309094ee01c14fff49475693232651d520b9379dffbe23a569356c990c0"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/MageArt.lua",
+        "sha256": "b0b2a63950e0a2f20c355a8e0a39f0ec5ac936bb98fe56f27ab24359ac505e8a"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/MageFire.tga",
+        "sha256": "ad07dc7a929a52df69a306e14019911c32aea347b768ac29020a47de8f185b84"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/MageFrost.tga",
+        "sha256": "39bef1fbffd0b970e85897ed86435c7ac1cf7c3db2b901c4c7b25b99314a631a"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/MageMinimap.tga",
+        "sha256": "c4e032d4af2b474bea8b5a0ef697264cd9d0bdab85395f032700db697162c272"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PaladinActionAlliance.tga",
+        "sha256": "1be342fdd193e900a2737a228b4edd4a34c47c5a01a9b4f3360b216b3428ce88"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PaladinActionHorde.tga",
+        "sha256": "27b5cf2d8d55bc9e6b497af5d54de4c0d70fd0d37018dfb0c079376e49eb1746"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PaladinArt.lua",
+        "sha256": "42593a89f21592d60ff8baf014e51ce36877f4961ffd909923fb3822ef7f4a9a"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PaladinConnectedAlliance.tga",
+        "sha256": "a8aaa862bb1c223efd2ff76a8a296165ecad3d88620025c63318dfcaf3be9e3f"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PaladinConnectedHorde.tga",
+        "sha256": "7e4939c8841e85971ba515b0e775bc478e00643c8e0be2df5f4c6061a109792e"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PaladinFrame.tga",
+        "sha256": "4625c950540ccd615a1395ec23915f290529e2ead94cef84a5e0cb5d7fbfae4e"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PaladinMapAlliance.tga",
+        "sha256": "7ab741d15aa63363b711500739eb90028e629ddf2d299811faf1e790dbd46cf7"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PaladinMapHorde.tga",
+        "sha256": "18faa9bba00c357c68235953386b82e147ca2d4fbd062574c8eeb4b383dfdfbb"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PaladinMinimap.tga",
+        "sha256": "1d42f9e1adee7b0bc338ac5bb95a4fb8e2b6ee72dff4cc1c4ac4b71bbbbc55ea"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PetBarPanel.lua",
+        "sha256": "2e3982845d287f11fe0ed45c498d1cabb1c58addc1f78bcad5000b185fe2ae4b"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PriestArt.lua",
+        "sha256": "665d1087aaf8e803238756dec80c9846b965ba3d6864c2a5627676cc75b0ff79"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PriestLight.tga",
+        "sha256": "326d13a7c5542c2e700696c80e7d5e1e7e1807302b16d66cdedca71d6be673bc"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PriestMinimap.tga",
+        "sha256": "3572d9fb4a50ee169a12a42578501015f59d058d37f537887e7df3b078c152b5"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/PriestShadow.tga",
+        "sha256": "f39deaa3b0496e7c80d56f9c7ddb27b3dd974d01f794599c829f8f14df1e206f"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/RogueBacking.tga",
+        "sha256": "824457688662315146855ecfdf93baed89a5c05addabc8a2ab08442ecfbfd091"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/RogueFrame.tga",
+        "sha256": "3e855531e63c0d59b1d4777bcde200a9ef86bd962ea953fcba88731e90ffd5a5"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/RogueMinimap.tga",
+        "sha256": "67e4a55a8bbf7d2e2b74348c3261d0548310e525227601a10f8b1529f416eb59"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ShamanAncestral.tga",
+        "sha256": "7b3d6e7a3e8f798a787a61cc7729314ba9279d80130d9b01cda0ae5a418b3cad"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ShamanAncestralStraight.tga",
+        "sha256": "4d5e7e4b7a872194752e64677bcc52f69e3083cadb96fe0ff117e56a64742b33"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ShamanArt.lua",
+        "sha256": "6875db03fe6595f9e9d908ee36a82a15ba6f4f26c2c14a1b9fdf105eccedc6f1"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ShamanElements.tga",
+        "sha256": "66e800e6a606a98257b7fe10a00e0d4ae915ad0aeb4f784010285820f44f2fdb"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/ShamanMinimap.tga",
+        "sha256": "4007794e49a7c5e7eeee2341893dc852448540431a92dacf6f08ec0147b7d295"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/WarlockFelObsidian.tga",
+        "sha256": "70a748e653b00607cf2fe67939c2a985a73f2b5f78cb02fe122ee22a6369fde2"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/WarlockMinimap.tga",
+        "sha256": "4d1e7a40f94a8efb22a419447853459b817978d4d40642d4d524c178766b347d"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/WarlockRitual.tga",
+        "sha256": "38443a796e71bd7752d7a5d670bd2f83fef9b44215569c65b414f121f991984e"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/WarriorArena.tga",
+        "sha256": "f51ed06e036da34661c9f5731f89670138f32895bd187669c493611fc465006b"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/WarriorBlackIron.tga",
+        "sha256": "9fae5614038ce94749c2dc9b0931305d1bee3d3359718827b6f54fb4d6efff71"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/WarriorFrame.tga",
+        "sha256": "907f84c3a120a22bbf6bf525ea41aef95127af6a78db2361376d59c8a8fdeec7"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/WarriorHorde.tga",
+        "sha256": "1431e15fb5f5beb73a6551d4b14d54fa1381f8b5fd45d04027f253f493723a3c"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/WarriorMapAlliance.tga",
+        "sha256": "30a958037781cb1ab492c50a19baa22d43ce091d1c33b20b77dbe140f2ed773f"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/WarriorMapHorde.tga",
+        "sha256": "d2efbd4104b4713593662421ce9106e27726aba0e71a8627124f2fb2c17dc208"
+      },
+      {
+        "path": "KerimAnkaUI_ClassArt/WarriorMinimap.tga",
+        "sha256": "53901adfa4aed7682cd5fe01bac7c126bcde6ddf2902069c0b7687de08100731"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/ClassicEra/KerimAnkaUI_DetailsSkin.lua",
+        "sha256": "c0d7d0fad83422f0d7007a2cc0ac7a8c8358bdf007e81648230711718efaee14"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/ClassicEra/Media/Geometry.lua",
+        "sha256": "1b95a5cc73891ad5bb49c5cff2d7eb19e654b07533e4d522bd4c77deab856576"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/KerimAnkaUI_DetailsSkin.lua",
+        "sha256": "fc78ada4f2cc1b24729bfca6480f1f419715616d31141983c609bd934f38f8c1"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/KerimAnkaUI_DetailsSkin.toc",
+        "sha256": "016bb95bedb88c1295155e67d6e08df6d98cbb80196d03573be42649b2e494c9"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/KerimAnkaUI_DetailsSkin_Vanilla.toc",
+        "sha256": "0b7d25dd2e1515cbdb9930245b5a5033fffcc6f12e015b7ac03a20973abe25fd"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/LICENSE",
+        "sha256": "23b2df0fd72976575ad9b4168f4a53b9fadb7793e62c0f98b644bda700029971"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/BL.tga",
+        "sha256": "9054821ed092fb8532aa45501b11fc6844f358a15c4b60bd2bd60cc34f37655b"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/BR.tga",
+        "sha256": "0770b09b212c0d5235408d608ca58b04da191b335911379e1ea479482fd4c088"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Blank.tga",
+        "sha256": "4c37301881aa33176bb2a967875bb7dceb5c76791754b98e8eb6334de3d0a619"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Bottom.tga",
+        "sha256": "3126333d8a14d8321936e606aa8cad2664e2bb84bae23887dbdc7a2c606cd44e"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Druid/BL.tga",
+        "sha256": "0a790d5a1ecd4ff3e93f0becd6834e36de96361c76b72c561c326c28f6ebb192"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Druid/BR.tga",
+        "sha256": "a73bcae212580f25d35b07fa5ddd12983ec6cdfc43c8f2e1b0a70adecb1793eb"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Druid/Bottom.tga",
+        "sha256": "9e55631a64317f5239fa3881d81f533dfc9858eeb3ba19a1a96f240802bb8412"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Druid/Left.tga",
+        "sha256": "35a4eeed40d42b88b58ae3bab7d878edef5bbd06808f566aa98ff3ea0ef8b9e9"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Druid/Right.tga",
+        "sha256": "f4ab6b336bf0fa87ff8a6e36ae211516ac39d0552942249d1528084d7734ef9c"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Druid/TL.tga",
+        "sha256": "1bd093c4db574aa87c99807017de6aefdd67f6054b5659565899bf891025d6e0"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Druid/TR.tga",
+        "sha256": "e0c45b218e7a9f829fee5a57c959859f822b5eb9d1b1720e4d79a0b18ca946cc"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Druid/Top.tga",
+        "sha256": "bf29019f160af5f4ed7e297a29d078169dd604fa65791dcdc3b78574dbc98cec"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Geometry.lua",
+        "sha256": "e07503a8141e4002f1d81bcfe2b15e4e6634080f4f8ab5eaa070f2fcf5fe848d"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Left.tga",
+        "sha256": "3d5c126144c7dbf4bc426534e9a57fdf8b207bebea15fb07d5d5200a15497a64"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Mage/BL.tga",
+        "sha256": "f7f718bad1afbaea8b571d11851cde8ac89e3052f5495767fdb3d0fc1b15f3c3"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Mage/BR.tga",
+        "sha256": "5a4135eeadcef324733a6ca5c7ae7b756f3c5418c99c0aaccda4d1cc77d7a940"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Mage/Bottom.tga",
+        "sha256": "68b5ebb32f8cd55d74741137ef96450696a0fc793ff195cba5c6799a7befd4e1"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Mage/Left.tga",
+        "sha256": "3a49410a0dd5c1e55ccd64754eac343fd18ded04085fa0e52edf8fc908ccbcc8"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Mage/Right.tga",
+        "sha256": "ac7a3666714ee5eb8799de49f308e4b15aad55336152361223a732147a9e477c"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Mage/TL.tga",
+        "sha256": "b3be84149da1e6d75d95a29763862b786c96d7c8242e2dfc073bc4e4a0d3ee30"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Mage/TR.tga",
+        "sha256": "31690b80b12c98caf35471f77d75a8b4c919f06c7221bea33c64aae4078d5f2d"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Mage/Top.tga",
+        "sha256": "13fd95b94eccbc7d6e95ef58cdc08286f768eb1de55e50d45426c0ab0ecc4ae4"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinAlliance/BL.tga",
+        "sha256": "89e99ec3215ee2e30e25bb1370b1bd671fdd342b68f53e75cdb3265fe010f1d2"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinAlliance/BR.tga",
+        "sha256": "dd296e0dc9be3e96b323a20b4784ea50c0d0399960b444e778262dec16ea4aef"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinAlliance/Bottom.tga",
+        "sha256": "fa2223a8b9c5acb7a3fd38bc4e2e3f975cf3828dbc50fb7a1d9a09d3c11db19b"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinAlliance/Left.tga",
+        "sha256": "77091b2eaf4c5006adc7a89dac64292773a2ac0fd87747716eef060fa6814171"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinAlliance/Right.tga",
+        "sha256": "84a4c86021265f3e06e653c1846bcaaa2f27cf88789edec917cce5f649ceefbd"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinAlliance/TL.tga",
+        "sha256": "6b52402b35e41debfc34d8196de1fabd167f290817d89edb7aa68bf22361a4da"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinAlliance/TR.tga",
+        "sha256": "1f64b9c206c25e1a37afc8b8c2ca6f0c28e0a624fa198011821163bdfdc888cb"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinAlliance/Top.tga",
+        "sha256": "7774402e3046e911c9cc420ed15f36909c00a84ebaba731d0642c2c7a25aed6f"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinHorde/BL.tga",
+        "sha256": "73d5272ad73d86990607d450cbb054f110c4f1bdb39493cbd4b7678804a70061"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinHorde/BR.tga",
+        "sha256": "27a158eb73289f46ea117edbce0075f8754f7bac48dc2cbaf0d69ca4383aceba"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinHorde/Bottom.tga",
+        "sha256": "2c46cd1f3a0c0e16dd77aa52b2e47c328a9813d99a08c53f4be55305d26a1395"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinHorde/Left.tga",
+        "sha256": "d5783ab882447974c81a00e2894ed0e1ed9c34f5fae19bf3eeb2e41a6e079ea1"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinHorde/Right.tga",
+        "sha256": "9ff3dff2aa5aa25df56e80978d5f14d4d3e9f27186802fb1c87bd905022e8cce"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinHorde/TL.tga",
+        "sha256": "eab9356948acfe04231db83fbbf23b04f0fb4158393812398992c14dda2b3696"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinHorde/TR.tga",
+        "sha256": "f1309eae7eab55950a0924bc623f5cc73de28666b30a9f2c2092bd0a4d8f8f59"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/PaladinHorde/Top.tga",
+        "sha256": "5498c6ebcde738746e5d362ac436079958601c1c51257954335c4ac129f40c1f"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Priest/BL.tga",
+        "sha256": "d3acc76693a5bcfe453bd48e375a47eb934a3409d6a391dc301e19e643ae4429"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Priest/BR.tga",
+        "sha256": "d51cb8e791b5b20c24d6bfe52fc137cad48d034fe839486008d3951c86b4753a"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Priest/Bottom.tga",
+        "sha256": "cb50ec9114ac6933c2910a779fa53dd71d1dc5173b7c2329f84973020306e8ef"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Priest/Left.tga",
+        "sha256": "7cf943e06f364f1edb2801cf78bbff646de4ec50c836d1f4ff68c4f4fac667f3"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Priest/Right.tga",
+        "sha256": "2d7e0b4bb8571695771aeb644f2b5b490fd553aa9fcb41743b27b867d54675b2"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Priest/TL.tga",
+        "sha256": "01e2cce24e0c4164eed304614d82e9a6a6ef65043abc9516ef61edf432f0dfeb"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Priest/TR.tga",
+        "sha256": "e1585c74299b0054bd14eae7798c092dd82a3c70c841a39bfbf6429d6d1bf3b3"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Priest/Top.tga",
+        "sha256": "2e6ec2399b7dc451f170402bad04135d3b2950c9dc05f5b8992ed6194979709d"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Right.tga",
+        "sha256": "61c84256576539c493c138850620c04b82b8d4181cd3ec06212691da5b248859"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Rogue/BL.tga",
+        "sha256": "5ca77782b4029979a41ebe031563bbbeb7bcd4321fbe14cf1a87a4e035152312"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Rogue/BR.tga",
+        "sha256": "a9b23adcb28f54dc2b56ac7c7a6fe53e22f23d507577278ad31b04c810579f4d"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Rogue/Bottom.tga",
+        "sha256": "c9093f27666497c0c3bbddfb73ccf5586efecf61899a987163b1f72709266226"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Rogue/Left.tga",
+        "sha256": "c46ba1229649d54079e2ce2e93fa7da82f9ae09cc8afaff5d7e797754e6aa3b7"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Rogue/Right.tga",
+        "sha256": "7dd18742c5885e264431eb06232c243f707aa6733287e6ad96e542bbd1b97095"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Rogue/TL.tga",
+        "sha256": "ec7852a7416ee2fa1cc54ad3af0ee0b48f2febc37a8974579b0a5aecf3467f14"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Rogue/TR.tga",
+        "sha256": "3b0e3e91b0c7b8294502163287f558544fa1dcdb1e8e63c66d72e75ba75cfd31"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Rogue/Top.tga",
+        "sha256": "3029860d457c88e5feaa98b050f0a0d41e3eec9d3ae84af018c15d0bb71b2e4b"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Shaman/BL.tga",
+        "sha256": "023603a4b095e99420b491c802ecb288af7bd6c9532dab6bb68e3438521100e5"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Shaman/BR.tga",
+        "sha256": "7963e57635b84033572cc83e735f873355b1cc4ab5008e99501b5712c83ba678"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Shaman/Bottom.tga",
+        "sha256": "81969e14b6d2b9a8b93b6fdf0514f529cea967396f366556cc449a7ad6a18764"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Shaman/Left.tga",
+        "sha256": "7fe942a894c25e44496ff6e83f6c73334acb8c034b8083c6705d3dac613c5f70"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Shaman/Right.tga",
+        "sha256": "2fc5d71fee092d9ef4a1a40906040d7cb797a16434ef796bd095ea5486730346"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Shaman/TL.tga",
+        "sha256": "40ac37125e818fa6c3674068559e76841d109474da86f0229d6097034c01e74f"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Shaman/TR.tga",
+        "sha256": "7e2e086480a41b6b25aa536d76015634c655b64b4f5c522c7d46d088f4d4ea6e"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Shaman/Top.tga",
+        "sha256": "a8a059ac247a491b6e8c0ac8d0d3cd5bac6856e096cc0aa19ed0aa218b3ebd51"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/TL.tga",
+        "sha256": "8036be4849d1787fa492764fe6019ca402f14a1a1255710c374cb7873e14b95f"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/TR.tga",
+        "sha256": "50766f70e4aa1ab2634d42cad76e83d335afcebbc90ed1447cd5b809345fdcc0"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Top.tga",
+        "sha256": "8219e5259eb716e82cbbf433a547f77ff304fdfbb991ab0aca20860fa1402eaa"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Warlock/BL.tga",
+        "sha256": "fdc4aff532035ef31395f1f2bd8f7272c875dc9d6a3c1075d4098bdf645c9068"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Warlock/BR.tga",
+        "sha256": "d6223648ba394a77e34544c9a8b373f9de48e6222bf82b1ad827bbf877fb1396"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Warlock/Bottom.tga",
+        "sha256": "cbf6377b81cb2fd9fbca60daafea34f7ede6751f325faba3f1429374e16f842f"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Warlock/Left.tga",
+        "sha256": "da3e7f8024c68d0a04658617891029759ca3d98c991cd6ea064c43185571e218"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Warlock/Right.tga",
+        "sha256": "10ae2e8d4a96ff14413945c30c2897eaab96bb645bbee23714ae163768ac2707"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Warlock/TL.tga",
+        "sha256": "24077769caca770fa65a1c8a014c00daa82a1a34bc88acf56c7491d6576c8da2"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Warlock/TR.tga",
+        "sha256": "80ecedb3990ea76e001c26a102840696ad85aa0b519fbe683d4d36fb7754ad84"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/Warlock/Top.tga",
+        "sha256": "2e5b282fd9d86208ee369b5cca2c4ac0475cdcdb00a2fd609188daadbec3b7f9"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorAlliance/BL.tga",
+        "sha256": "f924e1484372e72aaadbec80981cfba01dbd0c2795822efec08c746deb365d68"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorAlliance/BR.tga",
+        "sha256": "157b2801d7d9cdbd7f602333b7b370f9a1c8cb3e6fe3f643b68b7eafd55c0287"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorAlliance/Bottom.tga",
+        "sha256": "760f1df36fb12ce10ec4974159d22ef02d1bce8c8fa19d61af4c711d0e4c0d82"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorAlliance/Left.tga",
+        "sha256": "e6de4f5b0b301c7a4bde2187a612cfd2c96e7c1a938030cbb896b5331997a64e"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorAlliance/Right.tga",
+        "sha256": "677b331cc3931f89fb5063558292f784f196c0ea5692518d667983a607a07f43"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorAlliance/TL.tga",
+        "sha256": "3f85b44beb4f0ad5677732911f6501b04a11db19a11348fb6a6c5b5dafd93bff"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorAlliance/TR.tga",
+        "sha256": "fa296c8f6a14e22aedb749cbafe7383ed4480c22db0a4eb5ed02f3944cafd125"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorAlliance/Top.tga",
+        "sha256": "e1d3574c16bbe0649294bfc0f44e7d5362c5f433441bf4cf7319e74675503615"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorHorde/BL.tga",
+        "sha256": "6e71c46af6e934c479ee15ddaec9c2897cb2b51489ddcd2009e9b958e8a4a2ba"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorHorde/BR.tga",
+        "sha256": "ecd2a48f8d33051e76810893947adea3045a9e000a933b7f5da833b12d59e354"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorHorde/Bottom.tga",
+        "sha256": "b88986b6df09db93a6fbfb32df5e54e65d8f5e3b330dfbc367251c086689faf8"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorHorde/Left.tga",
+        "sha256": "78e57b2983d6a7f3fd7a339af685658164642426e84e7b3a5187ae747b47bb05"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorHorde/Right.tga",
+        "sha256": "d7998ed4925a9d77795e4f3fdff70d3a3dd964c1f54bcf4cc74ed035159b9db8"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorHorde/TL.tga",
+        "sha256": "d02acb3595d5f62b0665ae3cc14c10930829bb84bfa99af0b49ebbb18d7d0138"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorHorde/TR.tga",
+        "sha256": "344f2044bd654ff151ef9816f19a0d29c3d59af94d31100f648cb6d6d6ab03d6"
+      },
+      {
+        "path": "KerimAnkaUI_DetailsSkin/Media/WarriorHorde/Top.tga",
+        "sha256": "f02042da8869e6113e73357415570e1b85aa94688d560229c2fd794a0549460e"
+      },
+      {
+        "path": "KerimAnkaUI_HunterRange/ClassicEra/KerimAnkaUI_HunterRange.lua",
+        "sha256": "1505b76d7ed1156cd7ec5a817142c7b8f15c259fb3d44bd4ed7003edd67bbeb3"
+      },
+      {
+        "path": "KerimAnkaUI_HunterRange/ClassicEra/RangeLogic.lua",
+        "sha256": "d0257ff8067adc4dc74443ce4ff95c990bbce8bcb146b453186800fca1348e7a"
+      },
+      {
+        "path": "KerimAnkaUI_HunterRange/KerimAnkaUI_HunterRange.lua",
+        "sha256": "5a3e4458dbb375c2b1eb87a1cd727f1821d6eb3c4c822c99f7acca92a73db2d5"
+      },
+      {
+        "path": "KerimAnkaUI_HunterRange/KerimAnkaUI_HunterRange.toc",
+        "sha256": "26b36cc7a04af87db5120edd675b85c5dabc7d24c8e3fc4b760783bdcfa2983a"
+      },
+      {
+        "path": "KerimAnkaUI_HunterRange/KerimAnkaUI_HunterRange_Vanilla.toc",
+        "sha256": "7b83f7f12415e1301d7debd96695a7d8942ad64b10a1ac5c37f9acaa195eb045"
+      },
+      {
+        "path": "KerimAnkaUI_HunterRange/LICENSE",
+        "sha256": "23b2df0fd72976575ad9b4168f4a53b9fadb7793e62c0f98b644bda700029971"
+      },
+      {
+        "path": "KerimAnkaUI_HunterRange/Media/left.tga",
+        "sha256": "3640b8c5fab2bff7f50814ca65d82a238a7173a7332af687d91eb2856ea07f55"
+      },
+      {
+        "path": "KerimAnkaUI_HunterRange/Media/middle.tga",
+        "sha256": "dd9fc32b2475cef8012060e43af2c6b24b5dd365f28ca7e7beb830b60b285215"
+      },
+      {
+        "path": "KerimAnkaUI_HunterRange/Media/right.tga",
+        "sha256": "cab4605cbad7fb6751fdc48d2b1b717a82bcb37c3521b1c197934c0677ba168e"
+      },
+      {
+        "path": "KerimAnkaUI_HunterRange/RangeLogic.lua",
+        "sha256": "2b061b263a69e0b73545bcfed613a1e9a7b69735a276a7955a290fc2e61f749a"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/BL.tga",
+        "sha256": "8e6d4d9d420e9440f8e180d592ace780d733734b9337998004e5fb4c78891c96"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/BR.tga",
+        "sha256": "6fc4ff69ecc268ddecc28849265f5310bb198b8d2ad45b25d74a16155d236121"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/Bottom.tga",
+        "sha256": "abca784a50a570008c2e362495c3c6af98b33812ffa7efd7f9f3f2064f0cead7"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/ClassicEra/KerimAnkaUI_QuestJournal.lua",
+        "sha256": "24f78eb02fa19bf79db42c204a22026d35fb4956ac2bcfdb973bcd68c17dd433"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/KerimAnkaUI_QuestJournal.lua",
+        "sha256": "828bc43bc5511de263d622d5423d6ebc2d26b53317062e5f095dcf439d5776ce"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/KerimAnkaUI_QuestJournal.toc",
+        "sha256": "ba09c27c11164ab0c7272a29085fee0ba605896fd29f9e6a62e143ced24008db"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/KerimAnkaUI_QuestJournal_Vanilla.toc",
+        "sha256": "7e02e98b57f76dc22c7132670f509fef8ee8e605fa6ae9165e52fcadbfa668dd"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/LICENSE",
+        "sha256": "23b2df0fd72976575ad9b4168f4a53b9fadb7793e62c0f98b644bda700029971"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/LeatherFill.tga",
+        "sha256": "d24bc01edd8ab90519d4c3c16f7108893b4d15d33cb7682d817a0bfc9ac06180"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/Left.tga",
+        "sha256": "ddc7ea6fe6d497b3835e4e63e215a4e6c68e4e096f7440bc6095a6694be5ae40"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/Quill.tga",
+        "sha256": "043063e7e24f0fea98fe02ae106a2f910b04332e68ee88cea5a2e6e97451790d"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/Right.tga",
+        "sha256": "75d7013506735afd378cbdfa8fe8cb53cd5f957891017d4a6f3077a3680f56b1"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/TL.tga",
+        "sha256": "d356e3bf5450af0e1d263060693eff92065d8cb3954a0ee679f755a0046e5bdc"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/TR.tga",
+        "sha256": "fb159d49e5a80031d963d82435fd5d53149052fea1c7f5dd28e3d646d729108a"
+      },
+      {
+        "path": "KerimAnkaUI_QuestJournal/Top.tga",
+        "sha256": "b16eabe1bb61f3370d12e307455bf2e6a03e3c91e8b4a3a7304221f226bfb36b"
+      },
+      {
+        "path": "KerimAnkaUI_Threat/ClassicEra/KerimAnkaUI_Threat.lua",
+        "sha256": "4f7ffe72be484681da8620199dc6da74f2d88513f13ff08a31c03eff88bd70fc"
+      },
+      {
+        "path": "KerimAnkaUI_Threat/KerimAnkaUI_Threat.lua",
+        "sha256": "6d62136c6706a7a91570a55b259fc83498c680ec71d62c0eb8a791b57ce2b77d"
+      },
+      {
+        "path": "KerimAnkaUI_Threat/KerimAnkaUI_Threat.toc",
+        "sha256": "64230fa0eada24bdfc95096f6593665872c0a15c135c0c3052782426fffdf29a"
+      },
+      {
+        "path": "KerimAnkaUI_Threat/KerimAnkaUI_Threat_Vanilla.toc",
+        "sha256": "3d8d740103c2d91a0a1e87f2433ce9291911e16d64f7a6b0e563e76b3d6b59bb"
+      },
+      {
+        "path": "KerimAnkaUI_Threat/LICENSE",
+        "sha256": "23b2df0fd72976575ad9b4168f4a53b9fadb7793e62c0f98b644bda700029971"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/BarFill.tga",
+        "sha256": "048a026a318e3d53a82e237a4293596fed97b5aa7d976e0292c2e9db55868b4f"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/ClassicEnergyTick.lua",
+        "sha256": "8381748f7789916026a4be06598c9b99b20084b17e36bcb03eb8e3ab4009f693"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/ClassicManaTick.lua",
+        "sha256": "734f6eab1952465c858a25adb623f79e1fddf09823fce35f13853c5159583ae0"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/ClassicManaTickEngine.lua",
+        "sha256": "5307cabe8c92a474323c80309bc4673bd92394a6cbcbe046e162f3d33322a53f"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/CombatWidgets.lua",
+        "sha256": "54d98c20bac6be17e0b04bcf17c80fa7d716eba6ed76e5b25e7b8caadfc9b45a"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/DruidGeometry.lua",
+        "sha256": "78aba5504714d3929205d4ac96261dfad91b5d2bb0f5237259297ebaba884c55"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/DruidLabelLayout.lua",
+        "sha256": "6d3f07966a255fa6f45aa57a674e4e8bc74671689fd4446e29b1f52b6b052f09"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/HunterGeometry.lua",
+        "sha256": "b7e4b72e1c7d562cb79516e745905a3f505142016d2180a201305a3eb7bb8428"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/KerimAnkaUI_UnitFrames.lua",
+        "sha256": "d87c146c8c0f0b8ade77fef57bcbd6136b5754c725dc667d28b5645da0a03d19"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/MageGeometry.lua",
+        "sha256": "c101a4f26f3df436737d8097032f07ef20b90476a2411740d63d531700c25c7e"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/MageLabelLayout.lua",
+        "sha256": "48495779050ea691a002db69dd52a99848613d70eb7220e4de12c536b04f778b"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/Media/BlizzardRogueCombo.blp",
+        "sha256": "b1ef938bbb042ffb82eb219f881db077b7891c621a5a20bc9f2c805078fa7675"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/Media/NOTICE.txt",
+        "sha256": "814f3970b9de77295a6d777818e75490e8526aa2b322a44f6e485fe036f8f4c4"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/PaladinGeometry.lua",
+        "sha256": "4753d0fab545e67fa5c6a3b2341b83ffc9b843a5154cbd248455a6eaf8a49c95"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/PaladinLabelLayout.lua",
+        "sha256": "fcdb788abec907cbe0ca202489c9264bb86083f46b9465180cf2946df1c2b568"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/PetGeometry.lua",
+        "sha256": "2c52f5cd2eb533acf7aaed0806a6eac1b2c077ea3aca3f1d784f0323a91f3735"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/PetHappiness.lua",
+        "sha256": "0402f23be045d9dd5a9d79ed47eb23e2a2ee81531d3411c84e59df62530c6418"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/PortableCombo.lua",
+        "sha256": "86861b3bc98a0a2ab0403c613bdca58e4d26c882d1525715e1648fafc258159b"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/PriestGeometry.lua",
+        "sha256": "66d0e913780b1e344d4cf1b5439ae79b6424f44894a46a9228431bb528fe3734"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/PriestLabelLayout.lua",
+        "sha256": "12088d5d24d27bd7c6522a5514ae2de8b16e4cedf9702aea540c9ca4aca25de8"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/RaidMarker.lua",
+        "sha256": "02918a1849b4a36093c39dfeb5af9b286763cf55dc603ba36683f1486e9b33e8"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/ShamanGeometry.lua",
+        "sha256": "e53925c4a985cb9db1e364a0c039b47644b2c89f28af087c14bf51c7f0b8bf46"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/ShamanLabelLayout.lua",
+        "sha256": "329acb4d1c54cadd480ccc4872fa0ad761f082c81bc0fbd10dac8ed3b5c34e77"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/WarlockGeometry.lua",
+        "sha256": "e2839298ac0e19c62bd96dc4278955bdd278d3b2f84533fe0c4af4810d69af51"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/WarlockLabelLayout.lua",
+        "sha256": "c9b2a66f2c64acb37e61c8b111512c974bc77d6253c2db33d5b5ba15a673cfb1"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/WarriorGeometry.lua",
+        "sha256": "6638fb3bf6c1957b73e51c3ac682308cc608b080267d3f57287c15415c303327"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ClassicEra/WarriorLabelLayout.lua",
+        "sha256": "72f5ed387c74b6e25aa70894b1cb2411221e2c9af4c70bba02c68c88fa6aad95"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/CombatWidgets.lua",
+        "sha256": "fc94b1c398150689180f28fb8bdd5294c6ae6510befaeb7525ce8c0876e47d96"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/DruidFrame.tga",
+        "sha256": "1373bc9fad1248cc280de49e2da0265d29adebaec68d21f4427cf2a406a03d09"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/DruidGeometry.lua",
+        "sha256": "f85bcaf8c5a3bab92db85c0018e0f3815f48c1f43b78c2a5d67caf561bc76963"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/DruidLabelLayout.lua",
+        "sha256": "f6682d8d9a223431dcb605fa9ef493686562b32224ece7052aba7a89b5200dc0"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/DruidLevelMask.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/DruidLevelMaskRight.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/DruidPetFrame.tga",
+        "sha256": "8c82e3fb3e5cf863088398e4566fc448fc0649a5820a234c043691c991085c77"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/DruidPetPortraitMask.tga",
+        "sha256": "adb0c63db3225318d966c5af1a5580f8709d566c513699b7e434f20e88cd3aec"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/DruidPortraitMask.tga",
+        "sha256": "825c2f1a3066daf909548e07c70536f3316aeb97866f25d140f720266e6dc6aa"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/DruidPortraitMaskRight.tga",
+        "sha256": "8ac3a45632cb8154fb3d8423294032ebea3206e76a77d156fa41c970a886f7b0"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/HealthMask.tga",
+        "sha256": "190242027738aba61a5356455f5821b661c7672ef5564e065539270c7e5010b9"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/HunterFrame.tga",
+        "sha256": "5473e323676f023e2acd890fe2eb046e503f69d3fe2b1d8729ac4dfee056d3b7"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/HunterGeometry.lua",
+        "sha256": "30ba77e76050556a4564b6adc24510f802fc83177da9ea4da717cf53b35dc51d"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/HunterLevelBadge.tga",
+        "sha256": "5302d25d7f4336cc97cf421fa0b3d8b55481b7f479271c34f7d737cde6b7268a"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/HunterLevelMask.tga",
+        "sha256": "2c23d79a34d559a10ce3f48b828a8838cfbdc9c3f36bf6e26e50c9f0d5ac7bbd"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/HunterLevelMaskRight.tga",
+        "sha256": "365ecdc4c66f3d9fb005955ad92689e86747434dd62a1a9ace5bd32e7c09df2d"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/HunterPetFrame.tga",
+        "sha256": "a02f55fac38aa680a65dca585b46fbed9ae29e4d6c5603f7b1cefc6f28a17544"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/HunterPetPortraitMask.tga",
+        "sha256": "142aa17a3d2780c2c89eac74ec1e4b75a016dd292136a62c4b2841bfda2ac3f8"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/HunterPortraitMask.tga",
+        "sha256": "d749ad4803788520198a01585ec0e97b056c1b7e105ccd5220b7056ca111007c"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/HunterPortraitMaskRight.tga",
+        "sha256": "93df6a69f15cea91715fb4e52e83d6c66d09e98c7034c272dfeb8f2b17375966"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/KerimAnkaUI_UnitFrames.lua",
+        "sha256": "a8b8bbe23e8310cc7962b192e8a8df63c0a0949d645748773b15ebe8b94dafde"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/KerimAnkaUI_UnitFrames.toc",
+        "sha256": "12a6b8b27746798d74d0eb4fc66087bece5680d5bd50151923670325a5871af1"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/KerimAnkaUI_UnitFrames_Vanilla.toc",
+        "sha256": "456fd4b909fbea80b87f10fbf6c048670f423c95abee9de94c460cbeca4bd371"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/LICENSE",
+        "sha256": "23b2df0fd72976575ad9b4168f4a53b9fadb7793e62c0f98b644bda700029971"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/LeatherFrame.tga",
+        "sha256": "76b6839eda894b6935824e54580fa857b1ee2e18ee9a268dc81a413752a9b386"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/LevelCircle.tga",
+        "sha256": "16245ecb16af11674e6b3ae26cbc509ca614096c5184a84317d3cf456643a269"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/MageFrame.tga",
+        "sha256": "ba3cf92cbee87fe97419bf7066eff28ff91f1000ee2475989a412079efb719fb"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/MageGeometry.lua",
+        "sha256": "93e3844d1dd3f4998db460d911c276b65da5740388c43f9353ccb18084cc9fd5"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/MageLabelLayout.lua",
+        "sha256": "8d216e2e7396b0822eb47479f516f15e863de1efc9c7e04d85685013c60e437d"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/MageLevelMask.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/MageLevelMaskRight.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/MagePetFrame.tga",
+        "sha256": "a925ffcd04d6d9c35f43cd90142b56af5d3e76d7348a28bbde005b5e38b16ef5"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/MagePetPortraitMask.tga",
+        "sha256": "8b9adb6435f5b4147e718aca1001b6726f40fb7f5a60fb16185ad66834173351"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/MagePortraitMask.tga",
+        "sha256": "d952dbc58e17fd0e0d829f20a3908a3304ca113a0a6fea2781ba5e83bc30cf75"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/MagePortraitMaskRight.tga",
+        "sha256": "1caf65fe6fd4a6acadffa2be36f7e29cc19d43c32fa12c18cff6e1834f4068b7"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PaladinGeometry.lua",
+        "sha256": "ad7e7fe5835959fd72a70fc86c84d64197bfaed84368d44de5f75463ba06dc24"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PaladinLabelLayout.lua",
+        "sha256": "edcf770d445b80fa1c0732112da4f64b1e750112d9ab67a71e1dd2fa63903e47"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PaladinLevelMask.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PaladinLevelMaskRight.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PaladinPetPortraitMask.tga",
+        "sha256": "809e7903c60429a27cec5329ded378f585e195a5067bc957b05b434ecccaa445"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PaladinPortraitMask.tga",
+        "sha256": "809e7903c60429a27cec5329ded378f585e195a5067bc957b05b434ecccaa445"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PaladinPortraitMaskRight.tga",
+        "sha256": "d2f544196c38179d99c176196d5d3cdfdf63027489d51e6413321954c0f77f49"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PaladinUnitAlliance.tga",
+        "sha256": "f0d8104ddedb5ef2b6896245e0c73722a3164b128da808cbf08ca9f75c40c20a"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PaladinUnitHorde.tga",
+        "sha256": "2142155eeefc28f2fed6e064f43f222248367a6ae46687de00c02cbe043a28c0"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PetGeometry.lua",
+        "sha256": "1fd1ec3c87e1ec8864af499796adf398030546669c424bfd4fbcce54fc3ba96b"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PetHappiness.lua",
+        "sha256": "64397d63d59b4f9fd4f0e52e1af9cabbc8481b8c3551fae445614e2df73c8e76"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PetHappiness.tga",
+        "sha256": "1cccfa402a546df8be064dd2ca2d030429fb4429e880503447e3881f419c074a"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PortraitMask.tga",
+        "sha256": "ab38b23707873db1d83715de3731fbb61750601c728905a49d1c3008e20d9fb2"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PortraitMaskRight.tga",
+        "sha256": "ea24b4789f6f7c636a97596c08d31abdb91fa26d42cc3a59704efd5662b15b1d"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PowerMask.tga",
+        "sha256": "437d4f5eeab5c45990d4da835d4ef446b4e01a959e55b68bae7e24984f4abc1b"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PriestFrame.tga",
+        "sha256": "ca425877449ab35b33cea85dad796d0cb5053bef9d560e3fdbef9e3964077a77"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PriestGeometry.lua",
+        "sha256": "233e2871af5e10be228d0e41becce9cfa478aa92e2c7678785a0eb29af553e44"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PriestLabelLayout.lua",
+        "sha256": "9a37f8593b62ce75e5e502f58ce53cf70beca16f2cb4f561884a111267ec518f"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PriestLevelMask.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PriestLevelMaskRight.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PriestPetFrame.tga",
+        "sha256": "44dfaa77e8a804485b479ef2677725a54412f9adecf32933ef4d44e67170bd52"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PriestPetPortraitMask.tga",
+        "sha256": "4c9c68474d7aa318f122bfbc79e5b4f03f730b9b4ad3fa949f65d7f1a26ed22e"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PriestPortraitMask.tga",
+        "sha256": "3f46bbb824b5becaa489b33034723a269e8db74e3aa38ad63a5f8a124ff27c1f"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/PriestPortraitMaskRight.tga",
+        "sha256": "f45b5b910e77945b4bd4093441f55b14cd53a674b07c18c453d381b21481194a"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/RaidMarker.lua",
+        "sha256": "42f61561ee541bb7e82cd99ba5673972879afcb557026ffe6ac10f97a9f9f58c"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ShamanFrame.tga",
+        "sha256": "01d14ddf55c0cccd7e71e5a26e4f0d59c11952f129ca2a54f139e2a5a0dfe9e3"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ShamanGeometry.lua",
+        "sha256": "e1f7b51e147faba50cc25b20978b55e7110b490b41268f7d65618a5d89bb4a88"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ShamanLabelLayout.lua",
+        "sha256": "ea6c78d7ac49341afb4828fb350ca07570d2aa6871b331c0200c9b38965e7dc9"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ShamanLevelMask.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ShamanLevelMaskRight.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ShamanPetFrame.tga",
+        "sha256": "a5d83569ecd1b82348c6a8e003cef4ac554395a4e5c15d4ae834fca1908c87a4"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ShamanPetPortraitMask.tga",
+        "sha256": "19947a053c9c337c0b05d3bcf02b4405c2bf7ff1949c18eac5bb60ecbd7f8b02"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ShamanPortraitMask.tga",
+        "sha256": "05c3e7891a9f4e31c9e0f0a08b7c67e266ad45c07dc0a824da3c5574e277ed1a"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/ShamanPortraitMaskRight.tga",
+        "sha256": "09dd582b06d0a45fcda3d5252c2ce6f3dd182663e2231986fc189ab129656423"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarlockFrame.tga",
+        "sha256": "3dea1d8c21c3f15e0e36f7c3809eee453e41d12c6e607ef3985538b842f349a4"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarlockGeometry.lua",
+        "sha256": "0160b00561afa104750f32457bf1a70566bccb6fdd62243279437b2db673a2f9"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarlockLabelLayout.lua",
+        "sha256": "a2b4eff04bd0e06cbf7c204d8e0e823f19a3023c2179aad32c7f2ec57e0ed442"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarlockLevelMask.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarlockLevelMaskRight.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarlockPetFrame.tga",
+        "sha256": "19af1b847ffa6cb68990bd76f9a0dbf99819b5ede8cd4a282691ba6f9669f99f"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarlockPetPortraitMask.tga",
+        "sha256": "74112c403e45b042f8b1256f64ff9b4f977d19653ebc8708c6d13de0d2ea459e"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarlockPortraitMask.tga",
+        "sha256": "84db64b74b23761dd3028d3791c912b05ab512a7a6d9b95a21d7328c45542f02"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarlockPortraitMaskRight.tga",
+        "sha256": "766a15b1e9d8685cda6e43fd56b5bc8e41ca03fd2b65a4c7de17e14119d4ba32"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarriorGeometry.lua",
+        "sha256": "8723c7bef878c867fafb244fd999b185bce9e97eb41e90b6b872bd41020b3c62"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarriorLabelLayout.lua",
+        "sha256": "5bd0f573161bb201d68ff11cddc967e4fc47b7f4cd0cd4be1f9f53c0f47a8fbf"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarriorLevelMask.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarriorLevelMaskRight.tga",
+        "sha256": "7ddb682f2839351a8d20dc6e5edea9de05baacbe0a738cdba66abf25c5525946"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarriorPetPortraitMask.tga",
+        "sha256": "e7bf6e5880df67298c2484aa43f35463051c41b4ad2852710fe445a7d9f34c42"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarriorPortraitMask.tga",
+        "sha256": "e7bf6e5880df67298c2484aa43f35463051c41b4ad2852710fe445a7d9f34c42"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarriorPortraitMaskRight.tga",
+        "sha256": "994cbc6612af14e12e42794c25408a00e96077132e1b4513b32338799ae97fa1"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarriorUnitAlliance.tga",
+        "sha256": "608245c9f6c43eeb99b0822a53ee67698df9ffd44b14897055b2576acfb696e2"
+      },
+      {
+        "path": "KerimAnkaUI_UnitFrames/WarriorUnitHorde.tga",
+        "sha256": "f3c423f66c3b0c98fd07f036580823d8594e5f790cccc057ad4cde9380846a9a"
+      }
+    ],
+    "bags": [
+      {
+        "path": "KerimAnkaUI_Bags/Bootstrap.lua",
+        "sha256": "65b1c7c8af142f69cf3a145913b67a4567da723f19b49088aafc1d0689418386"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/BagCompanions.lua",
+        "sha256": "bfe64d5422743935eecc7f3fe8b8600d0bcb72333d889fe73514d62b2411fd73"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/BagMedia/ClassicFrame.tga",
+        "sha256": "5738b08e35c7b9d19e03b58bb807312b3d7c86c584577626b3928b962a8e4855"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/BagMedia/ControlAtlas.tga",
+        "sha256": "f99b54954123014092ce0f54d3cc4118b74b27c903d9d1194fb2535350a8c5c7"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/BagMedia/IconAtlas.tga",
+        "sha256": "b2426e105d0d3fdc6f30d08dfb4f58fb09233b079b84dfbd95b3c1d7cc68e5ab"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/BagMedia/LeatherFrame.tga",
+        "sha256": "e946257f24356b189ed31ba5d2241e38ad9c5d8eda8b5da6dfda05f43e90e1bf"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/BagShortcut.lua",
+        "sha256": "f0377f59a7e60a104f4132eabd36fb70258f7c4747762173e1ad7bc1d206d4f9"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/ClassicBagDesigns.lua",
+        "sha256": "0ac6bf36068dc6432b43c2024b1af8f17d1b97aa438c5184176eb374f9c9b64e"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/ClassicBags.lua",
+        "sha256": "c76a1da6ec8582e0af7282d80806445b9c9db091f7e30edf38f12a54b2755e5d"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/ClassicBank.lua",
+        "sha256": "d69b9c720f40fcb84eae310b4b0f58048a2536e585f051069f3a51fbb06864da"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/ClassicInventoryStyle.lua",
+        "sha256": "b65308b3f4bc672414bc2288efeab7aa2a3ee483dd054993a69e4dc29dc8c759"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/ClassicItemRecords.lua",
+        "sha256": "cba9acc608659bb80fb4243d47a9db0f0bc0b4194aa99af009388517a475c42d"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/ClassicMerchant.lua",
+        "sha256": "5c4ef162f0bfbdee0a3a3c1d32ea04cea7d287fc62b6f380295d6800d131d57b"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/ClassicEra/Keyring.lua",
+        "sha256": "3974540606446472c1f4b63a34749c6996c5e224e84603b22d6042028637097d"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Fonts/LICENCE.txt",
+        "sha256": "2a3d40d4133eb828437b32384ee57acf4ca8f6b9d2333626b5b4d8042bf276fa"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Fonts/Ubuntu-B.ttf",
+        "sha256": "c90e629e932f768909bdce1481ccd259d8aff1490a4bc1cf94d5413492317336"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Fonts/Ubuntu-R.ttf",
+        "sha256": "52c1afa489ae7bfd893af6cdd9f1af258005703600449e70d338caabcff507e5"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/KerimAnkaUI_Bags.toc",
+        "sha256": "ba7cae48dbfefcb17be162235760ac8fa347b2c6152dfd682216c40611819f41"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/KerimAnkaUI_Bags_Vanilla.toc",
+        "sha256": "ba7cae48dbfefcb17be162235760ac8fa347b2c6152dfd682216c40611819f41"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/LICENSE",
+        "sha256": "23b2df0fd72976575ad9b4168f4a53b9fadb7793e62c0f98b644bda700029971"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Locales/de.lua",
+        "sha256": "37f90081d04681b4e5bd64ed47d4f51c40a5d1b0edf1d689da243a7f40d7dabd"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Locales/en.lua",
+        "sha256": "5dcbcf085ffe75af3768f9fb47a6c76b2ba4f0462f07e34a5d245f1122fb5e40"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Locales/esES.lua",
+        "sha256": "706426ee2a0eca869e95c595290782f34974939268c4c16b493278489a29d28e"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Locales/frFR.lua",
+        "sha256": "fbe09dfb611143f3e725b1bc43263df9d11429db41e74f742e696c0ee7d9d42e"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Locales/itIT.lua",
+        "sha256": "a4525000958b8dc01d1ffa75314a84720e6ff0462cf514c0951d8ac275932342"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Locales/ptBR.lua",
+        "sha256": "ceb2c483de5566a12546d585152d36b162cbd8cdcd132e0b18b32f39d77683ee"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Locales/ruRU.lua",
+        "sha256": "ddf45fff054c135469a1aaea6d2a3727d17866a60e05904861052d3dc4a21174"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Locales/tr.lua",
+        "sha256": "0f9eaa7e66c97d1dd044661d2669fc9672aeeb67259ba9a0fb6726041e75e8db"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Locales/zhCN.lua",
+        "sha256": "9d067809faf2bb7fc7ee9bc927a460fbc9dcd6031a71282976c078eea96e9d94"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Media/BagShortcut.tga",
+        "sha256": "e81193673bb7d44de275e676785356e7186b942d9c162caa81b00b49e3b42c27"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Media/CardGlow.tga",
+        "sha256": "019dc9f28c69c8c39511d1f801ba0187223a76c4597a63e94089e123c7eacf64"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Media/Circle.tga",
+        "sha256": "e46b9252f3be01ec71be80acc0aa0d5956b23cdecd17a9f1768092fdd6abb4b8"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Media/Close.tga",
+        "sha256": "74535877b51493d143e00e6bc1ab216ce8bff3a981684ac1eda1f89c0e1137ef"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Media/CommunityGitHub.tga",
+        "sha256": "7bb0db8af126f816407e0649f7575a21c41004735514d3e65e53c45238cc16ee"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Media/CommunityTwitch.tga",
+        "sha256": "9cec894980feade1bf655a1c725c971273aed69ca286a8e87e54e3296ae04981"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Media/Minus.tga",
+        "sha256": "3c13c812b035f7301f1cf2458147e9d1296e71de335d3a5e2b7222c06cd0ef09"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Media/Phoenix.tga",
+        "sha256": "2b816a280b3220ad55483731aff03a7e9f390a4eefb94c3770dd3b62853f62f2"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Media/Plus.tga",
+        "sha256": "15de5a68be21d841eb794bcb380a7993cad61439c7ada3170498f20c91f334b2"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Media/RoundedBorder.tga",
+        "sha256": "65cb5bccdf6b6e06bd0e24d7e6425a7683aa60458595229ad359b7eca243931b"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Media/RoundedFill.tga",
+        "sha256": "48982b4a333dba0d9925e07b29e9d40ab11d1a3e5d37b031773265f2d3cb7d02"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Settings/BagOptions.lua",
+        "sha256": "8d1f21cb48381668efe2374e79e62b39195e7fbc38ae459ec981abb1e58b130d"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Settings/Community.lua",
+        "sha256": "53676142e69b3703fc5ba3829ec689c7c2012a76c14c5ecb99f7308cdaaef0f6"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Settings/Panel.lua",
+        "sha256": "3e91bc1b1371d1a23307c4882eeadf7fb7567b0e45656bf0b60488d31426a58d"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Shared/BagManager.lua",
+        "sha256": "4d9299f953c924f7e4084b065fd44fd8f7c00c36dde6f4e05dd71d4090cd993b"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Shared/LocaleFonts.lua",
+        "sha256": "3ae26b3d4a08a046d5fd97424b027298ed9b1a3c9bfaf53468414ab9c12b676d"
+      },
+      {
+        "path": "KerimAnkaUI_Bags/Shared/NativeItemLooks.lua",
+        "sha256": "2c770e99d62639a8221b8e5c09f2f97b90db7813e54879504a63d7682cba54d9"
+      }
+    ]
+  }
+}

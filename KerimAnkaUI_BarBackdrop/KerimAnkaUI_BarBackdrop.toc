@@ -4,7 +4,7 @@
 ## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Notes: Action-button backgrounds and borders for Blizzard and Bartender bars.
 ## Author: Kerim Anka
-## Version: 0.35.0
+## Version: 0.35.1
 ## Dependencies: KerimAnkaUI
 ## OptionalDeps: Bartender4
 ## SavedVariablesPerCharacter: ForeverBarBackdropCharacterDB

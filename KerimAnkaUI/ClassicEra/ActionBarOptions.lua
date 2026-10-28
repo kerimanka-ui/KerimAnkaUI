@@ -300,59 +300,94 @@ end
 
 
 
-function K.DrawInventoryPage(page)
- local M=K.InventoryMenus;local w=K.UnitWidgets;local y=0
- w.Text(page,K.L(M.Status()),8,y,690,13,{.65,.70,.62});y=y-78
+local inventoryTab='settings'
+function K.OpenBagSettings()
+ inventoryTab='settings';K.ShowPage('inventory')
+end
+local function InventoryControls(page,w,startY)
+ local y,col=startY,0;local M=K.InventoryMenus
+ local function Flush()if col==1 then y=y-96;col=0 end end
  local function Toggle(key,label,help)
-  local box=w.Box(page,0,y,714,62)
-  w.Text(box,K.L(label),16,-20,550,14)
-  local tip=w.Button(box,"?",584,-20,22,22,function() end);w.Tip(tip,label,help)
-  w.Switch(box,M.Get(key)==true,620,-16,function(value) M.Set(key,value);K.Render() end,not InCombatLockdown())
-  y=y-78
+  local box=w.Box(page,col*365,y,349,86)
+  w.Text(box,K.L(label),14,-12,278,13)
+  local tip=w.Button(box,'?',311,-10,22,22,function()end);w.Tip(tip,label,help)
+  w.Switch(box,M.Get(key)==true,255,-48,function(value)M.Set(key,value)end,not InCombatLockdown())
+  col=1-col;if col==0 then y=y-96 end
  end
  local function Numbers(fields)
-  for i,field in ipairs(fields) do
+  Flush()
+  for i,field in ipairs(fields)do
    local key,label,low,high=unpack(field)
    local box=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*96,349,86)
-   w.Text(box,K.L(label),14,-12,310,13)
+   w.Text(box,K.L(label),14,-12,278,13)
+   local tip=w.Button(box,'?',311,-10,22,22,function()end)
+   local help=key=='bagItemGap'and 'imItemLooksHelp'or key=='bagGap'and 'imBagShortcutGapHelp'or key=='bagSize'and 'imBagHelp'or 'imMicroHelp'
+   w.Tip(tip,label,help)
    local value=w.Text(box,tostring(M.Get(key)),14,-54,150,15)
-   for j,delta in ipairs({-1,1}) do
-    local button=w.Button(box,delta==-1 and "−" or "+",j==1 and 251 or 297,-47,36,32,function()
-     if M.Set(key,math.max(low,math.min(high,M.Get(key)+delta))) then value:SetText(tostring(M.Get(key))) end
+   for j,delta in ipairs({-1,1})do
+    local b=w.Button(box,delta==-1 and '−'or '+',j==1 and 251 or 297,-47,36,32,function()
+     if M.Set(key,math.max(low,math.min(high,M.Get(key)+delta)))then value:SetText(tostring(M.Get(key)))end
     end)
-    if InCombatLockdown() then button:Disable() end
+    if InCombatLockdown()then b:Disable()end
    end
   end
   y=y-math.ceil(#fields/2)*96
  end
- if K.BagShortcut then y=K.BagShortcut.Draw(page,w,y) end
- w.Text(page,K.L("imBags"),8,y,690,18,{.73,.62,.41});y=y-34
- Toggle("bagCombined","imCombinedBags","imCombinedBagsHelp")
- Toggle("bagDock","imDock","imBagHelp")
- Toggle("bagExpanded","imExpanded","imBagHelp")
- Toggle("bagBackground","imBagBackground","imBagAppearanceHelp")
- Toggle("bagFrame","imBagFrame","imBagAppearanceHelp")
- Toggle("bagIconBorder","imBagIconBorder","imBagAppearanceHelp")
- Toggle("hideNativeBagBar","imHideNativeBar","imHideNativeBarHelp")
- Toggle("bagJunk","imJunk","imItemLooksHelp")
- Toggle("bagQuality","imQuality","imItemLooksHelp")
- Numbers({{"bagSize","imBagSize",18,48},{"bagGap","imGap",0,16}})
- if K.ClassicMerchant and K.ClassicMerchant.DrawSettings then y=K.ClassicMerchant.DrawSettings(page,w,y) end
- if K.ClassicBags and K.ClassicBags.DrawMoneyRecords then y=K.ClassicBags.DrawMoneyRecords(page,w,y) end
- if K.ClassicItemRecords and K.ClassicItemRecords.DrawSettings then y=K.ClassicItemRecords.DrawSettings(page,w,y) end
- w.Text(page,K.L("imMicro"),8,y-8,690,18,{.73,.62,.41});y=y-44
- Toggle("microEnabled","imManage","imMicroHelp")
- Toggle("microLocked","imLocked","imMoveHelp")
- Numbers({{"microSize","imIconSize",18,48},{"microGap","imGap",0,16}})
- local align=w.Button(page,K.L("imAlign"),0,y,349,36,function() M.AlignChat();K.Render() end)
- local reset=w.Button(page,K.L("imReset"),365,y,349,36,function()
-  if InCombatLockdown() then return end
-  for _,key in ipairs({"microSize","microGap","microX","microY","microLocked"}) do K.db[key]=nil end
+ return Toggle,Numbers,Flush,function()return y end,function(v)Flush();y=v end
+end
+function K.DrawMicroMenuPage(page)
+ local w=K.UnitWidgets;local M=K.InventoryMenus
+ local Toggle,Numbers,Flush,Y=InventoryControls(page,w,0)
+ Toggle('microEnabled','imManage','imMicroHelp');Toggle('microLocked','imLocked','imMoveHelp')
+ Numbers({{'microSize','imIconSize',18,48},{'microGap','imGap',0,16}})
+ local y=Y()
+ local align=w.Button(page,K.L('imAlign'),0,y,349,36,function()M.AlignChat();K.Render()end)
+ local reset=w.Button(page,K.L('imReset'),365,y,349,36,function()
+  if InCombatLockdown()then return end
+  for _,key in ipairs({'microSize','microGap','microX','microY','microLocked'})do K.db[key]=nil end
   M.Refresh();K.Render()
  end)
- if InCombatLockdown() then align:Disable();reset:Disable() end
- w.Text(page,K.L("imMoveHelp"),8,y-58,690,13,{.65,.70,.62})
- page:SetHeight(-y+130)
+ if InCombatLockdown()then align:Disable();reset:Disable()end
+ w.Text(page,K.L('imMoveHelp'),8,y-58,690,13,{.65,.70,.62});page:SetHeight(-y+130)
+end
+function K.DrawInventoryPage(page)
+ local M=K.InventoryMenus;local w=K.UnitWidgets
+ for i,entry in ipairs({{'settings','bagSettingsTab'},{'money','bagMoneyTab'},{'records','bagRecordsTab'}})do
+  local key,label=entry[1],entry[2]
+  local b=w.Button(page,K.L(label),(i-1)*240,0,234,38,function()
+   inventoryTab=key;if K.scroll then K.scroll:SetVerticalScroll(0)end;K.Render()
+  end);w.Selected(b,inventoryTab==key)
+ end
+ local y=-60
+ if inventoryTab=='money'then
+  if K.ClassicBags and K.ClassicBags.DrawMoneyRecords then y=K.ClassicBags.DrawMoneyRecords(page,w,y)end
+  page:SetHeight(-y+20);return
+ elseif inventoryTab=='records'then
+  if K.ClassicItemRecords and K.ClassicItemRecords.DrawSettings then y=K.ClassicItemRecords.DrawSettings(page,w,y)end
+  page:SetHeight(-y+20);return
+ end
+ w.Text(page,K.L(M.Status()),8,y,690,13,{.65,.70,.62});y=y-78
+ if K.BagShortcut then y=K.BagShortcut.Draw(page,w,y)end
+ local Toggle,Numbers,Flush,Y,SetY=InventoryControls(page,w,y)
+ w.Text(page,K.L('inventory'),8,Y(),690,18,{.73,.62,.41});SetY(Y()-34)
+ Toggle('bagCombined','imCombinedBags','imCombinedBagsHelp')
+ Toggle('bagDock','imDock','imBagHelp');Toggle('bagExpanded','imExpanded','imBagHelp');Flush()
+ w.Text(page,K.L('imBagDesign'),8,Y(),690,18,{.73,.62,.41});SetY(Y()-36)
+ for i=1,3 do
+  local id=i;local box=w.Box(page,(i-1)*240,Y(),230,112)
+  w.Text(box,K.L('imBagDesignHelp'..i),12,-16,206,12,{.75,.76,.72})
+  local b=w.Button(box,K.L('imBagDesign'..i),10,-66,210,32,function()if M.Set('bagDesign',id)then K.Render()end end)
+  w.Selected(b,M.Get('bagDesign')==i);if InCombatLockdown()then b:Disable()end
+ end
+ SetY(Y()-130)
+ Toggle('bagBackground','imBagBackground','imBagAppearanceHelp');Toggle('bagFrame','imBagFrame','imBagAppearanceHelp')
+ Toggle('bagIconBorder','imBagIconBorder','imBagAppearanceHelp');Toggle('hideNativeBagBar','imHideNativeBar','imHideNativeBarHelp')
+ Toggle('bagJunk','imJunk','imItemLooksHelp');Toggle('bagQuality','imQuality','imItemLooksHelp')
+ Toggle('bagQuest','imQuestItems','imQuestItemsHelp');Toggle('bagEmptySlots','imEmptySlots','imEmptySlotsHelp')
+ Numbers({{'bagItemGap','imItemGap',0,16},{'bagSize','imBagSize',18,48},{'bagGap','imBagShortcutGap',0,16}})
+ w.Text(page,K.L('imBagShortcutGapHelp'),8,Y(),690,12,{.65,.70,.62});SetY(Y()-52)
+ if K.ClassicMerchant and K.ClassicMerchant.DrawSettings then SetY(K.ClassicMerchant.DrawSettings(page,w,Y()))end
+ page:SetHeight(-Y()+20)
 end
 
 function K.DrawErrorOptions(page)

@@ -584,7 +584,8 @@ function K.Render()
     elseif section=="camera" then Camera()
     elseif section=="combat" then Combat()
     elseif section=="alerts" then Alerts()
-    elseif section=="sounds" then Sounds() end
+    elseif section=="sounds" then Sounds()
+    elseif section=="imMicro" then K.DrawMicroMenuPage(page) end
     if K.reloadPrompt and K.reloadPrompt:IsShown() then
         if K.HasPendingModuleChanges() then K.ShowReloadPrompt() else K.reloadPrompt:Hide() end
     end
@@ -940,8 +941,8 @@ function K.BuildWindow()
     profiles:ClearAllPoints();profiles:SetPoint("BOTTOMLEFT",10,61)
     profiles.key="profiles";NavAccent(profiles);nav[#nav+1]=profiles
     introProfiles=profiles
-    for i,key in ipairs({"overview","camera","combat","alerts","sounds"}) do
-        local tab=FixedButton(f,K.L(key),220+(i-1)*126,-77,119,32,function()
+    for i,key in ipairs({"overview","camera","combat","alerts","sounds","imMicro"}) do
+        local tab=FixedButton(f,K.L(key),220+(i-1)*120,-77,114,32,function()
             section=key; K.scroll:SetVerticalScroll(0); K.Render()
         end)
         tab.underline=tab:CreateTexture(nil,"OVERLAY"); tab.underline:SetPoint("BOTTOMLEFT",2,0); tab.underline:SetPoint("BOTTOMRIGHT",-2,0)

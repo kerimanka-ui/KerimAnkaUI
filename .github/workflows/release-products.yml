@@ -1,0 +1,27 @@
+name: Release reviewed KerimAnka products
+on:
+  push:
+    tags: ['v[0-9]*']
+permissions:
+  contents: read
+concurrency:
+  group: kerimanka-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Test separate product boundaries
+        run: python3 -m unittest discover -s tests -p test_product_boundaries.py -v
+      - name: Build suite and independent Bags from this tag
+        run: python3 tools/package_products.py --release --output dist
+      - name: Verify reviewed archive hashes
+        run: python3 tools/check_product_release.py --tag "$GITHUB_REF_NAME" --output dist
+      - name: Publish distinct GitHub release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 tools/publish_product_release.py --tag "$GITHUB_REF_NAME" --output dist

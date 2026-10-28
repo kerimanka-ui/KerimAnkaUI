@@ -1,0 +1,37 @@
+name: Validate separate product packages
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'KerimAnkaUI*/**'
+      - 'tools/**'
+      - 'packaging/**'
+      - 'tests/**'
+      - '.pkgmeta'
+      - '.github/workflows/product-package-preview.yml'
+  pull_request:
+    paths:
+      - 'KerimAnkaUI*/**'
+      - 'tools/**'
+      - 'packaging/**'
+      - 'tests/**'
+      - '.pkgmeta'
+      - '.github/workflows/product-package-preview.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Test suite and independent product isolation
+        run: python3 -m unittest discover -s tests -p test_product_boundaries.py -v
+      - name: Build and inspect both real ZIP files
+        run: python3 tools/package_products.py --output dist
+      - name: Keep preview packages and per-file reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: kerimanka-product-previews-${{ github.sha }}
+          path: dist/
+          retention-days: 7
+          if-no-files-found: error

@@ -3,6 +3,14 @@
 This log records user-facing changes. Git commits provide the detailed history.
 Earlier development builds are not exhaustively reconstructed here.
 
+## 0.35.1 — 2026-10-28
+
+- Refined Classic Era bags with three selectable designs: Classic, Compact, and Leather & Metal.
+- Improved bag controls, search, compact layouts, quest-item highlighting and multilingual text.
+- Fixed excessive bag refresh work and updated bag settings, previews and Details skin wording.
+- Added separate packaging for the optional KerimAnka Bags independent edition; it is not installed by the suite ZIP.
+- Forever behavior is unchanged. These bag changes currently apply to Classic Era only.
+
 ## 0.35.0 — 2026-10-26
 
 - Added Classic Era support alongside Forever, with separate client loaders and saved settings.

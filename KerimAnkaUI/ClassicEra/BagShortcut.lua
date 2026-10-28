@@ -101,14 +101,16 @@ function M.Draw(page,w,y)
  w.Text(page,K.L('bsTitle'),8,y,690,18,{.73,.62,.41});y=y-36
  w.Text(page,K.L('bsHelp'),8,y,690,13,{.65,.70,.62});y=y-94
  w.Text(page,M.BindingInfo(),8,y,690,13,{.83,.78,.60});y=y-60
- for _,entry in ipairs({{'enabled','bsEnabled'},{'locked','bsLocked'}}) do
-  local key,label=unpack(entry);local card=w.Box(page,0,y,714,62)
-  w.Text(card,K.L(label),16,-20,550,14)
-  w.Switch(card,M.Get(key),620,-16,function(value) M.Set(key,value);K.Render() end,not Combat())
-  y=y-78
+ for i,entry in ipairs({{'enabled','bsEnabled'},{'locked','bsLocked'}}) do
+  local key,label=unpack(entry);local card=w.Box(page,(i-1)*365,y,349,86)
+  w.Text(card,K.L(label),14,-12,278,13)
+  local tip=w.Button(card,'?',311,-10,22,22,function()end);w.Tip(tip,label,'bsHelp')
+  w.Switch(card,M.Get(key),255,-48,function(value) M.Set(key,value) end,not Combat())
  end
+ y=y-96
  local card=w.Box(page,0,y,349,86)
- w.Text(card,K.L('bsSize'),14,-12,310,13)
+ w.Text(card,K.L('bsSize'),14,-12,278,13)
+ local tip=w.Button(card,'?',311,-10,22,22,function()end);w.Tip(tip,'bsSize','bsHelp')
  local value=w.Text(card,tostring(M.Get('size')),14,-54,150,15)
  for _,delta in ipairs({-1,1}) do
   local change=delta

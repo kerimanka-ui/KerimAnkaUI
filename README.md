@@ -146,3 +146,14 @@ or original artwork in another project require prior written permission. This
 includes free redistribution and paid bundles. Platform rights and third-party
 licenses remain unaffected. This is not an open-source license.
 See LICENSE for the full terms and CONTRIBUTING.md before submitting changes.
+
+## Independent Classic Era Bags
+
+The suite includes its own integrated bag feature. The separately downloadable
+KerimAnka Bags edition contains only bags, bank and character inventory records
+with the familiar settings panel. It does not require the suite. Its folder is
+generated during packaging and is never included in the complete-suite ZIP.
+When both editions are enabled, the suite takes priority. The independent edition
+keeps its own saved settings; no automatic settings migration is performed.
+At present only one independent KerimAnka edition can run at a time.
+See [product packaging](docs/PRODUCT-PACKAGING.md) for the release layout.

@@ -1,8 +1,9 @@
 -- Classic-only inventory presentation. Never runs in Forever or Retail.
 if not WOW_PROJECT_CLASSIC or WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then return end
 local _,K=...
+local T=K.InventoryText
 local M={};K.ClassicBags=M
-local frame,body,title,titleLead,titleTail,footer,moneyText,search,searchHint,keyButton,searchClear,shelfToggle,sortButton
+local frame,body,footer,moneyText,search,searchHint,keyButton,searchClear,shelfToggle,sortButton
 local holders,buttons,bagButtons={},{},{}
 local queued,busy,pendingToggle,pendingOpen,pendingRefresh=false,false,false,false,false
 local filterBag,redrawQueued,hoverBag,dockQueued
@@ -16,7 +17,7 @@ local keyState
 local function Combat() return InCombatLockdown and InCombatLockdown() end
 local headerText={
  ["en"]={"%s's bags","Show bag icons","Hide bag icons","Bag settings"},
- ["tr"]={"%s - Çantası","Çanta ikonlarını göster","Çanta ikonlarını gizle","Çanta ve Menü ayarları"},
+ ["tr"]={"%s - Çantası","Çanta ikonlarını göster","Çanta ikonlarını gizle","Çanta ayarları"},
  ["de"]={"Taschen von %s","Taschensymbole anzeigen","Taschensymbole ausblenden","Tascheneinstellungen"},
  ["frFR"]={"Sacs de %s","Afficher les icônes des sacs","Masquer les icônes des sacs","Options des sacs"},
  ["itIT"]={"Borse di %s","Mostra le icone delle borse","Nascondi le icone delle borse","Impostazioni borse"},
@@ -30,36 +31,10 @@ local function HeaderText(index)
  local lang=KAClassic_KerimAnkaUIDB and KAClassic_KerimAnkaUIDB.language or 'en'
  return (headerText[lang]or headerText.en)[index]
 end
-local function NativeNameFont(name)
- -- Common Turkish and Cyrillic names use the bundled face. CJK and other
- -- three/four-byte scripts retain the client's multilingual font fallback.
- for i=1,#name do if name:byte(i)>=224 then return true end end
- return false
-end
-local function UpdateTitle(width)
- local name=UnitName('player')or UNKNOWN or 'Player'
- local lead,tail=HeaderText(1):match('^(.-)%%s(.*)$')
- title:SetText(name);titleLead:SetText(lead or '');titleTail:SetText(tail or '')
- if K.ApplyTextFont then
-  -- Name and translated fragments can require different font families.
-  K.ApplyTextFont(title,13,false,'',NativeNameFont(name))
-  K.ApplyTextFont(titleLead,13,false,'');K.ApplyTextFont(titleTail,13,false,'')
- end
- local left=math.min(width*.35,(titleLead.GetUnboundedStringWidth and titleLead:GetUnboundedStringWidth()or titleLead:GetStringWidth()))
- local right=math.min(math.max(0,width-left-24),(titleTail.GetUnboundedStringWidth and titleTail:GetUnboundedStringWidth()or titleTail:GetStringWidth()))
- local natural=title.GetUnboundedStringWidth and title:GetUnboundedStringWidth()or title:GetStringWidth()
- local middle=math.min(math.max(24,width-left-right),math.max(1,natural))
- titleLead:SetWidth(left);titleTail:SetWidth(right);title:SetWidth(middle)
- title:ClearAllPoints();title:SetPoint('TOPLEFT',14+left,-13)
- -- Keep the suffix next to the actual name, not the far edge of the title area.
- titleTail:ClearAllPoints();titleTail:SetPoint('TOPLEFT',14+left+middle,-13)
-end
 local function HeaderTip(owner,text)
  if not headerTooltip then headerTooltip=CreateFrame('GameTooltip','KAClassicBagHeaderTooltip',UIParent,'GameTooltipTemplate')end
  headerTooltip:SetOwner(owner,'ANCHOR_LEFT');headerTooltip:SetText(text)
- local line=_G.KAClassicBagHeaderTooltipTextLeft1
- if line and K.ApplyTextFont then K.ApplyTextFont(line,12,false,'')end
- headerTooltip:Show()
+ K.InventoryTooltip(headerTooltip);headerTooltip:Show()
 end
 local function HideHeaderTip()if headerTooltip then headerTooltip:Hide()end end
 local function HeaderIcon(button,texture)
@@ -69,6 +44,25 @@ local function HeaderIcon(button,texture)
 end
 
 local function Message(text) print('|cffffcc66KerimAnka UI Classic bags:|r '..text) end
+local refreshing=false
+local paintEpoch=0
+local waitingForItemInfo=false
+local perf
+local function Clock()return debugprofilestop and debugprofilestop()or(GetTime and GetTime()*1000 or 0)end
+local function Count(key,amount)if perf then perf[key]=(perf[key]or 0)+(amount or 1)end end
+function M.StartPerf()
+ if perf then Message('Performance sample already running.');return end
+ local sample={events={},refresh=0,layout=0,paint=0,cached=0,cooldown=0,ms=0};perf=sample
+ Message('Sampling bags for 5 seconds; keep the bag open.')
+ C_Timer.After(5,function()
+  if perf~=sample then return end;perf=nil
+  Message(string.format('5s: refresh=%d layout=%d paint=%d cached=%d cooldown=%d refreshLua=%.2fms',sample.refresh,sample.layout,sample.paint,sample.cached,sample.cooldown,sample.ms))
+  local list={};for event,n in pairs(sample.events)do list[#list+1]={event,n}end;table.sort(list,function(a,b)return a[2]>b[2]end)
+  local top={};for i=1,math.min(4,#list)do top[#top+1]=list[i][1]..'='..list[i][2]end
+  Message('Events: '..table.concat(top,', '))
+ end)
+end
+
 local function Replacement()
  local loaded=C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded
  if loaded then
@@ -116,8 +110,18 @@ local function Option(key,default)
  if K.InventoryMenus and K.InventoryMenus.Get then local v=K.InventoryMenus.Get(key);if v~=nil then return v end end
  return default
 end
+function M.MinimumColumns()
+ return K.ClassicBagDesigns.MinimumColumns(K.ClassicBagDesigns.ID(),Option('bagSize',30),K.ClassicInventoryStyle.ItemGap())
+end
 local function Columns()
- local d=Config();return math.max(6,math.min(14,tonumber(d and d.columns) or 10))
+ local d=Config();return math.max(M.MinimumColumns(),math.min(14,math.floor(tonumber(d and d.columns)or 10)))
+end
+M.GetColumns=Columns
+function M.SetColumns(value)
+ if Combat()or type(value)~='number'or value~=value then return false end
+ value=math.max(M.MinimumColumns(),math.min(14,math.floor(value)))
+ if value~=Columns()then Config().columns=value;M.Refresh()end
+ return true
 end
 local function Position()
  if not frame then return end
@@ -125,7 +129,7 @@ local function Position()
  if d and type(d.x)=='number' and type(d.y)=='number' then frame:SetPoint('CENTER',UIParent,'CENTER',d.x,d.y)
  else frame:SetPoint('BOTTOMRIGHT',UIParent,'BOTTOMRIGHT',-35,100) end
 end
-local function Border(button,quality,hasItem)
+local function Border(button,quality,hasItem,quest)
  if not button.kaEdges then
   button.kaEdges={}
   for i=1,4 do
@@ -137,8 +141,9 @@ local function Border(button,quality,hasItem)
    button.kaEdges[i]=t
   end
  end
- local color=ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality or 1] or {r=1,g=1,b=1}
- for _,t in ipairs(button.kaEdges) do t:SetVertexColor(color.r,color.g,color.b);t:SetShown(hasItem and type(quality)=='number' and quality>=2 and Option('bagQuality',true)) end
+ local questBorder=quest and Option('bagQuest',true)
+ local color=questBorder and {r=1,g=.82,b=0}or ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality or 1]or {r=1,g=1,b=1}
+ for _,t in ipairs(button.kaEdges) do t:SetVertexColor(color.r,color.g,color.b);t:SetShown(hasItem and (questBorder or type(quality)=='number'and quality>=2 and Option('bagQuality',true))) end
 end
 local function QuietTemplate(button)
  -- The standalone template's extended-slot overlays are blue by default.
@@ -156,16 +161,19 @@ local function ItemName(info)
  local getter=C_Item and C_Item.GetItemInfo or GetItemInfo
  local name=key and getter and getter(key)
  if not name and info.hyperlink then name=info.hyperlink:match('%[(.-)%]') end
- return type(name)=='string' and name or ''
+ if type(name)~='string'then waitingForItemInfo=true;return ''end
+ return name
 end
-function M.Matches(info)
- local query=search and search:GetText() or ''
- query=query:match('^%s*(.-)%s*$'):lower()
+function M.Matches(info,query)
+ if query==nil then query=(search and search:GetText()or''):match('^%s*(.-)%s*$'):lower()end
  return query=='' or (info~=nil and ItemName(info):lower():find(query,1,true)~=nil)
 end
 function M.HoverBag(id)
- hoverBag=id
- if frame and frame:IsShown() then M.Refresh() end
+ if hoverBag==id then return end;hoverBag=id
+ -- Hover changes only the existing glow. Never reload items or move widgets.
+ for bag,group in pairs(buttons)do for _,b in pairs(group)do
+  if b.kaBagGlow then b.kaBagGlow:SetShown(id~=nil and bag==id)end
+ end end
 end
 local function Money()
  local value=GetMoney and GetMoney() or 0
@@ -240,8 +248,8 @@ function M.RefreshMoneyList()
   local entry=list[moneyOffset+i];row:SetShown(entry~=nil)
   if entry then row.label:SetText(CharacterLabel(entry.record,true));row.value:SetText(Coin(entry.record.money)) end
  end
- moneyPanel.total:SetText('Total: '..Coin(total))
- moneyPanel.range:SetText(#list==0 and 'No recorded characters' or string.format('%d-%d / %d',moneyOffset+1,math.min(#list,moneyOffset+moneyListRows),#list))
+ moneyPanel.total:SetText(T('Total: ')..Coin(total))
+ moneyPanel.range:SetText(#list==0 and T('No recorded characters') or string.format('%d-%d / %d',moneyOffset+1,math.min(#list,moneyOffset+moneyListRows),#list))
  moneyPanel:SetHeight(88+24*math.min(moneyListRows,math.max(1,#list)))
 end
 function M.RemoveMoneyRecord(key)
@@ -251,14 +259,14 @@ function M.RemoveMoneyRecord(key)
 end
 local function MoneyTooltip(self)
  M.RecordMoney()
- local list,total=M.MoneyRecords();GameTooltip:SetOwner(self,'ANCHOR_TOPRIGHT');GameTooltip:SetText('Character money')
+ local list,total=M.MoneyRecords();GameTooltip:SetOwner(self,'ANCHOR_TOPRIGHT');GameTooltip:SetText(T('Character money'))
  for i=1,math.min(moneyTooltipRows,#list) do local v=list[i].record;GameTooltip:AddDoubleLine(CharacterLabel(v,true),Coin(v.money),1,1,1,1,1,1) end
  if #list>moneyTooltipRows then
   local rest=0;for i=moneyTooltipRows+1,#list do rest=rest+list[i].record.money end
   GameTooltip:AddDoubleLine('Other characters ('..(#list-moneyTooltipRows)..')',Coin(rest),.6,.6,.6,1,1,1)
  end
- GameTooltip:AddLine(' ');GameTooltip:AddDoubleLine('Total recorded',Coin(total),1,.82,0,1,.82,0)
- GameTooltip:AddLine('Click: full list | Mouse wheel: scroll after opening',.65,.7,.62,true);GameTooltip:Show()
+ GameTooltip:AddLine(' ');GameTooltip:AddDoubleLine(T('Total recorded'),Coin(total),1,.82,0,1,.82,0)
+ GameTooltip:AddLine(T('Click: full list | Mouse wheel: scroll after opening'),.65,.7,.62,true);K.InventoryTooltip(GameTooltip);GameTooltip:Show()
 end
 function M.ToggleMoneyList()
  M.RecordMoney()
@@ -268,18 +276,18 @@ function M.ToggleMoneyList()
   moneyPanel=CreateFrame('Frame','KerimAnkaUIClassicMoneyList',frame,'BackdropTemplate');moneyPanel:SetWidth(390)
   moneyPanel:SetFrameStrata('TOOLTIP');moneyPanel:SetClampedToScreen(true);moneyPanel:EnableMouse(true);moneyPanel:EnableMouseWheel(true)
   moneyPanel:SetBackdrop({bgFile='Interface\\Buttons\\WHITE8X8',edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=1})
-  moneyPanel:SetBackdropColor(.035,.04,.03,.98);moneyPanel:SetBackdropBorderColor(.63,.49,.25,1)
-  local heading=moneyPanel:CreateFontString(nil,'OVERLAY','GameFontNormal');heading:SetPoint('TOPLEFT',12,-12);heading:SetText('Character money - last recorded')
+  K.ClassicInventoryStyle.Apply(moneyPanel,1)
+  local heading=moneyPanel:CreateFontString(nil,'OVERLAY','GameFontNormal');K.InventoryFont(heading);heading:SetPoint('TOPLEFT',12,-12);K.InventoryLabel(heading,'Character money - last recorded')
   local close=CreateFrame('Button',nil,moneyPanel,'UIPanelCloseButton');close:SetPoint('TOPRIGHT',1,1);close:SetScript('OnClick',function() moneyPanel:Hide() end)
   moneyRows={}
   for i=1,moneyListRows do
    local row=CreateFrame('Frame',nil,moneyPanel);row:SetPoint('TOPLEFT',12,-35-(i-1)*24);row:SetSize(366,22)
-   row.label=row:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');row.label:SetPoint('LEFT');row.label:SetWidth(228);row.label:SetJustifyH('LEFT')
-   row.value=row:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');row.value:SetPoint('RIGHT');row.value:SetWidth(126);row.value:SetJustifyH('RIGHT')
+   row.label=row:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');K.InventoryFont(row.label);row.label:SetPoint('LEFT');row.label:SetWidth(228);row.label:SetJustifyH('LEFT')
+   row.value=row:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');K.InventoryFont(row.value);row.value:SetPoint('RIGHT');row.value:SetWidth(126);row.value:SetJustifyH('RIGHT')
    moneyRows[i]=row
   end
-  moneyPanel.total=moneyPanel:CreateFontString(nil,'OVERLAY','GameFontNormal');moneyPanel.total:SetPoint('BOTTOMRIGHT',-12,12)
-  moneyPanel.range=moneyPanel:CreateFontString(nil,'OVERLAY','GameFontDisableSmall');moneyPanel.range:SetPoint('BOTTOMLEFT',12,34)
+  moneyPanel.total=moneyPanel:CreateFontString(nil,'OVERLAY','GameFontNormal');K.InventoryFont(moneyPanel.total);moneyPanel.total:SetPoint('BOTTOMRIGHT',-12,12)
+  moneyPanel.range=moneyPanel:CreateFontString(nil,'OVERLAY','GameFontDisableSmall');K.InventoryFont(moneyPanel.range);moneyPanel.range:SetPoint('BOTTOMLEFT',12,34)
   moneyPanel:SetScript('OnMouseWheel',function(_,delta) moneyOffset=(moneyOffset or 0)-delta;M.RefreshMoneyList() end)
   table.insert(UISpecialFrames,'KerimAnkaUIClassicMoneyList')
  end
@@ -287,9 +295,9 @@ function M.ToggleMoneyList()
 end
 function M.DrawMoneyRecords(page,w,y)
  local list,total=M.MoneyRecords()
- w.Text(page,'Recorded character money',8,y,690,18,{.73,.62,.41});y=y-34
- w.Text(page,'Last recorded, all realms. X removes only this money record. Logging into that character again records it anew.',8,y,690,13,{.65,.70,.62});y=y-56
- w.Text(page,'Total: '..Coin(total),8,y,690,14);y=y-34
+ w.Text(page,T('Recorded character money'),8,y,690,18,{.73,.62,.41});y=y-34
+ w.Text(page,T('Last recorded, all realms. X removes only this money record. Logging into that character again records it anew.'),8,y,690,13,{.65,.70,.62});y=y-56
+ w.Text(page,T('Total: ')..Coin(total),8,y,690,14);y=y-34
  for _,entry in ipairs(list) do
   local key=entry.key;local box=w.Box(page,0,y,714,46)
   w.Text(box,CharacterLabel(entry.record,true),12,-15,410,13)
@@ -297,17 +305,20 @@ function M.DrawMoneyRecords(page,w,y)
   w.Button(box,'X',662,-10,30,26,function() M.RemoveMoneyRecord(key);if K.Render then K.Render() end end)
   y=y-54
  end
- if #list==0 then w.Text(page,'No recorded characters.',8,y,690,13);y=y-34 end
+ if #list==0 then w.Text(page,T('No recorded characters.'),8,y,690,13);y=y-34 end
  return y-20
 end
 local function CooldownText(counter)
  local left=counter.expires and counter.expires-GetTime() or 0
- if left<=0 then counter.expires=nil;counter.label:SetText('');counter:Hide();return end
+ if left<=0 then counter.expires=nil;if counter.kaText~=''then counter.label:SetText('');counter.kaText=''end;counter:SetScript('OnUpdate',nil);counter:Hide();return end
  local text
  if left>=3600 then text=string.format(HOUR_ONELETTER_ABBR or '%dh',math.ceil(left/3600))
  elseif left>=60 then text=string.format(MINUTE_ONELETTER_ABBR or '%dm',math.ceil(left/60))
  else text=tostring(math.ceil(left))end
- counter.label:SetText(text)
+ if counter.kaText~=text then counter.label:SetText(text);counter.kaText=text end
+end
+local function CounterUpdate(self,dt)
+ self.kaElapsed=(self.kaElapsed or 0)+dt;if self.kaElapsed>=.1 then self.kaElapsed=0;CooldownText(self)end
 end
 local function PaintCooldown(button,bag,slot,hasItem)
  local start,duration,enabled=0,0,0
@@ -323,32 +334,47 @@ local function PaintCooldown(button,bag,slot,hasItem)
  if cooldown then
   -- One explicit counter, independent of the global cooldown-number CVar.
   -- Let native swipe timing/animation run; do not replace its scripts.
-  cooldown.noCooldownCount=true
-  if cooldown.SetHideCountdownNumbers then cooldown:SetHideCountdownNumbers(true)end
-  if cooldown.SetDrawSwipe then cooldown:SetDrawSwipe(true)end
+  if not cooldown.kaConfigured then
+   cooldown.noCooldownCount=true
+   if cooldown.SetHideCountdownNumbers then cooldown:SetHideCountdownNumbers(true)end
+   if cooldown.SetDrawSwipe then cooldown:SetDrawSwipe(true)end
+   cooldown.kaConfigured=true
+  end
+  if cooldown.kaStart~=start or cooldown.kaDuration~=duration or cooldown.kaEnabled~=(enabled or 0)or cooldown.kaActive~=not not active then
+  cooldown.kaStart,cooldown.kaDuration,cooldown.kaEnabled,cooldown.kaActive=start,duration,enabled or 0,not not active
   if CooldownFrame_Set then CooldownFrame_Set(cooldown,start,duration,enabled or 0)
   elseif cooldown.SetCooldown then cooldown:SetCooldown(active and start or 0,active and duration or 0);cooldown:SetShown(active and true or false)end
+  end
  end
  local counter=button.kaCooldownCounter
  if active and not counter then
   counter=CreateFrame('Frame',nil,button);button.kaCooldownCounter=counter;counter:SetAllPoints(button);counter:EnableMouse(false)
   counter:SetFrameLevel(math.max(button:GetFrameLevel()+5,cooldown and cooldown:GetFrameLevel()+1 or 0))
-  counter.label=counter:CreateFontString(nil,'OVERLAY','NumberFontNormal');counter.label:SetPoint('CENTER');counter.label:SetTextColor(1,1,1,1)
-  local elapsed=0;counter:SetScript('OnUpdate',function(self,dt)elapsed=elapsed+dt;if elapsed>=.1 then elapsed=0;CooldownText(self)end end)
+  counter.label=counter:CreateFontString(nil,'OVERLAY','NumberFontNormal');K.InventoryFont(counter.label);counter.label:SetPoint('CENTER');counter.label:SetTextColor(1,1,1,1)
+  counter.kaElapsed=0
  end
  if counter then
   counter.expires=active and start+duration or nil
-  if active then counter:Show()end
+  if active then if counter:GetScript('OnUpdate')~=CounterUpdate then counter:SetScript('OnUpdate',CounterUpdate)end;counter:Show()end
   CooldownText(counter)
  end
 end
-local function Paint(button,bag,slot)
- QuietTemplate(button)
- local info=C_Container.GetContainerItemInfo(bag,slot)
+local EMPTY_ITEM={}
+local function Paint(button,bag,slot,info,provided)
+ if not provided then info=C_Container.GetContainerItemInfo(bag,slot)end
+ button.kaHasItem=info~=nil
+ local v=info or EMPTY_ITEM
+ local junkOption,qualityOption,questOption,emptyOption,design=Option('bagJunk',true),Option('bagQuality',true),Option('bagQuest',true),Option('bagEmptySlots',false),Option('bagDesign',1)
+ local c=button.kaPaintSnapshot
+ if c and c.epoch==paintEpoch and c.present==(info~=nil)and c.itemID==v.itemID and c.link==v.hyperlink and c.icon==v.iconFileID and c.count==v.stackCount and c.quality==v.quality and c.lock==v.isLocked and c.value==v.hasNoValue and c.junkOption==junkOption and c.qualityOption==qualityOption and c.questOption==questOption and c.emptyOption==emptyOption and c.design==design then
+  Count('cached');if button.kaBagGlow then button.kaBagGlow:SetShown(hoverBag==bag)end;PaintCooldown(button,bag,slot,info~=nil);return
+ end
+ Count('paint');QuietTemplate(button)
  local icon=info and info.iconFileID
  local quality=info and info.quality
- SetItemButtonTexture(button,icon);SetItemButtonCount(button,info and info.stackCount or 0)
- local junk=info and quality==0 and not info.hasNoValue and Option('bagJunk',true)
+ SetItemButtonTexture(button,icon);K.ClassicInventoryStyle.EmptySlot(button,icon~=nil);K.ClassicBagDesigns.SkinItem(button,K.ClassicBagDesigns.ID(),icon~=nil);SetItemButtonCount(button,info and info.stackCount or 0)
+ local quest=K.ClassicInventoryStyle.IsQuestItem(bag,slot,info)
+ local junk=info and not quest and quality==0 and not info.hasNoValue and Option('bagJunk',true)
  if SetItemButtonDesaturated then SetItemButtonDesaturated(button,(info and info.isLocked) or junk or false) end
  local texture=button.icon or button.Icon or _G[button:GetName()..'IconTexture']
  if texture then texture:SetVertexColor(junk and .55 or 1,junk and .55 or 1,junk and .55 or 1) end
@@ -358,13 +384,16 @@ local function Paint(button,bag,slot)
   button.kaJunk:SetTexture('Interface\\MoneyFrame\\UI-GoldIcon');button.kaJunk:SetSize(13,13);button.kaJunk:SetPoint('TOPLEFT',1,-1)
  end
  button.kaJunk:SetShown(junk and true or false)
- Border(button,quality,icon~=nil)
+ Border(button,quality,icon~=nil,quest)
  if not button.kaBagGlow then
   button.kaBagGlow=button:CreateTexture(nil,'OVERLAY',nil,6)
   button.kaBagGlow:SetAllPoints();button.kaBagGlow:SetColorTexture(1,.78,.20,.22)
  end
  button.kaBagGlow:SetShown(hoverBag==bag)
  PaintCooldown(button,bag,slot,info~=nil)
+ c=c or{};button.kaPaintSnapshot=c
+ c.epoch,c.present,c.itemID,c.link,c.icon,c.count,c.quality,c.lock,c.value=paintEpoch,info~=nil,v.itemID,v.hyperlink,v.iconFileID,v.stackCount,v.quality,v.isLocked,v.hasNoValue
+ c.junkOption,c.qualityOption,c.questOption,c.emptyOption,c.design=junkOption,qualityOption,questOption,emptyOption,design
 end
 -- Keep Blizzard split/purchase dialogs above our inventory windows, without
 -- changing their owners, values, scripts or the actual item operation.
@@ -474,7 +503,7 @@ local sortContext
 local sortMoves,sortWaits=0,0
 local lastSortMove,sortStalls
 local function SortLabel()
- if sortButton then sortButton:SetText(sorting and not sortContext and 'Stop' or 'Sort');sortButton:SetAlpha(Combat() and .45 or 1) end
+ if sortButton then sortButton:SetText(sorting and not sortContext and T('Stop') or T('Sort'));sortButton:SetAlpha(Combat() and .45 or 1) end
  if sortContext and sortContext.Label then sortContext.Label(sorting) end
 end
 function M.StopSort(reason)
@@ -508,7 +537,7 @@ local function ReadSortSlots()
     local data=info and ItemData(info)
     if info and not data then
      if C_Item and C_Item.RequestLoadItemDataByID and info.itemID then C_Item.RequestLoadItemDataByID(info.itemID) end
-     return nil,'Item information is loading. Press Sort again shortly.'
+     return nil,T('Item information is loading. Press Sort again shortly.')
     end
     local group=groups[family];group[#group+1]={bag=bag,slot=slot,item=data,index=#group+1}
    end
@@ -529,14 +558,14 @@ local function Before(a,b)
  return a.count>b.count
 end
 local function MoveSlots(from,to)
- if CursorItem() then return false,'Finish moving the item on your cursor first.' end
+ if CursorItem() then return false,T('Finish moving the item on your cursor first.') end
  C_Container.PickupContainerItem(from.bag,from.slot)
  if not CursorItem() then return false,'The item could not be picked up. Try again.' end
  C_Container.PickupContainerItem(to.bag,to.slot)
  -- A swap or partial stack leaves an item on the cursor. Put it in the
  -- vacated source slot immediately; never delete or blindly clear the cursor.
  if CursorItem() then C_Container.PickupContainerItem(from.bag,from.slot) end
- if CursorItem() then return false,'Sorting stopped: place the item on your cursor into a free slot.' end
+ if CursorItem() then return false,T('Sorting stopped: place the item on your cursor into a free slot.') end
  return true
 end
 local function NextSortMove(groups,order)
@@ -574,22 +603,22 @@ end
 local function SortTick(token)
  if not sorting or token~=sortGeneration then return end
  if Combat() or not M.Enabled() or not SortVisible() or (UnitIsDead and UnitIsDead('player')) then M.StopSort();return end
- if CursorItem() then M.StopSort('Finish moving the item on your cursor first.');return end
+ if CursorItem() then M.StopSort(T('Finish moving the item on your cursor first.'));return end
  local groups,order=ReadSortSlots()
  if not groups then
   if order=='locked' and sortWaits<120 then sortWaits=sortWaits+1;C_Timer.After(.1,function() SortTick(token) end);return end
-  M.StopSort(order=='locked' and 'Items are still locked. Try again shortly.' or order);return
+  M.StopSort(order=='locked' and T('Items are still locked. Try again shortly.') or order);return
  end
  sortWaits=0
  local from,to=NextSortMove(groups,order)
  if not from then SortRefresh();M.StopSort();return end
- if sortMoves>=1024 then M.StopSort('Sorting paused. Press Sort again to continue.');return end
+ if sortMoves>=1024 then M.StopSort(T('Sorting paused. Press Sort again to continue.'));return end
  local function Signature(slot)
   local item=slot.item;return slot.bag..':'..slot.slot..':'..(item and (item.key..':'..item.count) or 'empty')
  end
  local signature=Signature(from)..'>'..Signature(to)
  sortStalls=signature==lastSortMove and (sortStalls or 0)+1 or 0;lastSortMove=signature
- if sortStalls>=3 then M.StopSort('An item could not be moved. Check bag space or item restrictions and try again.');return end
+ if sortStalls>=3 then M.StopSort(T('An item could not be moved. Check bag space or item restrictions and try again.'));return end
  local ok,reason=MoveSlots(from,to)
  if not ok then M.StopSort(reason);return end
  sortMoves=sortMoves+1;SortRefresh()
@@ -597,12 +626,12 @@ local function SortTick(token)
 end
 function M.Sort(context)
  if sorting then local same=sortContext==context;M.StopSort();if same then return false end end
- if Combat() then Message('Sort outside combat.');return false end
+ if Combat() then Message(T('Sort outside combat.'));return false end
  if not M.Enabled() then return false end
  if context then if not context.Valid() then return false end
  elseif not frame or not frame:IsShown() then return false end
- if CursorItem() then Message('Finish moving the item on your cursor first.');return false end
- if not C_Container.PickupContainerItem or not (C_Item and C_Item.GetItemInfo or GetItemInfo) then Message('Native item sorting APIs are unavailable.');return false end
+ if CursorItem() then Message(T('Finish moving the item on your cursor first.'));return false end
+ if not C_Container.PickupContainerItem or not (C_Item and C_Item.GetItemInfo or GetItemInfo) then Message(T('Native item sorting APIs are unavailable.'));return false end
  sortContext=context;sorting=true;sortGeneration=sortGeneration+1;sortMoves=0;sortWaits=0;lastSortMove=nil;sortStalls=0;SortLabel()
  SortTick(sortGeneration);return true
 end
@@ -610,11 +639,11 @@ function M.IsSorting(context) return sorting and (context==nil or sortContext==c
 local function Ensure()
  if frame then return true end
  if not (C_Container and ContainerFrameItemButton_OnLoad and SetItemButtonTexture and SetItemButtonCount) then
-  Message('Native Classic bag-button APIs are unavailable. Original bags remain available.');return false
+  Message(T('Native Classic bag-button APIs are unavailable. Original bags remain available.'));return false
  end
  frame=CreateFrame('Frame','KerimAnkaUIClassicBagFrame',UIParent,'BackdropTemplate')
  frame:Hide()
- frame.kaClassicInventory=true
+ frame.kaClassicInventory=true;frame.kaBagDesignWindow=true
  frame:SetFrameStrata('DIALOG');frame:SetMovable(true);frame:SetClampedToScreen(true);frame:EnableMouse(true);frame:RegisterForDrag('LeftButton')
  frame:SetBackdrop({bgFile='Interface\\Buttons\\WHITE8X8',edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=2})
  frame:SetBackdropColor(.045,.05,.04,.97);frame:SetBackdropBorderColor(.63,.49,.25,1)
@@ -624,51 +653,54 @@ local function Ensure()
   local d=Config();if d and x and y and px and py then d.x=x-px;d.y=y-py end
   Position()
  end)
- title=frame:CreateFontString(nil,'OVERLAY','GameFontNormal')
- titleLead=frame:CreateFontString(nil,'OVERLAY','GameFontNormal');titleLead:SetPoint('TOPLEFT',14,-13)
- titleTail=frame:CreateFontString(nil,'OVERLAY','GameFontNormal')
- for _,label in ipairs({title,titleLead,titleTail})do label:SetJustifyH('LEFT');label:SetWordWrap(false)end
- local close=CreateFrame('Button','KerimAnkaUIClassicBagClose',frame,'UIPanelCloseButton');close:SetPoint('TOPRIGHT',1,1)
+ local close=K.ClassicBagDesigns.NewButton('KerimAnkaUIClassicBagClose',frame,'close');close:SetSize(26,26);close:SetPoint('TOPRIGHT',-10,-10)
  close:SetScript('OnClick',function() frame:Hide() end)
- local settings=CreateFrame('Button','KerimAnkaUIClassicBagSettings',frame,'UIPanelButtonTemplate')
- settings:SetSize(22,22);settings:SetPoint('TOPRIGHT',-32,-8)
+ local settings=K.ClassicBagDesigns.NewButton('KerimAnkaUIClassicBagSettings',frame,'settings')
+ frame.kaBagSettings=settings;settings:SetSize(22,22);settings:SetPoint('TOPRIGHT',-36,-8)
  HeaderIcon(settings,'Interface\\Icons\\INV_Misc_Gear_01')
  settings:SetScript('OnClick',function()
   HideHeaderTip()
-  if K.ShowPage then frame:Hide();K.ShowPage('inventory')end
+  if K.ShowPage then frame:Hide();if K.OpenBagSettings then K.OpenBagSettings()else K.ShowPage('inventory')end end
  end)
  settings:SetScript('OnEnter',function(self)HeaderTip(self,HeaderText(4))end)
  settings:SetScript('OnLeave',HideHeaderTip)
- footer=frame:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');footer:SetPoint('BOTTOMLEFT',14,12)
- local records=CreateFrame('Button','KerimAnkaUIClassicBagRecords',frame,'UIPanelButtonTemplate')
- records:SetSize(100,22);records:SetPoint('BOTTOMLEFT',14,33);records:SetText('Recorded items')
+ footer=frame:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');K.InventoryFont(footer);footer:SetPoint('BOTTOMLEFT',14,12)
+ local records=K.ClassicBagDesigns.NewButton('KerimAnkaUIClassicBagRecords',frame,'records')
+ frame.kaRecordsButton=records;records:SetSize(150,22);records:SetPoint('BOTTOMLEFT',14,33);K.InventoryLabel(records,'Recorded items')
  records:SetScript('OnClick',function() if K.ClassicItemRecords then K.ClassicItemRecords.Toggle() end end)
  records:SetScript('OnEnter',function(self)
-  GameTooltip:SetOwner(self,'ANCHOR_LEFT');GameTooltip:SetText('Recorded inventory and bank')
-  GameTooltip:AddLine('Read-only snapshots for characters you have visited. Bank records require a bank visit.',1,.82,0,true);GameTooltip:Show()
+  GameTooltip:SetOwner(self,'ANCHOR_LEFT');GameTooltip:SetText(T('Recorded inventory and bank'))
+  GameTooltip:AddLine(T('Read-only snapshots for characters you have visited. Bank records require a bank visit.'),.9,.9,.86,true);K.InventoryTooltip(GameTooltip);GameTooltip:Show()
  end)
  records:SetScript('OnLeave',function() GameTooltip:Hide() end)
- moneyText=frame:CreateFontString('KerimAnkaUIClassicBagMoney','OVERLAY','GameFontHighlightSmall');moneyText:SetPoint('BOTTOMRIGHT',-14,12)
+ moneyText=frame:CreateFontString('KerimAnkaUIClassicBagMoney','OVERLAY','GameFontHighlightSmall');K.InventoryFont(moneyText);moneyText:SetPoint('BOTTOMRIGHT',-14,12)
  moneyHit=CreateFrame('Button','KerimAnkaUIClassicMoneyButton',frame);moneyHit:SetPoint('BOTTOMRIGHT',-10,5);moneyHit:SetSize(90,25)
  moneyHit:SetScript('OnEnter',MoneyTooltip);moneyHit:SetScript('OnLeave',function() GameTooltip:Hide() end)
  moneyHit:SetScript('OnClick',function() M.ToggleMoneyList() end)
 
- search=CreateFrame('EditBox','KerimAnkaUIClassicBagSearch',frame,'InputBoxTemplate')
- search:SetAutoFocus(false);search:SetSize(240,22);search:SetPoint('TOPLEFT',20,-79)
- search:SetMaxLetters(80);search:SetFontObject(GameFontHighlightSmall)
- searchHint=search:CreateFontString(nil,'OVERLAY','GameFontDisableSmall');searchHint:SetPoint('LEFT',3,0);searchHint:SetText(SEARCH or 'Search')
- search:SetScript('OnTextChanged',function(self) searchHint:SetShown(self:GetText()=='');M.Refresh() end)
+ search=CreateFrame('EditBox','KerimAnkaUIClassicBagSearch',frame)
+ search:EnableMouse(true);search:SetAutoFocus(false);search:SetSize(240,22);search:SetPoint('TOPLEFT',20,-79)
+ search:SetMaxLetters(80);search:SetFontObject(GameFontHighlightSmall);K.InventoryFont(search)
+ searchHint=search:CreateFontString(nil,'OVERLAY','GameFontDisableSmall');K.InventoryFont(searchHint);searchHint:SetPoint('LEFT',27,0);K.InventoryLabel(searchHint,'Search');searchHint:SetTextColor(.6,.61,.58,1);searchHint:SetWordWrap(false)
+ search.kaLastQuery=search:GetText()or''
+ search:SetScript('OnTextChanged',function(self)
+  local query=self:GetText()or'';searchHint:SetShown(query=='')
+  if self.kaLastQuery==query then return end;self.kaLastQuery=query;M.Refresh()
+ end)
+ search:SetScript('OnMouseDown',function(self)self:SetFocus()end)
+ search:SetScript('OnEditFocusGained',function(self)searchHint:SetShown(self:GetText()=='');K.ClassicBagDesigns.SearchFocus(self,true)end)
+ search:SetScript('OnEditFocusLost',function(self)searchHint:SetShown(self:GetText()=='');K.ClassicBagDesigns.SearchFocus(self,false)end)
  search:SetScript('OnEscapePressed',function(self) self:SetText('');self:ClearFocus() end)
  search:SetScript('OnEnterPressed',function(self) self:ClearFocus() end)
- local clear=CreateFrame('Button',nil,frame,'UIPanelButtonTemplate');searchClear=clear;clear:SetSize(22,22);clear:SetPoint('TOPRIGHT',-14,-79);clear:SetText('x')
+ local clear=K.ClassicBagDesigns.NewButton(nil,search,'clear');searchClear=clear;clear:SetSize(22,22);clear:SetPoint('TOPRIGHT',-14,-79);clear:SetText('x')
  clear:SetScript('OnClick',function() search:SetText('');search:ClearFocus() end)
- sortButton=CreateFrame('Button','KerimAnkaUIClassicBagSort',frame,'UIPanelButtonTemplate')
- sortButton:SetSize(68,22);sortButton:SetPoint('TOPRIGHT',-42,-79);sortButton:SetText('Sort')
+ sortButton=K.ClassicBagDesigns.NewButton('KerimAnkaUIClassicBagSort',frame,'sort')
+ sortButton:SetSize(68,22);sortButton:SetPoint('TOPRIGHT',-42,-79);K.InventoryLabel(sortButton,'Sort')
  sortButton:SetScript('OnClick',function() M.Sort() end)
  sortButton:SetScript('OnEnter',function(self)
-  GameTooltip:SetOwner(self,'ANCHOR_LEFT');GameTooltip:SetText('Sort bags')
-  GameTooltip:AddLine('Combine stacks, group item types, put grey items and empty slots last.',1,.82,0,true)
-  GameTooltip:AddLine('All equipped bags. Outside combat only. Click again to stop.',1,.82,0,true);GameTooltip:Show()
+  GameTooltip:SetOwner(self,'ANCHOR_LEFT');GameTooltip:SetText(T('Sort bags'))
+  GameTooltip:AddLine(T('Combine stacks, group item types, put grey items and empty slots last.'),.9,.9,.86,true)
+  GameTooltip:AddLine(T('All equipped bags. Outside combat only. Click again to stop.'),.9,.9,.86,true);K.InventoryTooltip(GameTooltip);GameTooltip:Show()
  end)
  sortButton:SetScript('OnLeave',function() GameTooltip:Hide() end)
 
@@ -681,7 +713,7 @@ local function Ensure()
   M.ReleaseKeyring(true);if CloseNative then CloseNative() end
   busy=wasBusy
  end)
- shelfToggle=CreateFrame('Button','KerimAnkaUIClassicBagShelfToggle',frame,'UIPanelButtonTemplate')
+ shelfToggle=K.ClassicBagDesigns.NewButton('KerimAnkaUIClassicBagShelfToggle',frame,'shelf')
  shelfToggle:SetSize(22,22);shelfToggle:SetPoint('TOPRIGHT',-58,-8)
  HeaderIcon(shelfToggle,'Interface\\Buttons\\Button-Backpack-Up')
  shelfToggle:SetScript('OnClick',function() M.SetShelfHidden(not Config().shelfHidden) end)
@@ -695,7 +727,7 @@ local function Ensure()
   b:SetSize(30,30);b:SetPoint('TOPLEFT',14+bag*35,-39)
   b:SetBackdrop({edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=1})
   b.icon=b:CreateTexture(nil,'ARTWORK');b.icon:SetPoint('TOPLEFT',2,-2);b.icon:SetPoint('BOTTOMRIGHT',-2,2)
-  b.free=b:CreateFontString(nil,'OVERLAY','NumberFontNormalSmall');b.free:SetPoint('BOTTOMRIGHT',-1,1)
+  b.free=b:CreateFontString(nil,'OVERLAY','NumberFontNormalSmall');K.InventoryFont(b.free);b.free:SetPoint('BOTTOMRIGHT',-1,1)
   b:RegisterForClicks('LeftButtonUp')
   b:SetScript('OnClick',function() ClickBag(id) end)
   b:SetScript('OnReceiveDrag',function() ReceiveBagItem(id) end)
@@ -707,89 +739,154 @@ local function Ensure()
    M.HoverBag(id)
    GameTooltip:SetOwner(self,'ANCHOR_LEFT')
    if id>0 and C_Container.ContainerIDToInventoryID then GameTooltip:SetInventoryItem('player',C_Container.ContainerIDToInventoryID(id))
-   else GameTooltip:SetText(BACKPACK_TOOLTIP or 'Backpack') end
-   GameTooltip:AddLine(tostring(Slots(id))..' slots | Click: filter / show all',1,.82,0)
-   if id>0 then GameTooltip:AddLine('Drag: move bag | Drop a bag here: equip / swap',1,.82,0)
-   else GameTooltip:AddLine('Drop an item here: put in backpack',1,.82,0) end
-   GameTooltip:Show()
+   else GameTooltip:SetText(BACKPACK_TOOLTIP or T('Backpack')) end
+   GameTooltip:AddLine(tostring(Slots(id))..T(' slots | Click: filter / show all'),.9,.9,.86)
+   if id>0 then GameTooltip:AddLine(T('Drag: move bag | Drop a bag here: equip / swap'),.9,.9,.86)
+   else GameTooltip:AddLine(T('Drop an item here: put in backpack'),.9,.9,.86) end
+   K.InventoryTooltip(GameTooltip);GameTooltip:Show()
   end)
   b:SetScript('OnLeave',function() M.HoverBag(nil);GameTooltip:Hide() end)
   local holder=CreateFrame('Frame','KAClassicBagHolder'..bag,body);holders[bag]=holder
   holder:SetID(bag);holder:SetAllPoints(body);buttons[bag]={}
  end
  keyButton=CreateFrame('Button',nil,frame,'BackdropTemplate');keyButton:SetSize(25,30);keyButton:SetPoint('TOPLEFT',190,-39)
- keyButton:SetBackdrop({edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=1});keyButton:SetBackdropBorderColor(.45,.4,.2,1)
+ keyButton:SetBackdrop({edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=1});keyButton:SetBackdropBorderColor(0,0,0,0)
  keyButton.icon=keyButton:CreateTexture(nil,'ARTWORK');keyButton.icon:SetPoint('TOPLEFT',2,-2);keyButton.icon:SetPoint('BOTTOMRIGHT',-2,2);keyButton.icon:SetTexture('Interface\\Icons\\INV_Misc_Key_14')
  keyButton:SetScript('OnClick',function()
   local id=Enum and Enum.BagIndex and Enum.BagIndex.Keyring or KEYRING_CONTAINER
   if not Combat() and id and ToggleBag then ToggleBag(id);QueueDock() end
  end)
- keyButton:SetScript('OnEnter',function(self) GameTooltip:SetOwner(self,'ANCHOR_LEFT');GameTooltip:SetText(KEYRING or 'Keyring');GameTooltip:Show() end)
+ keyButton:SetScript('OnEnter',function(self) GameTooltip:SetOwner(self,'ANCHOR_LEFT');GameTooltip:SetText(KEYRING or T('Keyring'));K.InventoryTooltip(GameTooltip);GameTooltip:Show() end)
  keyButton:SetScript('OnLeave',function() GameTooltip:Hide() end)
  for _,delta in ipairs({-1,1}) do
   local change=delta
-  local b=CreateFrame('Button',nil,frame,'UIPanelButtonTemplate');b:SetSize(24,22)
+  local b=K.ClassicBagDesigns.NewButton(nil,frame,change<0 and'minus'or'plus');b:SetSize(24,22)
   frame.kaResizeButtons=frame.kaResizeButtons or {};table.insert(frame.kaResizeButtons,b);b.kaResizeDelta=change
   b:SetPoint('TOPRIGHT',change<0 and -112 or -85,-8);b:SetText(change<0 and '-' or '+')
-  b:SetScript('OnClick',function() if not Combat() then Config().columns=math.max(6,math.min(14,Columns()+change));M.Refresh() end end)
+  b:SetScript('OnClick',function()M.SetColumns(Columns()+change)end)
  end
  UISpecialFrames=UISpecialFrames or {};table.insert(UISpecialFrames,'KerimAnkaUIClassicBagFrame')
+ frame.kaDesignButtons={close,settings,records,sortButton,searchClear,shelfToggle}
+ for _,b in ipairs(frame.kaResizeButtons)do table.insert(frame.kaDesignButtons,b)end
+ frame.kaBagBadge=frame:CreateTexture(nil,'ARTWORK');frame.kaBagBadge:SetPoint('TOPLEFT',14,-10);frame.kaBagBadge:SetSize(20,20);frame.kaBagBadge:SetTexture('Interface\\Buttons\\Button-Backpack-Up')
  Position();frame:Hide();return true
 end
-function M.Refresh()
+local function SetText(region,value)
+ if region.kaTextValue~=value then region:SetText(value);region.kaTextValue=value end
+end
+local function CapacityText(free,total,l)
+ local compact=string.format('%d / %d',free,total)
+ if not l.wideFooter then return compact end
+ local full=string.format(T('%d / %d slots free%s'),free,total,filterBag and(T(' | bag ')..filterBag)or'')
+ local language=KAClassic_KerimAnkaUIDB and KAClassic_KerimAnkaUIDB.language or'en'
+ K.ClassicBagDesigns.CapacityFont(footer)
+ if footer.kaFullText~=full or footer.kaMeasureLanguage~=language then
+  SetText(footer,full)
+  footer.kaFullWidth=footer.GetUnboundedStringWidth and footer:GetUnboundedStringWidth()or footer:GetStringWidth()
+  footer.kaFullText,footer.kaMeasureLanguage=full,language
+ end
+ return footer.kaFullWidth<=l.footerWidth and full or compact
+end
+function M.RefreshMoney()
+ if not frame or not frame:IsShown()then return end
+ SetText(moneyText,Money())
+ local width=math.min(96,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth()or 80)+12))
+ if moneyText.kaWidth~=width then moneyText:SetWidth(width);moneyHit:SetWidth(width+8);moneyText.kaWidth=width end
+end
+function M.RefreshCooldowns()
+ if not frame or not frame:IsShown()then return end;Count('cooldown')
+ for bag,group in pairs(buttons)do for slot,b in pairs(group)do if b:IsShown()then PaintCooldown(b,bag,slot,b.kaHasItem)end end end
+end
+local function RefreshVisible()
  if not frame or not K.db or not frame:IsShown() then return end
+ K.ClassicInventoryStyle.Apply(frame,2)
  local size=math.max(18,math.min(48,tonumber(Option('bagSize',30)) or 30))
- local cell=size+4;local columns=Columns();local n,total,free=0,0,0
+ local cell=size+K.ClassicInventoryStyle.ItemGap();local columns=Columns();local n,total,free=0,0,0
+ waitingForItemInfo=false
+ local query=(search:GetText()or''):match('^%s*(.-)%s*$'):lower()
  local shelfHidden=Config().shelfHidden==true
- local width=math.max(230,columns*cell+28);local narrow=width<330
- local extra=narrow and 29 or 0
- local searchY=(shelfHidden and -39 or -79)-extra
- local itemTop=(shelfHidden and 72 or 112)+extra
- local gridLeft=(width-columns*cell)/2
+ local shortcutGap=K.ClassicInventoryStyle.BagShortcutGap()
+ local hasKey=KeyRingButton~=nil and (KEYRING_CONTAINER~=nil or Enum and Enum.BagIndex and Enum.BagIndex.Keyring~=nil)
+ local layout=K.ClassicBagDesigns.Layout(K.ClassicBagDesigns.ID(),size,columns,0,K.ClassicInventoryStyle.ItemGap(),shortcutGap,shelfHidden,hasKey)
+ local gridLeft,itemTop=layout.itemX,layout.itemY
  for bag=0,4 do
   local count=Slots(bag);local holder=holders[bag];holder.size=count
   local row=bagButtons[bag]
   local inventory=bag>0 and C_Container.ContainerIDToInventoryID(bag)
-  row.icon:SetTexture(bag==0 and 'Interface\\Buttons\\Button-Backpack-Up' or (inventory and GetInventoryItemTexture('player',inventory)) or 'Interface\\PaperDoll\\UI-PaperDoll-Slot-Bag')
-  row:ClearAllPoints();row:SetPoint('TOPLEFT',14+bag*35,narrow and -68 or -39)
+  local icon=bag==0 and 'Interface\\Buttons\\Button-Backpack-Up'or(inventory and GetInventoryItemTexture('player',inventory))or'Interface\\PaperDoll\\UI-PaperDoll-Slot-Bag'
+  if row.kaIcon~=icon then row.icon:SetTexture(icon);row.kaIcon=icon end
+  -- Position after the filtered item count determines the bottom tray.
   row:SetShown(not shelfHidden)
-  row:SetAlpha(count>0 and 1 or .4);row:SetBackdropBorderColor(filterBag==bag and 1 or .45,filterBag==bag and .8 or .4,.2,1)
+  row:SetAlpha(count>0 and 1 or .4);row:SetBackdropBorderColor(.65,.72,.78,filterBag==bag and 1 or 0)
   total=total+count
   for slot=1,count do
-   local info=C_Container.GetContainerItemInfo(bag,slot);if not info then free=free+1 end
+   local info=C_Container.GetContainerItemInfo(bag,slot);if not info then free=free+1 elseif not info.iconFileID then waitingForItemInfo=true end
    local button=buttons[bag][slot]
    if not button then
     button=CreateFrame('Button',holder:GetName()..'Item'..slot,holder,'ContainerFrameItemButtonTemplate')
     button:SetID(slot);buttons[bag][slot]=button
    end
-   if (filterBag==nil or filterBag==bag) and M.Matches(info) then
-    local scale=size/37;button:SetSize(37,37);button:SetScale(scale);button:ClearAllPoints()
-    button:SetPoint('TOPLEFT',frame,'TOPLEFT',(gridLeft+(n%columns)*cell)/scale,(-itemTop-math.floor(n/columns)*cell)/scale)
-    Paint(button,bag,slot);button:Show();n=n+1
+   if (filterBag==nil or filterBag==bag) and M.Matches(info,query) then
+    local scale=size/37;local x,y=(gridLeft+(n%columns)*cell)/scale,(-itemTop-math.floor(n/columns)*cell)/scale
+    if button.kaScale~=scale then button:SetSize(37,37);button:SetScale(scale);button.kaScale=scale end
+    if button.kaX~=x or button.kaY~=y then button:ClearAllPoints();button:SetPoint('TOPLEFT',frame,'TOPLEFT',x,y);button.kaX,button.kaY=x,y end
+    Paint(button,bag,slot,info,true);if not button:IsShown()then button:Show()end;n=n+1
    else button:Hide() end
   end
   for slot=count+1,#buttons[bag] do buttons[bag][slot]:Hide() end
  end
- local rows=math.max(1,math.ceil(n/columns));frame:SetSize(width,itemTop+rows*cell+60)
- footer:SetText(string.format('%d / %d slots free%s',free,total,filterBag and (' | bag '..filterBag) or ''))
- bagButtons[0].free:SetText(tostring(free))
- for bag=1,4 do bagButtons[bag].free:SetText('') end
- moneyText:SetText(Money())
- local moneyWidth=math.min(width-120,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth() or 80)+12))
- moneyText:SetWidth(moneyWidth);moneyHit:SetWidth(moneyWidth+8);footer:SetWidth(math.max(70,width-moneyWidth-38))
- search:SetWidth(frame:GetWidth()-146)
- keyButton:SetShown(not shelfHidden and KeyRingButton~=nil and (KEYRING_CONTAINER~=nil or Enum and Enum.BagIndex and Enum.BagIndex.Keyring~=nil))
-
+ local l=K.ClassicBagDesigns.Layout(K.ClassicBagDesigns.ID(),size,columns,n,K.ClassicInventoryStyle.ItemGap(),shortcutGap,shelfHidden,hasKey)
+ SetText(footer,CapacityText(free,total,l))
+ SetText(bagButtons[0].free,tostring(free));for bag=1,4 do SetText(bagButtons[bag].free,'')end
+ SetText(moneyText,Money())
+ local moneyWidth=math.min(96,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth()or 80)+12))
+ moneyText:SetWidth(moneyWidth);moneyHit:SetWidth(moneyWidth+8)
+ local key=table.concat({l.id,size,columns,l.rows,tostring(shelfHidden),tostring(hasKey),K.ClassicInventoryStyle.ItemGap(),shortcutGap,tostring(Option('bagBackground',true)),tostring(Option('bagFrame',true)),KAClassic_KerimAnkaUIDB and KAClassic_KerimAnkaUIDB.language or'en'},':')
+ if frame.kaGeometryKey~=key then
+  Count('layout')
+ frame:SetSize(l.width,l.height);frame.kaBagLayout=l
+ K.ClassicBagDesigns.PaintShelf(frame,l,Option('bagBackground',true))
+ for bag=0,4 do
+  local row=bagButtons[bag];row:SetSize(l.iconSize,l.iconSize);row:ClearAllPoints();row:SetPoint('TOPLEFT',l.icons[bag].x,-l.icons[bag].y);K.ClassicBagDesigns.SkinShortcut(row)
+ end
+ keyButton:SetSize(l.id==2 and 24 or 25,l.iconSize);keyButton:ClearAllPoints();keyButton:SetPoint('TOPLEFT',l.icons[5].x,-l.icons[5].y)
+ keyButton:SetShown(not shelfHidden and hasKey);K.ClassicBagDesigns.SkinShortcut(keyButton)
+ local moneyWidth=math.min(96,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth()or 80)+12))
+ local record=frame.kaRecordsButton
+ record:ClearAllPoints();footer:ClearAllPoints();moneyText:ClearAllPoints();moneyHit:ClearAllPoints()
+ record:SetSize(l.recordWidth,28);record:SetPoint('BOTTOMLEFT',14,10)
+ footer:SetPoint('BOTTOMLEFT',l.footerX,16);footer:SetWidth(l.footerWidth);footer:SetJustifyH('CENTER')
+ moneyText:SetPoint('BOTTOMRIGHT',-14,16);moneyHit:SetPoint('BOTTOMRIGHT',-10,8)
+ footer:SetWordWrap(false);if footer.SetMaxLines then footer:SetMaxLines(1)end
  shelfToggle:SetText('');shelfToggle.icon:SetAlpha(shelfHidden and .55 or 1)
- shelfToggle:ClearAllPoints();shelfToggle:SetPoint('TOPRIGHT',-58,narrow and -37 or -8)
- for _,b in ipairs(frame.kaResizeButtons or {}) do b:ClearAllPoints();b:SetPoint('TOPRIGHT',b.kaResizeDelta<0 and -112 or -85,narrow and -37 or -8) end
- keyButton:ClearAllPoints();keyButton:SetPoint('TOPLEFT',190,narrow and -68 or -39)
- UpdateTitle(math.max(80,width-(narrow and 80 or 168)))
- search:ClearAllPoints();search:SetPoint('TOPLEFT',20,searchY)
- searchClear:ClearAllPoints();searchClear:SetPoint('TOPRIGHT',-14,searchY)
- sortButton:ClearAllPoints();sortButton:SetPoint('TOPRIGHT',-42,searchY);SortLabel()
+ shelfToggle:ClearAllPoints();shelfToggle:SetSize(l.headerSize,l.headerSize);shelfToggle:SetPoint('TOPLEFT',l.controls.shelf.x,-l.controls.shelf.y)
+ for _,b in ipairs(frame.kaResizeButtons or{})do
+  local p=b.kaResizeDelta<0 and l.controls.minus or l.controls.plus
+  b:SetSize(l.headerSize,l.headerSize);b:ClearAllPoints();b:SetPoint('TOPLEFT',p.x,-p.y)
+  if b.SetEnabled then b:SetEnabled(b.kaResizeDelta<0 and columns>M.MinimumColumns()or b.kaResizeDelta>0 and columns<14)end
+ end
+ frame.kaBagSettings:ClearAllPoints();frame.kaBagSettings:SetSize(l.headerSize,l.headerSize);frame.kaBagSettings:SetPoint('TOPRIGHT',-40,-l.headerY)
+ for _,b in ipairs(frame.kaDesignButtons)do if b.kaRole=='close'then b:SetSize(l.headerSize,l.headerSize);b:ClearAllPoints();b:SetPoint('TOPRIGHT',-10,-l.headerY)end end
+ -- Main inventory deliberately has no character-name caption.
+ K.ClassicBagDesigns.Interior(frame,l,Option('bagBackground',true))
+ K.ClassicBagDesigns.CapacityFont(footer)
+ search:ClearAllPoints();search:SetPoint('TOPLEFT',l.searchX,-l.searchY);search:SetSize(l.searchWidth,26);searchHint:SetWidth(math.max(1,l.searchWidth-54));K.ClassicBagDesigns.SkinSearch(search,l.id,l)
+ searchClear:ClearAllPoints();searchClear:SetPoint('RIGHT',search,'RIGHT',-4,0);searchClear:SetSize(20,20);searchClear:SetFrameLevel(search:GetFrameLevel()+1);searchClear:Show()
+ sortButton:ClearAllPoints();sortButton:SetSize(76,26);sortButton:SetPoint('TOPRIGHT',-14,-l.searchY);SortLabel()
+ for _,b in ipairs(frame.kaDesignButtons)do K.ClassicBagDesigns.PaintButton(b,l.id)end
+
  M.DockKeyring()
+ frame.kaGeometryKey=key
+ end
+ searchClear:Show();searchHint:SetShown(search:GetText()=='');SortLabel()
  pendingRefresh=false
+end
+function M.Refresh()
+ if refreshing or not frame or not frame:IsShown()then return end
+ refreshing=true;Count('refresh');local began=perf and Clock()
+ local ok,err=pcall(RefreshVisible);refreshing=false
+ if perf and began then perf.ms=perf.ms+math.max(0,Clock()-began)end
+ if not ok then error(err,0)end
 end
 CloseNative=function()
  if CloseAllBags then CloseAllBags() end
@@ -797,7 +894,7 @@ CloseNative=function()
 end
 local function Show()
  if not M.Enabled() or not Ensure() then M.RestoreNativeBagAlpha();return false end
- busy=true;CloseNative();frame:Show();M.Refresh();busy=false;return true
+ busy=true;CloseNative();if not frame:IsShown()then paintEpoch=paintEpoch+1;frame:Show();M.Refresh()end;busy=false;return true
 end
 -- A bank visit is an explicit open, even when native OpenAllBags calls
 -- ToggleBag internally. Discard those pending toggles before the UI handoff.
@@ -807,7 +904,7 @@ function M.OpenForBank()
 end
 function M.Toggle()
  if not M.Enabled() then
-  local replacement=Replacement();Message(replacement and ('Another bag addon is active: '..replacement) or 'Enable combined bags in the inventory settings first.');return false
+  local replacement=Replacement();Message(replacement and (T('Another bag addon is active: ')..replacement) or T('Enable combined bags in the inventory settings first.'));return false
  end
  if frame and frame:IsShown() then frame:Hide();return true end
  return Show()
@@ -878,7 +975,7 @@ if previousSet then
    if not K.db or Combat() or type(value)~='boolean' then return false end
    K.db.bagCombined=value;if value then M.PrepareBags() end;if not value then if frame then frame:Hide() end;M.RestoreNativeBagAlpha() end;return true
   end
-  local ok=previousSet(key,value);if frame and frame:IsShown() then M.Refresh() end;return ok
+  local ok=previousSet(key,value);if not K.ClassicInventoryStyle and frame and frame:IsShown()then M.Refresh()end;return ok
  end
 end
 K.BagMode={Get=function() return K.db and K.db.bagCombined~=false end,Set=function(value) return K.InventoryMenus.Set('bagCombined',value) end,ApplySaved=function() end}
@@ -897,14 +994,18 @@ events:SetScript('OnUpdate',function(_,elapsed)
  hookElapsed=hookElapsed+elapsed;if hookElapsed<1 then return end;hookElapsed=0
  if M.Enabled() then M.InstallBagCallHooks();M.InstallNativeBagHooks() end
 end)
-for _,event in ipairs({'BAG_UPDATE_DELAYED','PLAYER_EQUIPMENT_CHANGED','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','PLAYER_MONEY','GET_ITEM_INFO_RECEIVED','PLAYER_REGEN_ENABLED','PLAYER_REGEN_DISABLED','PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_LOGOUT','ADDON_LOADED'}) do events:RegisterEvent(event) end
+for _,event in ipairs({'QUEST_LOG_UPDATE','BAG_UPDATE_DELAYED','PLAYER_EQUIPMENT_CHANGED','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','PLAYER_MONEY','GET_ITEM_INFO_RECEIVED','PLAYER_REGEN_ENABLED','PLAYER_REGEN_DISABLED','PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_LOGOUT','ADDON_LOADED'}) do events:RegisterEvent(event) end
 events:SetScript('OnEvent',function(_,event,initialLogin,isReloadingUi)
+ if perf then perf.events[event]=(perf.events[event]or 0)+1 end
+ if event=='BAG_UPDATE_COOLDOWN'then M.RefreshCooldowns();return end
+ if event=='GET_ITEM_INFO_RECEIVED'and not waitingForItemInfo then return end
+ if event=='QUEST_LOG_UPDATE'or event=='GET_ITEM_INFO_RECEIVED'then paintEpoch=paintEpoch+1 end
  if event=='PLAYER_ENTERING_WORLD' then
   moneyReady=false;Startup(initialLogin==true and isReloadingUi~=true)
  elseif event=='PLAYER_LOGIN' then
   -- Core settings and other addons may finish initializing later in this event.
   C_Timer.After(0,function() M.PrepareBags() end)
- elseif event=='PLAYER_MONEY' then M.RecordMoney();M.RefreshMoneyList()
+ elseif event=='PLAYER_MONEY'then M.RecordMoney();M.RefreshMoneyList();M.RefreshMoney();return
  elseif event=='PLAYER_LOGOUT' then
   -- Keep the latest valid snapshot; teardown APIs may already report zero.
   startupGeneration=startupGeneration+1
@@ -914,15 +1015,16 @@ events:SetScript('OnEvent',function(_,event,initialLogin,isReloadingUi)
  if event=='ADDON_LOADED' and not M.Enabled() then if frame then frame:Hide() end;M.RestoreNativeBagAlpha();return end
  if frame and frame:IsShown() then
   if redrawQueued then pendingRefresh=true;return end
-  redrawQueued=true;C_Timer.After(0,function() redrawQueued=false;M.Refresh() end)
+  redrawQueued=true;C_Timer.After(.05,function()redrawQueued=false;M.Refresh()end)
  elseif event=='PLAYER_REGEN_ENABLED' then pendingRefresh=false end
 end)
 SLASH_KERIMANKAUICLASSICBAGS1='/kauibags'
 SlashCmdList.KERIMANKAUICLASSICBAGS=function(input)
  input=(input or ''):lower():match('^%s*(.-)%s*$')
+ if input=='perf'then M.StartPerf();return end
  if input=='status' then M.Status();return end
  if input=='repair' then M.PrepareBags();M.Status();return end
- if input=='off' then if K.InventoryMenus.Set('bagCombined',false) then Message('Combined bags off. Native bags restored.') else Message('Change bag mode outside combat.') end;return end
+ if input=='off' then if K.InventoryMenus.Set('bagCombined',false) then Message(T('Combined bags off. Native bags restored.')) else Message(T('Change bag mode outside combat.')) end;return end
  if input=='on' then if K.InventoryMenus.Set('bagCombined',true) then Show() end;return end
  M.Toggle()
 end

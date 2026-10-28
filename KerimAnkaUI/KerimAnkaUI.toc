@@ -4,7 +4,7 @@
 ## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Notes: Settings panel for the KerimAnka UI suite for World of Warcraft: Forever.
 ## Author: Kerim Anka
-## Version: 0.35.0
+## Version: 0.35.1
 ## SavedVariables: KerimAnkaUIDB
 ## SavedVariablesPerCharacter: KerimAnkaUICharacterDB
 ## OptionalDeps: MinimapButtonButton, Bartender4, Details, Questie, Clique, LibDataBroker-1.1, LibDBIcon-1.0

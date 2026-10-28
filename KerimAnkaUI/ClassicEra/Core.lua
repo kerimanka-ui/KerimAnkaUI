@@ -1,7 +1,7 @@
 -- Classic Era/Hardcore only: no execution in Forever or Retail.
 if not WOW_PROJECT_CLASSIC or WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then return end
 local addonName, K = ...
-K.name, K.version = addonName, "0.35.0 Classic Era"
+K.name, K.version = addonName, "0.35.1 Classic Era"
 -- Final panel placement captured from Kerimankahan-Hantirt. These are panel
 -- preferences, not the game's UI scale or any gameplay frame coordinates.
 K.panelDefaults={scale=0.8721474221494858,height=819.36083984375,position={x=36.77588658330683,y=209.4805938205954}}
@@ -426,6 +426,7 @@ local function Initialize()
     if not K.locales[KAClassic_KerimAnkaUIDB.language] then KAClassic_KerimAnkaUIDB.language = "en" end
     KAClassic_KerimAnkaUICharacterDB = type(KAClassic_KerimAnkaUICharacterDB) == "table" and KAClassic_KerimAnkaUICharacterDB or {}
     K.db = KAClassic_KerimAnkaUICharacterDB
+    K.db.bagTheme=nil -- retired appearance override; design owns its materials
     K.db.readyMeterPlacement=nil -- old post-login native geometry request is retired
     K.db.cvars = K.db.cvars or {}
     K.db.originalCVars = K.db.originalCVars or {}
@@ -1915,7 +1916,8 @@ local position=Shape({x=N(-10000,10000),y=N(-10000,10000),detached=B});position.
 local minimap=Shape({hide=B,minimapPos=N(-10000,10000)})
 local bars={kind="bars"}
 local schema={}
-schema.root=Shape({fps=Shape(Fields("enabled locked showMS",{x={-10000,10000},y={-10000,10000}})),soundShortcut=Shape(Fields("enabled locked",{size={24,64},x={0,1},y={0,1}})),bagShortcut=Shape(Fields("enabled locked",{size={24,80},x={0,1},y={0,1}})),actionRange=Shape({enabled=B,color={kind="rgb"}}),minimapButtons=Shape(Fields("enabled locked showTooltip",{buttonStyle={1,2},buttonSize={20,64},columns={1,12},iconSize={24,40},angle={-360,360},radius={0,80}})),minimapCoords=Shape(Fields("enabled outline",{x={-300,300},y={-300,300},size={8,32},font={0,2}})),experience=Shape(Fields("enabled locked showRep showPet showTime showRate showQuest showRested trim hideNative classColor",{frameSize={10,24},verticalSpace={0,120},backgroundAlpha={0,1},width={280,1400},barHeight={8,28},subHeight={8,20},layout={1,2},red={0,1},green={0,1},blue={0,1},x={-10000,10000},y={-10000,10000}})),nativeMeter=Shape(Fields("enabled trim",{trimAlpha={0,1},backgroundAlpha={0,1},padding={0,24},edgeTop={-24,48},edgeBottom={-24,48},edgeLeft={-24,48},edgeRight={-24,48}})),barSource=N(0,2),bagCombined=B,bagDock=B,hideNativeBagBar=B,bagJunk=B,bagQuality=B,bagExpanded=B,bagBackground=B,bagFrame=B,bagIconBorder=B,bagSize=N(18,48),bagGap=N(0,16),microEnabled=B,microLocked=B,microSize=N(18,48),microGap=N(0,16),microX=N(0,10000),microY=N(0,10000),hideNativeHotkeys=B,hideNativeMacroNames=B,hideActionBarStatues=B,hideErrors=B,keepImportantErrors=B,errorMode=N(1,3),errorFilters=Shape({target=B,movement=B,range=B,direction=B,cooldown=B,resources=B}),muteClicks=B,cvars={kind="cvars"},sounds={kind="sounds"},position=position,panelHeight=N(640,1100)})
+-- bagTheme below is validation-only for legacy portable profiles.
+schema.root=Shape({fps=Shape(Fields("enabled locked showMS",{x={-10000,10000},y={-10000,10000}})),soundShortcut=Shape(Fields("enabled locked",{size={24,64},x={0,1},y={0,1}})),bagShortcut=Shape(Fields("enabled locked",{size={24,80},x={0,1},y={0,1}})),actionRange=Shape({enabled=B,color={kind="rgb"}}),minimapButtons=Shape(Fields("enabled locked showTooltip",{buttonStyle={1,2},buttonSize={20,64},columns={1,12},iconSize={24,40},angle={-360,360},radius={0,80}})),minimapCoords=Shape(Fields("enabled outline",{x={-300,300},y={-300,300},size={8,32},font={0,2}})),experience=Shape(Fields("enabled locked showRep showPet showTime showRate showQuest showRested trim hideNative classColor",{frameSize={10,24},verticalSpace={0,120},backgroundAlpha={0,1},width={280,1400},barHeight={8,28},subHeight={8,20},layout={1,2},red={0,1},green={0,1},blue={0,1},x={-10000,10000},y={-10000,10000}})),nativeMeter=Shape(Fields("enabled trim",{trimAlpha={0,1},backgroundAlpha={0,1},padding={0,24},edgeTop={-24,48},edgeBottom={-24,48},edgeLeft={-24,48},edgeRight={-24,48}})),barSource=N(0,2),bagCombined=B,bagDock=B,hideNativeBagBar=B,bagJunk=B,bagQuality=B,bagQuest=B,bagEmptySlots=B,bagItemGap=N(0,16),bagTheme=N(1,3),bagDesign=N(1,3),bagExpanded=B,bagBackground=B,bagFrame=B,bagIconBorder=B,bagSize=N(18,48),bagGap=N(0,16),microEnabled=B,microLocked=B,microSize=N(18,48),microGap=N(0,16),microX=N(0,10000),microY=N(0,10000),hideNativeHotkeys=B,hideNativeMacroNames=B,hideActionBarStatues=B,hideErrors=B,keepImportantErrors=B,errorMode=N(1,3),errorFilters=Shape({target=B,movement=B,range=B,direction=B,cooldown=B,resources=B}),muteClicks=B,cvars={kind="cvars"},sounds={kind="sounds"},position=position,panelHeight=N(640,1100)})
 
 schema.root.fields.minimapButtons.fields.excluded={kind="iconExclusions"}
 -- Character UI preferences only. Inventory, money and timer runtime state are excluded.
@@ -2088,6 +2090,7 @@ local function Store()
 end
 function P.Capture()
  local settings={root=Clean(K.db,schema.root),appearance=Clean(KAClassic_KerimAnkaUIDB,schema.appearance)}
+ settings.root.bagTheme=nil -- legacy inputs are readable, never exported
  local prior=Store().characters[CharacterKey()]
  local previous,previousLoaded
  for name,addon in pairs(moduleFor) do
@@ -2211,6 +2214,8 @@ local function ApplySettings(payload)
  end
 end
 local function Normalize(payload)
+ -- Compatibility-only schema field: old ready/saved profiles remain valid.
+ payload.settings.root.bagTheme=nil
  -- A saved native-era profile can still contain the old Bartender defaults.
  -- Normalize before staging AND verification, just as A.View does on startup.
  -- Preserve explicit/custom selections and the separate nativeLayout settings.
@@ -2713,7 +2718,7 @@ do
 local M={};K.InventoryMenus=M
 local bagState,microState,bagRow,bagToggle,microArt,mover,hiddenNativeBar
 local busy=false;local pending=false;local queued=false;local hooked={}
-local defaults={bagCombined=true,bagDock=true,bagExpanded=true,bagBackground=true,bagFrame=true,bagIconBorder=false,bagSize=30,bagGap=3,hideNativeBagBar=true,bagJunk=true,bagQuality=true,microEnabled=true,microSize=28,microGap=1,microLocked=true}
+local defaults={bagCombined=true,bagDock=true,bagExpanded=true,bagBackground=true,bagFrame=true,bagIconBorder=false,bagSize=30,bagGap=3,hideNativeBagBar=true,bagJunk=true,bagQuality=true,bagQuest=true,bagEmptySlots=false,bagItemGap=4,bagDesign=1,microEnabled=true,microSize=28,microGap=1,microLocked=true}
 local excludedBags={};local hiddenItems={}
 local iconBorders=setmetatable({},{__mode="k"})
 function M.Get(key)
@@ -3237,7 +3242,7 @@ function M.Refresh()
  ApplyBags();M.ApplyNativeBagHide();ApplyMicro()
  busy=false
 end
-local ranges={bagSize={18,48},bagGap={0,16},microSize={18,48},microGap={0,16},microX={0,10000},microY={0,10000}}
+local ranges={bagDesign={1,3},bagItemGap={0,16},bagSize={18,48},bagGap={0,16},microSize={18,48},microGap={0,16},microX={0,10000},microY={0,10000}}
 function M.Set(key,value)
  if not K.db then return false end
  if Combat() then

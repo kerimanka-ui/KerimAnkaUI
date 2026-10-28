@@ -2,6 +2,7 @@
 -- No Bagnon code, dependencies, data imports, or native item-action templates.
 if not WOW_PROJECT_CLASSIC or WOW_PROJECT_ID~=WOW_PROJECT_CLASSIC then return end
 local _,K=...
+local T=K.InventoryText
 local M={};K.ClassicItemRecords=M
 local bankOpen=false
 local bankGeneration=0
@@ -172,7 +173,7 @@ local function Text(parent,size)
  return parent:CreateFontString(nil,'OVERLAY',size or 'GameFontHighlightSmall')
 end
 local function Button(parent,name,text,x,y,width,fn)
- local b=CreateFrame('Button',name,parent,'UIPanelButtonTemplate');b:SetPoint('TOPLEFT',x,y);b:SetSize(width,24);b:SetText(text);b:SetScript('OnClick',fn);return b
+ local b=CreateFrame('Button',name,parent,'UIPanelButtonTemplate');b:SetPoint('TOPLEFT',x,y);b:SetSize(width,24);K.InventoryLabel(b,text);b:SetScript('OnClick',fn);return b
 end
 local function ItemTooltip(self)
  local entry=self.entry;if not entry then return end
@@ -182,10 +183,10 @@ local function ItemTooltip(self)
   local ok=pcall(GameTooltip.SetHyperlink,GameTooltip,item.link)
   if not ok then GameTooltip:SetText(item.name or ('Item '..tostring(item.itemID or '?'))) end
  elseif item then GameTooltip:SetText(item.name or ('Item '..tostring(item.itemID or '?')))
- else GameTooltip:SetText('Empty recorded slot') end
- GameTooltip:AddLine(' ');GameTooltip:AddLine('Saved view only - items cannot be moved or used.',1,.82,0,true)
- GameTooltip:AddLine(string.format('Bag %d / slot %d',entry.bag,entry.slot),.65,.7,.62)
- GameTooltip:Show()
+ else GameTooltip:SetText(T('Empty recorded slot')) end
+ GameTooltip:AddLine(' ');GameTooltip:AddLine(T('Saved view only - items cannot be moved or used.'),.9,.9,.86,true)
+ GameTooltip:AddLine(string.format(T('Bag %d / slot %d'),entry.bag,entry.slot),.65,.7,.62)
+ K.InventoryTooltip(GameTooltip);GameTooltip:Show()
 end
 -- Draw the small star with native UI lines: no font glyph or client atlas dependency.
 local function PaintStar(button,favorite)
@@ -204,7 +205,7 @@ local function Star(parent)
   end
  end
  b:SetScript('OnClick',function(self) if parent.recordKey then M.SetFavorite(parent.recordKey,not M.IsFavorite(parent.recordKey)) end end)
- b:SetScript('OnEnter',function(self) GameTooltip:SetOwner(self,'ANCHOR_RIGHT');GameTooltip:SetText(M.IsFavorite(parent.recordKey) and 'Remove favorite' or 'Add favorite');GameTooltip:Show() end)
+ b:SetScript('OnEnter',function(self) GameTooltip:SetOwner(self,'ANCHOR_RIGHT');GameTooltip:SetText(M.IsFavorite(parent.recordKey) and T('Remove favorite') or T('Add favorite'));K.InventoryTooltip(GameTooltip);GameTooltip:Show() end)
  b:SetScript('OnLeave',function() GameTooltip:Hide() end)
  return b
 end
@@ -219,7 +220,7 @@ local function RefreshMenu()
   end
  end
  local count=math.max(1,math.min(characterRows,#list))
- menu.range:SetText(#list==0 and 'No recorded characters' or string.format('%d-%d / %d  |  Mouse wheel',menuOffset+1,math.min(#list,menuOffset+characterRows),#list))
+ menu.range:SetText(#list==0 and T('No recorded characters') or string.format(T('%d-%d / %d  |  Mouse wheel'),menuOffset+1,math.min(#list,menuOffset+characterRows),#list))
  menu:SetHeight(38+26*count)
 end
 local function ToggleMenu()
@@ -235,7 +236,7 @@ local function ToggleMenu()
    b:SetScript('OnEnter',function(self)
     local r=self.record;if not r then return end
     GameTooltip:SetOwner(self,'ANCHOR_RIGHT');GameTooltip:SetText(ColourName(r))
-    GameTooltip:AddLine('Inventory: '..(r.bags and 'saved' or 'not recorded')..' | Bank: '..(r.bank and 'saved' or 'not recorded'),1,.82,0,true);GameTooltip:Show()
+    GameTooltip:AddLine(T('Inventory: ')..(r.bags and T('saved') or T('not recorded'))..T(' | Bank: ')..(r.bank and T('saved') or T('not recorded')),.9,.9,.86,true);K.InventoryTooltip(GameTooltip);GameTooltip:Show()
    end)
    b:SetScript('OnLeave',function() GameTooltip:Hide() end)
    b:EnableMouseWheel(true);b:SetScript('OnMouseWheel',function(_,delta) menuOffset=(menuOffset or 0)-delta;RefreshMenu() end)
@@ -255,12 +256,12 @@ local function Ensure()
  panel:SetFrameStrata('DIALOG');panel:SetClampedToScreen(true);panel:EnableMouse(true);panel:EnableMouseWheel(true);panel:SetMovable(true);panel:RegisterForDrag('LeftButton');Backdrop(panel)
  panel:SetScript('OnDragStart',function(self) self:StartMoving() end);panel:SetScript('OnDragStop',function(self) self:StopMovingOrSizing() end)
  panel:SetScript('OnHide',function() if menu then menu:Hide() end;GameTooltip:Hide() end)
- local heading=Text(panel,'GameFontNormal');heading:SetPoint('TOPLEFT',12,-13);heading:SetText('KerimAnka UI - Recorded items')
+ local heading=Text(panel,'GameFontNormal');heading:SetPoint('TOPLEFT',12,-13);K.InventoryLabel(heading,'KerimAnka UI - Recorded items')
  local close=CreateFrame('Button',nil,panel,'UIPanelCloseButton');close:SetPoint('TOPRIGHT',1,1);close:SetScript('OnClick',function() panel:Hide() end)
  selector=Button(panel,'KerimAnkaUIClassicRecordCharacter','Select character',12,-38,300,ToggleMenu)
  inventoryTab=Button(panel,'KerimAnkaUIClassicRecordInventory','Inventory',12,-70,110,function() mode='bags';offset=0;M.Refresh() end)
  bankTab=Button(panel,'KerimAnkaUIClassicRecordBank','Bank',128,-70,110,function() mode='bank';offset=0;M.Refresh() end)
- local readOnly=Text(panel);readOnly:SetPoint('TOPRIGHT',-12,-77);readOnly:SetText('Read-only')
+ local readOnly=Text(panel);readOnly:SetPoint('TOPRIGHT',-12,-77);K.InventoryLabel(readOnly,'Read-only')
  status=Text(panel);status:SetPoint('TOPLEFT',12,-103);status:SetWidth(406);status:SetJustifyH('LEFT')
  rows={}
  for i=1,columns*visibleRows do
@@ -278,6 +279,7 @@ local function Ensure()
  UISpecialFrames=UISpecialFrames or {};table.insert(UISpecialFrames,'KerimAnkaUIClassicItemRecords')
 end
 function M.Refresh()
+ if panel then K.ClassicInventoryStyle.Apply(panel,1)end
  if not panel or not panel:IsShown() then return end
  local list=M.Characters()
  if not selected or not Record(selected) then
@@ -285,14 +287,17 @@ function M.Refresh()
  end
  local record=selected and Record(selected)
  local snapshot=record and record[mode]
- selector:SetText(record and (CharacterLabel(record)..'  v') or 'No recorded characters')
+ selector:SetText(record and (CharacterLabel(record)..'  v') or T('No recorded characters'))
  inventoryTab:SetAlpha(mode=='bags' and 1 or .55);bankTab:SetAlpha(mode=='bank' and 1 or .55)
+ cell=34+K.ClassicInventoryStyle.ItemGap();panel:SetWidth(math.max(430,columns*cell+24))
+ status:SetWidth(panel:GetWidth()-24);summary:SetWidth(panel:GetWidth()-24)
  local slots=Flat(snapshot);local rowCount=math.max(1,math.ceil(#slots/columns))
  offset=math.max(0,math.min(offset,math.max(0,rowCount-visibleRows)))
  for i,b in ipairs(rows) do
   local entry=slots[offset*columns+i];b.entry=entry;b:SetShown(entry~=nil)
+  b:ClearAllPoints();b:SetPoint('TOPLEFT',12+((i-1)%columns)*cell,-132-math.floor((i-1)/columns)*cell)
   if entry then
-   local item=entry.item;b.icon:SetTexture(item and item.icon or nil);b.icon:SetShown(item~=nil)
+   local item=entry.item;K.ClassicInventoryStyle.EmptySlot(b,item~=nil);b.icon:SetTexture(item and item.icon or nil);b.icon:SetShown(item~=nil)
    b.count:SetText(item and item.count>1 and tostring(item.count) or '')
    local c=ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[item and item.quality or 1] or {r=.4,g=.4,b=.4}
    local coloured=item and type(item.quality)=='number' and item.quality>=2
@@ -300,11 +305,11 @@ function M.Refresh()
   end
  end
  if snapshot then
-  status:SetText('Last recorded: '..Stamp(snapshot.updated))
-  summary:SetText(string.format('%d / %d slots occupied | Rows %d-%d / %d',snapshot.occupied,snapshot.slots,offset+1,math.min(rowCount,offset+visibleRows),rowCount))
+  status:SetText(T('Last recorded: ')..Stamp(snapshot.updated))
+  summary:SetText(string.format(T('%d / %d slots occupied | Rows %d-%d / %d'),snapshot.occupied,snapshot.slots,offset+1,math.min(rowCount,offset+visibleRows),rowCount))
  else
-  status:SetText(mode=='bank' and 'Bank not recorded. Visit the bank on this character.' or 'Inventory not recorded yet. Log in on this character.')
-  summary:SetText('No snapshot - this does not mean the container is empty.')
+  status:SetText(mode=='bank' and T('Bank not recorded. Visit the bank on this character.') or T('Inventory not recorded yet. Log in on this character.'))
+  K.InventoryLabel(summary,'No snapshot - this does not mean the container is empty.')
  end
  panel:SetHeight(174+cell*math.min(visibleRows,rowCount));RefreshMenu()
 end
@@ -323,14 +328,14 @@ function M.Toggle()
  if panel and panel:IsShown() then panel:Hide() else M.Open() end
 end
 function M.DrawSettings(page,w,y)
- w.Text(page,'Recorded inventory and bank',8,y,690,18,{.73,.62,.41});y=y-34
- w.Text(page,'Read-only snapshots. Inventory updates on login and bag changes; bank updates only while the bank is open.',8,y,690,13,{.65,.70,.62});y=y-55
- w.Button(page,'Open recorded items',0,y,240,32,function() M.Open() end);y=y-48
+ w.Text(page,T('Recorded inventory and bank'),8,y,690,18,{.73,.62,.41});y=y-34
+ w.Text(page,T('Read-only snapshots. Inventory updates on login and bag changes; bank updates only while the bank is open.'),8,y,690,13,{.65,.70,.62});y=y-55
+ w.Button(page,T('Open recorded items'),0,y,240,32,function() M.Open() end);y=y-48
  local list=M.Characters()
  for _,entry in ipairs(list) do
   local key=entry.key;local r=entry.record;local box=w.Box(page,0,y,714,46)
   w.Text(box,ColourName(r),12,-14,400,13)
-  w.Text(box,'Inventory: '..(r.bags and 'saved' or '-')..' | Bank: '..(r.bank and 'saved' or '-'),418,-14,230,12)
+  w.Text(box,T('Inventory: ')..(r.bags and T('saved') or '-')..T(' | Bank: ')..(r.bank and T('saved') or '-'),418,-14,230,12)
   w.Button(box,'X',662,-10,30,26,function() M.Remove(key);if K.Render then K.Render() end end);y=y-54
  end
  return y-20

@@ -18,9 +18,11 @@ local function PaladinVariant()
 end
 local rogue=select(2,UnitClass("player"))=="ROGUE"
 local rogueUV={TL={0.8125,0.8125},TR={0.8125,0.8125},BL={0.8125,0.8125},BR={0.8125,0.8125},Top={0.546875,0.8125},Bottom={0.546875,0.8125},Left={0.8125,0.59375},Right={0.8125,0.59375}}
-local SKIN_NAME = warrior and "Forever Warrior" or paladin and "Forever Paladin" or rogue and "Forever Rogue" or druid and "Forever Druid" or priest and "Forever Priest" or mage and "Forever Mage" or shaman and "Forever Shaman" or warlock and "Forever Warlock" or "Forever Hunter"
+local LEGACY_SKIN_NAME = warrior and "Forever Warrior" or paladin and "Forever Paladin" or rogue and "Forever Rogue" or druid and "Forever Druid" or priest and "Forever Priest" or mage and "Forever Mage" or shaman and "Forever Shaman" or warlock and "Forever Warlock" or "Forever Hunter"
 local shamanUV={TL={0.8125,0.8125},TR={0.8125,0.8125},BL={0.8125,0.8125},BR={0.8125,0.8125},Top={0.546875,0.8125},Bottom={0.546875,0.8125},Left={0.8125,0.59375},Right={0.8125,0.59375}}
-local function OwnSkin(name) return warrior and name=="Forever Hunter" or paladin and name=="Forever Hunter" or rogue and name=="Forever Hunter" or druid and (name=="Forever Hunter" or name=="Forever Warlock" or name=="Forever Shaman" or name=="Forever Mage" or name=="Forever Priest") or priest and (name=="Forever Hunter" or name=="Forever Warlock" or name=="Forever Shaman" or name=="Forever Mage") or name==SKIN_NAME or (warlock or shaman or mage) and name=="Forever Hunter" or (shaman or mage) and name=="Forever Warlock" or mage and name=="Forever Shaman" end
+local SKIN_NAME='KerimAnka UI - '..LEGACY_SKIN_NAME:gsub('^Forever ','')
+local function LegacyOwnSkin(name) return warrior and name=="Forever Hunter" or paladin and name=="Forever Hunter" or rogue and name=="Forever Hunter" or druid and (name=="Forever Hunter" or name=="Forever Warlock" or name=="Forever Shaman" or name=="Forever Mage" or name=="Forever Priest") or priest and (name=="Forever Hunter" or name=="Forever Warlock" or name=="Forever Shaman" or name=="Forever Mage") or name==SKIN_NAME or (warlock or shaman or mage) and name=="Forever Hunter" or (shaman or mage) and name=="Forever Warlock" or mage and name=="Forever Shaman" end
+local function OwnSkin(name)return name==SKIN_NAME or LegacyOwnSkin(name)or name==LEGACY_SKIN_NAME end
 local warlockUV={TL={0.8125,0.8125},TR={0.8125,0.8125},BL={0.8125,0.8125},BR={0.8125,0.8125},Top={0.5712890625,0.8125},Bottom={0.5712890625,0.8125},Left={0.8125,0.5625},Right={0.8125,0.5625}}
 local MEDIA = "Interface\\AddOns\\" .. ADDON_NAME .. "\\Media\\"
 local shells = setmetatable({}, {__mode = "k"})
@@ -171,7 +173,7 @@ local function RegisterSkin()
     skin.callback = nil
     skin.control_script = nil
     skin.skin_options = nil
-    skin.author = "Forever UI"
+    skin.author = "KerimAnka UI"
     skin.version = "0.2.0"
     skin.site = ""
     skin.desc = warrior and "Dark iron Warrior frame with linked Alliance and Horde cloth." or paladin and "Antique gold Paladin frame, following the Alliance or Horde appearance choice. Native Details data and controls." or rogue and "Dark stitched leather, antique brass, steel dagger clasps and poison emeralds. Native Details data and controls." or druid and "Dark ironwood, aged bronze, amber and autumn oak leaves. Native Details data and controls." or priest and "Antique gold, satin silver and ivory pearl clasps. Native Details data and controls." or mage and "Midnight navy, aged gold and silver celestial clasps. Native Details data and controls." or shaman and "Basalt, bronze and turquoise elemental spirals. Native Details data and controls." or warlock and "Obsidian, gold and fel gems. Native Details data and controls." or "Matte walnut, aged bronze and leaves. Native Details data and controls."
@@ -217,7 +219,8 @@ local function RegisterSkin()
     end
     registered = details:InstallSkin(SKIN_NAME, skin) == true
     if registered and details.GetAllInstances then
-        for _, instance in ipairs(details:GetAllInstances()) do
+        for id, instance in ipairs(details:GetAllInstances()) do
+            if not InCombatLockdown()and OwnSkin(instance.skin)and instance.skin~=SKIN_NAME then ForeverDetailsHunterAPI.Apply(id,SKIN_NAME)end
             RefreshShell(instance)
         end
     end
@@ -269,6 +272,7 @@ function ForeverDetailsHunterAPI.Set(key,value)
 end
 function ForeverDetailsHunterAPI.Apply(id,skinName)
     if InCombatLockdown() then return false,"combat" end
+    if type(skinName)=='string'and OwnSkin(skinName)then skinName=SKIN_NAME end
     if not registered or type(skinName)~="string" or not Details:GetSkin(skinName) then return false,"skin unavailable" end
     local instance=Instances()[id]
     if not Available(instance) then return false,"window unavailable" end
@@ -314,7 +318,7 @@ loader:SetScript("OnEvent", function(self)
         if attempts < 30 then
             C_Timer.After(1, Retry)
         else
-            print("Forever Details Hunter: Details skin API is not ready; skin was not registered.")
+            print("KerimAnka UI Details: Details skin API is not ready; skin was not registered.")
         end
     end
     C_Timer.After(1, Retry)

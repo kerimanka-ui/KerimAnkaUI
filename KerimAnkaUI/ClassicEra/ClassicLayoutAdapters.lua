@@ -106,7 +106,7 @@ function A.Build()
  -- connected artwork (notably Paladin), so it is not a freely movable widget.
  local menus=K.InventoryMenus
  if menus and menus.Get('microEnabled')and _G.MicroMenuContainer then
-  Add('micro','imMicro','inventory',nil,function()return K.db end,{'microX','microY'},MicroMenuContainer,menus.Refresh,
+  Add('micro','imMicro','home','imMicro',function()return K.db end,{'microX','microY'},MicroMenuContainer,menus.Refresh,
    function()local x=MicroMenuContainer:GetLeft();local y=MicroMenuContainer:GetBottom();return{x=(x or 0)*Ratio(MicroMenuContainer),y=(y or 0)*Ratio(MicroMenuContainer)}end,
    function(dx,dy,b)menus.Set('microX',b.x+dx);menus.Set('microY',b.y+dy)end,true)
  end
