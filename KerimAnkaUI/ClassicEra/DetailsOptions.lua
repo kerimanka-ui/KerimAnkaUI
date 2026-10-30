@@ -308,7 +308,7 @@ end
 -- KerimAnka UI experience widget. Independent implementation using game data.
 ;(function(K)
 local X={selected="xp"};K.Experience=X
-local D={frameSize=16,verticalSpace=0,backgroundAlpha=.92,enabled=false,locked=true,layout=1,width=500,barHeight=14,subHeight=10,showRep=true,showPet=true,showTime=true,showRate=true,showQuest=true,showRested=true,trim=true,hideNative=false,classColor=true,red=.55,green=.7,blue=.28}
+local D={frameSize=16,verticalSpace=0,backgroundAlpha=.92,showBackground=true,enabled=false,locked=true,layout=1,width=500,barHeight=14,subHeight=10,showRep=true,showPet=true,showTime=true,showRate=true,showQuest=true,showRested=true,trim=true,hideNative=false,classColor=true,texturedBars=false,red=.55,green=.7,blue=.28}
 local ids={"total","levelTime","xp","remaining","rate","reputation","pet"}
 X.ids=ids
 local state={revision=0,questXP=0,questDirty=true,gained=0}
@@ -491,13 +491,20 @@ function X.JumpToText(id)
  end)
 end
 
-local function Color() return X.GetColor("main") end
+-- The native glossy asset darkens its tint. A white flat asset does not.
+-- Match its approximate average brightness without recreating the bright band.
+-- This affects rendering only: selected/class RGB and saved colors stay intact.
+local function FillColor(key)
+ local r,g,b=X.GetColor(key)
+ local light=X.Get("texturedBars") and 1 or .5
+ return r*light,g*light,b*light
+end
 local function Bar(parent)
  local f=CreateFrame("Frame",nil,parent,"BackdropTemplate")
  f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
  f:SetBackdropColor(.025,.03,.025,1);f:SetBackdropBorderColor(.3,.28,.17,1)
  f.layers={}
- for i=1,3 do local b=CreateFrame("StatusBar",nil,f);b:SetPoint("TOPLEFT",1,-1);b:SetPoint("BOTTOMRIGHT",-1,1);b:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar");b:SetMinMaxValues(0,1);b:SetFrameLevel(f:GetFrameLevel()+i);f.layers[i]=b end
+ for i=1,3 do local b=CreateFrame("StatusBar",nil,f);b:SetPoint("TOPLEFT",1,-1);b:SetPoint("BOTTOMRIGHT",-1,1);b:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8");b:SetMinMaxValues(0,1);b:SetFrameLevel(f:GetFrameLevel()+i);f.layers[i]=b end
  return f
 end
 local function CreateWidget(parent,isPreview)
@@ -530,12 +537,26 @@ local function CreateWidget(parent,isPreview)
   end
  end
  f.trim=CreateFrame("Frame",nil,f);f.trim:EnableMouse(false);f.trim:SetAllPoints();f.trim:SetFrameLevel(f:GetFrameLevel()+7);f.parts={}
+ if plainCorners then
+  -- A single native rectangle avoids seams/doubled edges between decorative
+  -- rails and the separately generated plain corner artwork.
+  f.plainTrim=CreateFrame("Frame",nil,f.trim,"BackdropTemplate")
+  f.plainTrim:EnableMouse(false)
+  f.plainTrim:SetBackdrop({edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
+  f.plainTrim:SetBackdropBorderColor(.42,.32,.18,1)
+ else
  for _,name in ipairs({"TL","TR","BL","BR","Top","Bottom","Left","Right"}) do local t=f.trim:CreateTexture(nil,"OVERLAY");t:SetTexture(TrimTexture(name),"CLAMP","CLAMP","TRILINEAR");f.parts[name]=t end
+ end
  return f
 end
 local function Layout(f,data)
  local w=X.Get("width");local horizontal=X.Get("layout")==2
  local bh,sh=X.Get("barHeight"),X.Get("subHeight")
+ -- Change fill assets only when layout/settings change, never on each XP tick.
+ local texture=X.Get("texturedBars") and "Interface\\TargetingFrame\\UI-StatusBar" or "Interface\\Buttons\\WHITE8X8"
+ for _,bar in ipairs({f.main,f.rep,f.pet}) do
+  for _,layer in ipairs(bar.layers) do layer:SetStatusBarTexture(texture) end
+ end
  local c=X.Get("frameSize");local pad=c+4
  local extra=data.rep or data.pet
  local vertical=X.Get("verticalSpace")
@@ -551,6 +572,7 @@ local function Layout(f,data)
  local inset=math.ceil(c*.27)
  f.background:ClearAllPoints();f.background:SetPoint("TOPLEFT",inset,-inset);f.background:SetPoint("BOTTOMRIGHT",-inset,inset)
  f.background:SetColorTexture(.045,.055,.045,X.Get("backgroundAlpha"))
+ f.background:SetShown(X.Get("showBackground"))
  f.main:ClearAllPoints();f.main:SetPoint("TOPLEFT",pad,-barY);f.main:SetSize(w-pad*2,bh);f.main:SetShown(data.main)
  local subW=(data.rep and data.pet) and (w-pad*2-12)/2 or w-pad*2
  for _,id in ipairs({"rep","pet"}) do
@@ -586,20 +608,27 @@ local function Layout(f,data)
   if cfg.visible==false then shown=false end
   label:SetShown(shown);if label.hit then label.hit:SetShown(shown) end
  end
+ if f.plainTrim then
+  -- Match the visible background on all four sides. No extra outer rail.
+  f.plainTrim:ClearAllPoints()
+  f.plainTrim:SetPoint("TOPLEFT",f,"TOPLEFT",inset,-inset)
+  f.plainTrim:SetPoint("BOTTOMRIGHT",f,"BOTTOMRIGHT",-inset,inset)
+ else
  local p=f.parts
  for name,point in pairs({TL="TOPLEFT",TR="TOPRIGHT",BL="BOTTOMLEFT",BR="BOTTOMRIGHT"}) do p[name]:SetSize(c,c);p[name]:ClearAllPoints();p[name]:SetPoint(point) end
  p.Top:ClearAllPoints();p.Top:SetHeight(c);p.Top:SetPoint("TOPLEFT",c,0);p.Top:SetPoint("TOPRIGHT",-c,0)
  p.Bottom:ClearAllPoints();p.Bottom:SetHeight(c);p.Bottom:SetPoint("BOTTOMLEFT",c,0);p.Bottom:SetPoint("BOTTOMRIGHT",-c,0)
  p.Left:ClearAllPoints();p.Left:SetWidth(c);p.Left:SetPoint("TOPLEFT",0,-c);p.Left:SetPoint("BOTTOMLEFT",0,c)
  p.Right:ClearAllPoints();p.Right:SetWidth(c);p.Right:SetPoint("TOPRIGHT",0,-c);p.Right:SetPoint("BOTTOMRIGHT",0,c)
+ end
  f.trim:SetShown(X.Get("trim"));f.height=h
 end
 
 local function Paint(f,data)
  local signature=tostring(data.main)..tostring(data.rep~=nil)..tostring(data.pet~=nil)
  if f.rev~=state.revision or f.signature~=signature then Layout(f,data);f.rev=state.revision;f.signature=signature end
- local max=math.max(1,data.max);local r,g,b=Color()
- local rr,rg,rb=X.GetColor("rested");local qr,qg,qb=X.GetColor("quest")
+ local max=math.max(1,data.max);local r,g,b=FillColor("main")
+ local rr,rg,rb=FillColor("rested");local qr,qg,qb=FillColor("quest")
  f.main.layers[1]:SetStatusBarColor(rr,rg,rb,.45);f.main.layers[2]:SetStatusBarColor(qr,qg,qb,.9);f.main.layers[3]:SetStatusBarColor(r,g,b,1)
  f.main.layers[1]:SetValue(math.min(1,(data.xp+(X.Get("showQuest") and data.quest or 0)+(X.Get("showRested") and data.rested or 0))/max))
  f.main.layers[2]:SetValue(math.min(1,(data.xp+(X.Get("showQuest") and data.quest or 0))/max));f.main.layers[3]:SetValue(math.min(1,data.xp/max))
@@ -610,7 +639,7 @@ local function Paint(f,data)
  for _,id in ipairs({"rep","pet"}) do
   local info=data[id];local bar=f[id]
   if info then
-   bar.layers[1]:SetValue(0);bar.layers[2]:SetValue(0);bar.layers[3]:SetStatusBarColor(X.GetColor(id));bar.layers[3]:SetValue(math.min(1,info.value/math.max(1,info.max)))
+   bar.layers[1]:SetValue(0);bar.layers[2]:SetValue(0);bar.layers[3]:SetStatusBarColor(FillColor(id));bar.layers[3]:SetValue(math.min(1,info.value/math.max(1,info.max)))
    t[id=="rep" and "reputation" or "pet"]:SetText(info.name..(id=="pet" and " · "..K.L("xpLevel").." "..info.level or "").."  "..Num(info.value).." / "..Num(info.max))
   end
  end
@@ -790,11 +819,12 @@ function K.DrawExperiencePage(page)
  y=y-52
  local function Toggle(key,label,x,top,width,reader,writer)
   local card=w.Box(page,x,top,width,78);w.Text(card,K.L(label),14,-10,width-66,13)
-  local help=w.Button(card,"?",width-38,-8,22,22,function() end);w.Tip(help,label,"xpHelp")
+  local help=w.Button(card,"?",width-38,-8,22,22,function() end);w.Tip(help,label,key=="texturedBars" and "xpTexturedBarsHelp" or key=="showBackground" and "xpShowBackgroundHelp" or "xpHelp")
   w.Switch(card,reader and reader() or X.Get(key),width-94,-41,function(v) if not K.InCombat() then if writer then writer(v) else X.Set(key,v) end;Redraw() end end,true)
  end
- for i,f in ipairs({{"enabled","xpEnabled"},{"locked","xpLocked"},{"showRep","xpShowRep"},{"showPet","xpShowPet"},{"showTime","xpShowTime"},{"showRate","xpShowRate"},{"showQuest","xpShowQuest"},{"showRested","xpShowRested"},{"trim","xpTrim"},{"hideNative","xpHideNative"},{"classColor","xpClassColor"}}) do Toggle(f[1],f[2],(i-1)%2*365,y-math.floor((i-1)/2)*88,349) end
- y=y-6*88-16
+ local toggles={{"enabled","xpEnabled"},{"locked","xpLocked"},{"showRep","xpShowRep"},{"showPet","xpShowPet"},{"showTime","xpShowTime"},{"showRate","xpShowRate"},{"showQuest","xpShowQuest"},{"showRested","xpShowRested"},{"trim","xpTrim"},{"showBackground","xpShowBackground"},{"hideNative","xpHideNative"},{"classColor","xpClassColor"},{"texturedBars","xpTexturedBars"}}
+ for i,f in ipairs(toggles) do Toggle(f[1],f[2],(i-1)%2*365,y-math.floor((i-1)/2)*88,349) end
+ y=y-math.ceil(#toggles/2)*88-16
  local function Step(key,label,low,high,step,reader,writer)
   local card=w.Box(page,0,y,714,72);w.Text(card,K.L(label),14,-12,480,13)
   local function read() return reader and reader() or X.Get(key) end

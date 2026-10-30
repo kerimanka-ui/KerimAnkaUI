@@ -932,3 +932,9 @@ K.locales.frFR["bagSettingsTab"]="Réglages"
 K.locales.frFR["bagMoneyTab"]="Argent des personnages"
 
 K.locales.frFR["bagRecordsTab"]="Sacs et banque"
+
+K.locales.frFR["xpTexturedBars"]="Utiliser une texture de barre brillante"
+K.locales.frFR["xpTexturedBarsHelp"]="Désactivé : remplissage uni avec la couleur choisie. Activé : texture brillante d’origine pour les barres d’expérience, de réputation et du familier."
+
+K.locales.frFR["xpShowBackground"]="Afficher le fond du panneau"
+K.locales.frFR["xpShowBackgroundHelp"]="Affiche ou masque le fond du panneau. Barres, textes et cadre décoratif restent indépendants. Le réglage d’opacité est conservé."

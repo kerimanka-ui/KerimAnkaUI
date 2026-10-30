@@ -5,7 +5,7 @@ import argparse, hashlib, json, re, subprocess, sys, tempfile, zipfile
 SUITE_ROOTS = frozenset({
     'KerimAnkaUI', 'KerimAnkaUI_AspectAlert', 'KerimAnkaUI_BarBackdrop',
     'KerimAnkaUI_ClassArt', 'KerimAnkaUI_DetailsSkin', 'KerimAnkaUI_HunterRange',
-    'KerimAnkaUI_QuestJournal', 'KerimAnkaUI_Threat', 'KerimAnkaUI_UnitFrames',
+    'KerimAnkaUI_QuestJournal', 'KerimAnkaUI_Threat', 'KerimAnkaUI_UnitFrames', 'KerimAnkaUI_Chat',
 })
 BAG_ROOT = 'KerimAnkaUI_Bags'
 

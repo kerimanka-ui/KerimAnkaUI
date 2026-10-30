@@ -1108,3 +1108,9 @@ K.locales.tr["bagSettingsTab"]="Ayarlar"
 K.locales.tr["bagMoneyTab"]="Karakter Paraları"
 
 K.locales.tr["bagRecordsTab"]="Çanta ve Banka"
+
+K.locales.tr["xpTexturedBars"]="Parlak Bar Dokusunu Kullan"
+K.locales.tr["xpTexturedBarsHelp"]="Kapalıyken seçili renkte düz dolgu kullanılır. Açıkken XP, itibar ve pet barlarında eski parlak doku kullanılır."
+
+K.locales.tr["xpShowBackground"]="Panel Arka Planını Göster"
+K.locales.tr["xpShowBackgroundHelp"]="Panelin arka planını gizler veya gösterir. Barlar, yazılar ve dekoratif çerçeve ayrı kalır. Arka plan görünürlüğü ayarın korunur."

@@ -104,8 +104,15 @@ function A.Build()
  end
  -- Class decoration follows action-bar bounds. Offsetting its anchor can expand
  -- connected artwork (notably Paladin), so it is not a freely movable widget.
+ local chat=K.Chat
+ if chat and chat.Enabled()then
+  local d=chat.ManagedBounds();local primary=GENERAL_CHAT_DOCK and GENERAL_CHAT_DOCK.primary or ChatFrame1
+  local frame=chat.shells[primary]
+  if d and frame then Add('chat','Chat','chat',nil,chat.ManagedBounds,{'x','y','width','height','controlMode','microGap','microSize'},frame,chat.Refresh,
+   function()return{x=d.x,y=d.y}end,function(dx,dy,b)d.x=b.x+dx;d.y=b.y+dy;chat.Refresh()end,true)end
+ end
  local menus=K.InventoryMenus
- if menus and menus.Get('microEnabled')and _G.MicroMenuContainer then
+ if menus and menus.Get('microEnabled')and _G.MicroMenuContainer and not(chat and chat.Enabled()and chat.GetMicroDock())then
   Add('micro','imMicro','home','imMicro',function()return K.db end,{'microX','microY'},MicroMenuContainer,menus.Refresh,
    function()local x=MicroMenuContainer:GetLeft();local y=MicroMenuContainer:GetBottom();return{x=(x or 0)*Ratio(MicroMenuContainer),y=(y or 0)*Ratio(MicroMenuContainer)}end,
    function(dx,dy,b)menus.Set('microX',b.x+dx);menus.Set('microY',b.y+dy)end,true)
@@ -168,6 +175,7 @@ function A.RestoreRecord(id,values)
   -- provider-aware settings view used by the class-design page.
   local api=ForeverClassArtLayoutAPI
   d=api and api.GetSettings();fields={'x','y'}
+ elseif id=='chat'then d=Root('chat',true);fields={'x','y','width','height','controlMode','microGap','microSize'}
  elseif id=='micro'then d=K.db;fields={'microX','microY'}
  elseif id:match('^unit%.')then
   local key=id:sub(6);if key~='player'and key~='target'and key~='targettarget'and key~='pet'then return false end

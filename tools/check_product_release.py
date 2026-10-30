@@ -11,7 +11,7 @@ def check(root, output, tag):
     for name in reviewed['archiveHashes']:
         if Path(name).name!=name:raise ValueError('Unexpected archive name')
         actual_hashes[name]=hashlib.sha256((output/name).read_bytes()).hexdigest()
-    for product in ('suite','bags'):
+    for product in reviewed['productMembers']:
         report=json.loads((output/f'{product}-package-report.json').read_text())
         if report['version']!=version:raise ValueError('Product version mismatch')
         if report['archive']not in reviewed['archiveHashes']:raise ValueError('Unexpected product archive')
@@ -22,7 +22,7 @@ def check(root, output, tag):
         if report['sha256']!=actual_hashes[report['archive']]:raise ValueError('Archive report hash mismatch')
     sums=''.join(value+'  '+name+'\n'for name,value in sorted(actual_hashes.items()))
     (output/f'KerimAnka-{version}-SHA256SUMS.txt').write_text(sums,encoding='utf-8')
-    print('Reviewed suite and independent file manifests match; ZIP checksums generated.')
+    print('Reviewed product file manifests match; ZIP checksums generated.')
     return dict(reviewed,archiveHashes=actual_hashes)
 
 if __name__=='__main__':

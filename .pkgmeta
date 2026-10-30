@@ -1,4 +1,4 @@
-# Package the nine installable addons as siblings, never as nested addons.
+# Package the ten installable addons as siblings, never as nested addons.
 package-as: KerimAnkaUI-Suite
 enable-nolib-creation: no
 manual-changelog:
@@ -19,6 +19,7 @@ ignore:
   - outputs
   - work
   - KerimAnkaUI_Bags
+  - KerimAnkaUI_ChatIndependent
 move-folders:
   KerimAnkaUI-Suite/KerimAnkaUI: KerimAnkaUI
   KerimAnkaUI-Suite/KerimAnkaUI_AspectAlert: KerimAnkaUI_AspectAlert
@@ -29,3 +30,4 @@ move-folders:
   KerimAnkaUI-Suite/KerimAnkaUI_QuestJournal: KerimAnkaUI_QuestJournal
   KerimAnkaUI-Suite/KerimAnkaUI_Threat: KerimAnkaUI_Threat
   KerimAnkaUI-Suite/KerimAnkaUI_UnitFrames: KerimAnkaUI_UnitFrames
+  KerimAnkaUI-Suite/KerimAnkaUI_Chat: KerimAnkaUI_Chat

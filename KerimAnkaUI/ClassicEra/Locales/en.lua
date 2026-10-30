@@ -1108,3 +1108,9 @@ K.locales.en["bagSettingsTab"]="Settings"
 K.locales.en["bagMoneyTab"]="Character Money"
 
 K.locales.en["bagRecordsTab"]="Bags & Bank"
+
+K.locales.en["xpTexturedBars"]="Use Glossy Bar Texture"
+K.locales.en["xpTexturedBarsHelp"]="Off uses a flat fill in the selected color. On restores the original glossy texture for XP, reputation and pet bars."
+
+K.locales.en["xpShowBackground"]="Show Panel Background"
+K.locales.en["xpShowBackgroundHelp"]="Hides or shows the panel backdrop. Bars, text and the decorative frame stay separate. Your background opacity setting is preserved."

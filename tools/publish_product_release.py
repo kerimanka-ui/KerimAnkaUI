@@ -16,7 +16,7 @@ def publish(root,output,tag):
     targets[sums]=hashlib.sha256((output/sums).read_bytes()).hexdigest()
     result=gh('release','view',tag,'--json','isDraft,assets',optional=True)
     if result.returncode:
-        gh('release','create',tag,'--verify-tag','--draft','--title',f'KerimAnka UI {version} — Classic Era Bags',
+        gh('release','create',tag,'--verify-tag','--draft','--title',reviewed.get('title',f'KerimAnka UI {version}'),
            '--notes-file',str(root/f'release/{version}-notes.md'))
         result=gh('release','view',tag,'--json','isDraft,assets')
     info=json.loads(result.stdout);assets={entry['name']for entry in info['assets']}

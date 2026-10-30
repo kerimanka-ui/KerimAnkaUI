@@ -52,6 +52,11 @@ local function Mark(a)
  if not Journal()then K.db.layoutEditRecovery={version=1,items={}}end
  if not Journal().items[a.id]then Journal().items[a.id]=K.LayoutAdapters.Copy(initial[a.id])end
 end
+function M.MarkChatResize()
+ local a=byID.chat;if not M.active or Combat()or not a then return false end
+ M.EndDrag()
+ Mark(a);selected='chat';return true
+end
 function M.MarkQuick(name)
  if not M.active or Combat()then return false end
  local snapshot=K.LayoutQuickOptions.Capture(name);if not snapshot then return false end
@@ -184,7 +189,7 @@ function M.Refresh()
    visible[a.id]=true
    local mover=movers[a.id]
    if not mover then
-    mover=CreateFrame('Button',nil,root,'BackdropTemplate');movers[a.id]=mover;mover:RegisterForDrag('LeftButton');mover:RegisterForClicks('LeftButtonUp','RightButtonUp');mover:EnableMouse(true);mover:SetMovable(true);Backdrop(mover,.22)
+    mover=CreateFrame('Button',nil,root,'BackdropTemplate');movers[a.id]=mover;mover:HookScript('OnHide',function(self)if self.resize then self.resize:SetScript('OnUpdate',nil);self.resize.drag=nil;if K.Chat then K.Chat.dragTop=nil end end end);mover:RegisterForDrag('LeftButton');mover:RegisterForClicks('LeftButtonUp','RightButtonUp');mover:EnableMouse(true);mover:SetMovable(true);Backdrop(mover,.22)
     mover.label=Font(mover,11);mover.label:SetPoint('CENTER',0,0);mover.label:SetWordWrap(false)
     mover:SetScript('OnClick',function(_,button)if button=='RightButton'then M.OpenQuickSettings(a.id)else M.Select(a.id)end end)
     mover:SetScript('OnDragStart',function(self)M.BeginDrag(a.id,self)end);mover:SetScript('OnDragStop',M.EndDrag)
@@ -199,6 +204,7 @@ function M.Refresh()
    mover.label:SetText(K.L(a.label)..(a.disabled and(' ['..K.L('off')..']')or''));mover:SetFrameLevel(selected==a.id and 60 or 20+i)
    mover:SetBackdropBorderColor(selected==a.id and 1 or .72,selected==a.id and .82 or .57,selected==a.id and .35 or .29,1)
    mover:SetBackdropColor(.035,.045,.04,a.disabled and .12 or selected==a.id and .52 or .28);mover:Show()
+   if a.id=='chat'and K.Chat then K.Chat.ResizeHandle(mover,nil,true)end
    if selected==a.id then chosen:SetText(K.L(a.label));info:SetText(string.format(K.L('lePosition'),math.floor(x-UIParent:GetWidth()/2+.5),math.floor(y-UIParent:GetHeight()/2+.5)))end
   end
  end

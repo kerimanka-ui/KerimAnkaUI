@@ -1,13 +1,14 @@
 -- Classic Era/Hardcore only: no execution in Forever or Retail.
 if not WOW_PROJECT_CLASSIC or WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then return end
 local addonName, K = ...
-K.name, K.version = addonName, "0.35.1 Classic Era"
+K.name, K.version = addonName, "0.36.0 Classic Era"
 -- Final panel placement captured from Kerimankahan-Hantirt. These are panel
 -- preferences, not the game's UI scale or any gameplay frame coordinates.
 K.panelDefaults={scale=0.8721474221494858,height=819.36083984375,position={x=36.77588658330683,y=209.4805938205954}}
 -- Sound shortcut position captured from Nosce-Temet near the minimap.
 K.soundShortcutDefaults={enabled=true,locked=true,size=36,x=0.9051041920979818,y=0.9162963772578913}
 K.modules = {
+    {key="chat",addon="KerimAnkaUI_Chat",icon="Interface\\Icons\\INV_Misc_Note_01"},
     {key="backdrop", addon="KerimAnkaUI_BarBackdrop", icon="Interface\\Icons\\INV_Misc_Gear_01"},
     {key="art", addon="KerimAnkaUI_ClassArt", slash="FOREVERHUNTERART", icon="Interface\\Icons\\Ability_Hunter_BeastCall"},
     {key="units", addon="KerimAnkaUI_UnitFrames", slash="FOREVERLEATHERUNITS", icon="Interface\\Icons\\INV_Misc_GroupLooking"},
@@ -481,7 +482,7 @@ SlashCmdList.KERIMANKAUI = function(input)
 end
 
 -- Published before children initialize; legacy entry points route into this hub.
-KerimAnkaUIAPI={version=1,OpenPage=function(key) if K.ShowPage then K.ShowPage(key) end end}
+KerimAnkaUIAPI={GetChatHost=function()return K end,version=1,OpenPage=function(key) if K.ShowPage then K.ShowPage(key) end end}
 
 -- Bundled profile engine. LibSerialize retains its original MIT notice.
 do
@@ -1917,7 +1918,7 @@ local minimap=Shape({hide=B,minimapPos=N(-10000,10000)})
 local bars={kind="bars"}
 local schema={}
 -- bagTheme below is validation-only for legacy portable profiles.
-schema.root=Shape({fps=Shape(Fields("enabled locked showMS",{x={-10000,10000},y={-10000,10000}})),soundShortcut=Shape(Fields("enabled locked",{size={24,64},x={0,1},y={0,1}})),bagShortcut=Shape(Fields("enabled locked",{size={24,80},x={0,1},y={0,1}})),actionRange=Shape({enabled=B,color={kind="rgb"}}),minimapButtons=Shape(Fields("enabled locked showTooltip",{buttonStyle={1,2},buttonSize={20,64},columns={1,12},iconSize={24,40},angle={-360,360},radius={0,80}})),minimapCoords=Shape(Fields("enabled outline",{x={-300,300},y={-300,300},size={8,32},font={0,2}})),experience=Shape(Fields("enabled locked showRep showPet showTime showRate showQuest showRested trim hideNative classColor",{frameSize={10,24},verticalSpace={0,120},backgroundAlpha={0,1},width={280,1400},barHeight={8,28},subHeight={8,20},layout={1,2},red={0,1},green={0,1},blue={0,1},x={-10000,10000},y={-10000,10000}})),nativeMeter=Shape(Fields("enabled trim",{trimAlpha={0,1},backgroundAlpha={0,1},padding={0,24},edgeTop={-24,48},edgeBottom={-24,48},edgeLeft={-24,48},edgeRight={-24,48}})),barSource=N(0,2),bagCombined=B,bagDock=B,hideNativeBagBar=B,bagJunk=B,bagQuality=B,bagQuest=B,bagEmptySlots=B,bagItemGap=N(0,16),bagTheme=N(1,3),bagDesign=N(1,3),bagExpanded=B,bagBackground=B,bagFrame=B,bagIconBorder=B,bagSize=N(18,48),bagGap=N(0,16),microEnabled=B,microLocked=B,microSize=N(18,48),microGap=N(0,16),microX=N(0,10000),microY=N(0,10000),hideNativeHotkeys=B,hideNativeMacroNames=B,hideActionBarStatues=B,hideErrors=B,keepImportantErrors=B,errorMode=N(1,3),errorFilters=Shape({target=B,movement=B,range=B,direction=B,cooldown=B,resources=B}),muteClicks=B,cvars={kind="cvars"},sounds={kind="sounds"},position=position,panelHeight=N(640,1100)})
+schema.root=Shape({chat=Shape(Fields("enabled microDock enterMode microHidden")),fps=Shape(Fields("enabled locked showMS",{x={-10000,10000},y={-10000,10000}})),soundShortcut=Shape(Fields("enabled locked",{size={24,64},x={0,1},y={0,1}})),bagShortcut=Shape(Fields("enabled locked",{size={24,80},x={0,1},y={0,1}})),actionRange=Shape({enabled=B,color={kind="rgb"}}),minimapButtons=Shape(Fields("enabled locked showTooltip",{buttonStyle={1,2},buttonSize={20,64},columns={1,12},iconSize={24,40},angle={-360,360},radius={0,80}})),minimapCoords=Shape(Fields("enabled outline",{x={-300,300},y={-300,300},size={8,32},font={0,2}})),experience=Shape(Fields("enabled locked showRep showPet showTime showRate showQuest showRested trim hideNative classColor",{frameSize={10,24},verticalSpace={0,120},backgroundAlpha={0,1},width={280,1400},barHeight={8,28},subHeight={8,20},layout={1,2},red={0,1},green={0,1},blue={0,1},x={-10000,10000},y={-10000,10000}})),nativeMeter=Shape(Fields("enabled trim",{trimAlpha={0,1},backgroundAlpha={0,1},padding={0,24},edgeTop={-24,48},edgeBottom={-24,48},edgeLeft={-24,48},edgeRight={-24,48}})),barSource=N(0,2),bagCombined=B,bagDock=B,hideNativeBagBar=B,bagJunk=B,bagQuality=B,bagQuest=B,bagEmptySlots=B,bagItemGap=N(0,16),bagTheme=N(1,3),bagDesign=N(1,3),bagExpanded=B,bagBackground=B,bagFrame=B,bagIconBorder=B,bagSize=N(18,48),bagGap=N(0,16),microEnabled=B,microLocked=B,microSize=N(18,48),microGap=N(0,16),microX=N(0,10000),microY=N(0,10000),hideNativeHotkeys=B,hideNativeMacroNames=B,hideActionBarStatues=B,hideErrors=B,keepImportantErrors=B,errorMode=N(1,3),errorFilters=Shape({target=B,movement=B,range=B,direction=B,cooldown=B,resources=B}),muteClicks=B,cvars={kind="cvars"},sounds={kind="sounds"},position=position,panelHeight=N(640,1100)})
 
 schema.root.fields.minimapButtons.fields.excluded={kind="iconExclusions"}
 -- Character UI preferences only. Inventory, money and timer runtime state are excluded.
@@ -1934,6 +1935,14 @@ swing.bars=Shape({mainhand=swingBar,offhand=swingBar,ranged=swingBar})
 schema.root.fields.classicSwing=Shape(swing)
 schema.root.fields.classicCast=Shape(Fields("enabled locked icon time",{width={140,600},height={10,40},scale={.5,2},fontSize={8,24},x={-10000,10000},y={-10000,10000}}))
 
+-- Shared chat appearance, validated for profile import/export.
+schema.root.fields.chat.fields.theme=N(1,3)
+for key,range in pairs({x={0,10000},y={0,10000},width={300,3000},height={100,2000},controlMode={1,3},microGap={0,12},microSize={20,40}})do schema.root.fields.chat.fields[key]=N(range[1],range[2])end
+schema.root.fields.chat.fields.unlocked=B
+schema.root.fields.chat.fields.channelColors=B
+schema.root.fields.chat.fields.visibilityMode=N(1,3)
+schema.root.fields.chat.fields.backgroundColor={kind="rgb"}
+schema.root.fields.chat.fields.backgroundAlpha=N(0,1)
 schema.root.fields.experience.fields.labels=Shape({total=Shape({color={kind="rgb"},visible=B,x=N(-1400,1400),y=N(-400,400),size=N(8,28),font=N(0,2),align=N(0,2)}),levelTime=Shape({color={kind="rgb"},visible=B,x=N(-1400,1400),y=N(-400,400),size=N(8,28),font=N(0,2),align=N(0,2)}),xp=Shape({color={kind="rgb"},visible=B,x=N(-1400,1400),y=N(-400,400),size=N(8,28),font=N(0,2),align=N(0,2)}),remaining=Shape({color={kind="rgb"},visible=B,x=N(-1400,1400),y=N(-400,400),size=N(8,28),font=N(0,2),align=N(0,2)}),rate=Shape({color={kind="rgb"},visible=B,x=N(-1400,1400),y=N(-400,400),size=N(8,28),font=N(0,2),align=N(0,2)}),reputation=Shape({color={kind="rgb"},visible=B,x=N(-1400,1400),y=N(-400,400),size=N(8,28),font=N(0,2),align=N(0,2)}),pet=Shape({color={kind="rgb"},visible=B,x=N(-1400,1400),y=N(-400,400),size=N(8,28),font=N(0,2),align=N(0,2)})})
 schema.root.fields.experience.fields.colors=Shape({main={kind="rgb"},quest={kind="rgb"},rested={kind="rgb"},rep={kind="rgb"},pet={kind="rgb"}})
 schema.appearance=Shape({scale=N(.3,2),cardGlow=B,glowStrength=N(0,1),glowRadius=N(4,20),glowColor={kind="rgb"},cardTone=N(.6,1.8),minimap=minimap})
@@ -3090,6 +3099,7 @@ local function ReleaseMicro()
   if MicroMenu:GetParent()==microState.menu.parent then Restore(microState.menu)
   elseif MicroMenu:GetScale()==microState.appliedScale then MicroMenu:SetScale(microState.menu.scale) end
   for _,key in ipairs(microFields) do MicroMenu[key]=microState.fields[key] end
+  for button,original in pairs(microState.buttonSizes or {})do button:SetSize(original[1],original[2])end
   microState=nil
   if MicroMenu.MarkDirty then MicroMenu:MarkDirty() end
   if MicroMenuContainer.Layout then MicroMenuContainer:Layout() end
@@ -3186,7 +3196,11 @@ local function ReturnMicroButtons()
  return true
 end
 
+local chatMenuHidden=false
 local function ApplyMicro()
+ if not(K.Chat and K.Chat.Enabled())then ReleaseMicro();return end
+ local dockState=K.Chat and K.Chat.GetMicroDock and K.Chat.GetMicroDock()
+ if chatMenuHidden and not(dockState and dockState.hidden)then MicroMenuContainer:Show();chatMenuHidden=false end
  if BTMicro() or Editor() or not MicroMenu or not MicroMenuContainer or Protected(MicroMenuContainer) or Protected(MicroMenu) then ReleaseMicro();return end
  if ReturnMicroButtons()==false then return end
  if not M.Get("microEnabled") then ReleaseMicro();return end
@@ -3199,10 +3213,32 @@ local function ApplyMicro()
  end
  MakeMicroUI()
  Hook(MicroMenu,"Layout");Hook(MicroMenu,"SetNormalScale");Hook(MicroMenu,"SetParent");Hook(MicroMenuContainer,"SetPoint");Hook(MicroMenuContainer,"SetScale")
- local height=buttons[1]:GetHeight();local scale=M.Get("microSize")/math.max(1,height)
+ local ownedDock=K.Chat and K.Chat.GetMicroDock and K.Chat.GetMicroDock()
+ if ownedDock then
+  microState.buttonSizes=microState.buttonSizes or {}
+  for _,b in ipairs(buttons)do
+   if not microState.buttonSizes[b]then microState.buttonSizes[b]={b:GetWidth(),b:GetHeight()}end
+   b:SetSize(ownedDock.buttonSize or 32,ownedDock.buttonSize or 32)
+  end
+ end
+ local height=buttons[1]:GetHeight();local scale=ownedDock and 1 or M.Get("microSize")/math.max(1,height)
+ -- One placement owner: the chat supplies a temporary dock rectangle. Saved x/y stay intact.
+ local chatDock=K.Chat and K.Chat.GetMicroDock and K.Chat.GetMicroDock()
+ if chatDock and chatDock.hidden then MicroMenuContainer:Hide();chatMenuHidden=true;return end
+ if chatDock and chatDock.vertical then
+  local total,count=0,0;for _,b in ipairs(buttons)do if b:IsShown()then total=total+b:GetHeight();count=count+1 end end
+  scale=math.min(scale,math.max(.1,(chatDock.height-math.max(0,count-1)*3)/math.max(1,total)))
+
+ end
  MicroMenuContainer:SetScale(1)
- MicroMenu.childXPadding=M.Get("microGap")/scale;MicroMenu.childYPadding=0
+ MicroMenu.childXPadding=(chatDock and chatDock.gap or M.Get("microGap"))/scale;MicroMenu.childYPadding=chatDock and (chatDock.gap or 4)or 0
  MicroMenu.isHorizontal=true;MicroMenu.isStacked=false;MicroMenu.layoutFramesGoingRight=true;MicroMenu.layoutFramesGoingUp=false;MicroMenu.stride=#buttons
+ if chatDock and chatDock.vertical then
+  MicroMenu.isHorizontal=false;MicroMenu.childXPadding=0;MicroMenu.childYPadding=3/scale
+ end
+ if chatDock and not chatDock.vertical then
+  MicroMenu.stride=math.max(1,math.floor((chatDock.width+(chatDock.gap or 4))/((chatDock.buttonSize or 32)+(chatDock.gap or 4))))
+ end
  MicroMenu:SetScale(scale)
  microState.appliedScale=scale
  MicroMenu:Layout()
@@ -3214,15 +3250,20 @@ local function ApplyMicro()
   y=math.max(4,((chat and chat:GetBottom()) or 65)*cs-M.Get("microSize")-12)
  end
  local width=MicroMenu:GetWidth()*scale;local h=MicroMenu:GetHeight()*scale
+ if chatDock then x=chatDock.x+(chatDock.width-width)/2;y=chatDock.y+(chatDock.height-h)/2 end
  x=math.max(4,math.min(x,math.max(4,UIParent:GetWidth()-width-4)))
  y=math.max(4,math.min(y,math.max(4,UIParent:GetHeight()-h-4)))
- MicroMenuContainer:ClearAllPoints();MicroMenuContainer:SetPoint("BOTTOMLEFT",UIParent,"BOTTOMLEFT",x,y)
+ MicroMenuContainer:ClearAllPoints()
+ if chatDock and chatDock.anchor then
+  -- Anchor to the shared shell so dragging the native chat moves the menu without polling.
+  MicroMenuContainer:SetPoint("BOTTOMLEFT",chatDock.anchor,"BOTTOMLEFT",(chatDock.offsetX or 10)+(chatDock.width-width)/2,(chatDock.offsetY or 3)+(chatDock.height-h)/2)
+ else MicroMenuContainer:SetPoint("BOTTOMLEFT",UIParent,"BOTTOMLEFT",x,y)end
  MicroMenuContainer:SetSize(width,h)
  MicroMenu:ClearAllPoints();MicroMenu:SetPoint("BOTTOMLEFT",MicroMenuContainer,"BOTTOMLEFT",0,0)
- microArt:Show()
+ microArt:SetShown(not chatDock)
  mover:SetSize(math.max(150,width),18);mover:ClearAllPoints();mover:SetPoint("BOTTOMLEFT",UIParent,"BOTTOMLEFT",x,y+h+2)
  mover.menuHeight=h
- mover.label:SetText(K.L("imMove"));mover:SetShown(not M.Get("microLocked"))
+ mover.label:SetText(K.L("imMove"));mover:SetShown(not M.Get("microLocked") and not chatDock)
 end
 local function WatchBartender()
  for _,name in ipairs({"BagBar","MicroMenu"}) do

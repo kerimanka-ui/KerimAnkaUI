@@ -1134,3 +1134,9 @@ K.locales.zhCN["bagSettingsTab"]="设置"
 K.locales.zhCN["bagMoneyTab"]="角色金币"
 
 K.locales.zhCN["bagRecordsTab"]="背包与银行"
+
+K.locales.zhCN["xpTexturedBars"]="使用高光进度条纹理"
+K.locales.zhCN["xpTexturedBarsHelp"]="关闭时使用所选颜色的纯色填充。开启时恢复经验、声望和宠物进度条的原有高光纹理。"
+
+K.locales.zhCN["xpShowBackground"]="显示面板背景"
+K.locales.zhCN["xpShowBackgroundHelp"]="显示或隐藏面板背景。进度条、文字和装饰边框保持独立。保留背景透明度设置。"

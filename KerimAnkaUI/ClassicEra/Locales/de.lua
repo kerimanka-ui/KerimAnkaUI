@@ -1108,3 +1108,9 @@ K.locales.de["bagSettingsTab"]="Einstellungen"
 K.locales.de["bagMoneyTab"]="Charaktergold"
 
 K.locales.de["bagRecordsTab"]="Taschen & Bank"
+
+K.locales.de["xpTexturedBars"]="Glänzende Balkentextur verwenden"
+K.locales.de["xpTexturedBarsHelp"]="Aus: flache Füllung in der gewählten Farbe. Ein: ursprüngliche glänzende Textur für EP-, Ruf- und Begleiterbalken."
+
+K.locales.de["xpShowBackground"]="Panelhintergrund anzeigen"
+K.locales.de["xpShowBackgroundHelp"]="Blendet den Panelhintergrund ein oder aus. Balken, Texte und Zierrahmen bleiben getrennt. Die eingestellte Deckkraft bleibt erhalten."

@@ -4,7 +4,7 @@
 ## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Notes: Shared settings and ready layouts for KerimAnka UI on Classic Era.
 ## Author: Kerim Anka
-## Version: 0.35.1
+## Version: 0.36.0
 ## SavedVariables: KAClassic_KerimAnkaUIDB
 ## SavedVariablesPerCharacter: KAClassic_KerimAnkaUICharacterDB
 ## OptionalDeps: MinimapButtonButton, Bartender4, Details, Questie, Clique, LibDataBroker-1.1, LibDBIcon-1.0
@@ -21,6 +21,7 @@ ClassicEra\Locales\ptBR.lua
 ClassicEra\Locales\ruRU.lua
 ClassicEra\NameFonts.xml
 ClassicEra\NameFonts.lua
+ClassicEra\ChatLocales.lua
 ClassicEra\Core.lua
 ClassicEra\Keyring.lua
 ClassicEra\QuestieCompat.lua
@@ -65,3 +66,4 @@ ClassicEra\ClassicLayoutQuickOptions.lua
 ClassicEra\ClassicLayoutPreviews.lua
 ClassicEra\ClassicLayoutElements.lua
 ClassicEra\ClassicLayoutEditor.lua
+

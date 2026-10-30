@@ -932,3 +932,9 @@ K.locales.ptBR["bagSettingsTab"]="Configurações"
 K.locales.ptBR["bagMoneyTab"]="Dinheiro dos personagens"
 
 K.locales.ptBR["bagRecordsTab"]="Bolsas e banco"
+
+K.locales.ptBR["xpTexturedBars"]="Usar textura brilhante nas barras"
+K.locales.ptBR["xpTexturedBarsHelp"]="Desativado: preenchimento uniforme na cor escolhida. Ativado: textura brilhante original para experiência, reputação e ajudante."
+
+K.locales.ptBR["xpShowBackground"]="Mostrar fundo do painel"
+K.locales.ptBR["xpShowBackgroundHelp"]="Mostra ou oculta o fundo do painel. Barras, textos e moldura decorativa ficam separados. A opacidade configurada é preservada."

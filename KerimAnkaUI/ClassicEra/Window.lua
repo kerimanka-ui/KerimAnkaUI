@@ -518,17 +518,70 @@ local function Module(module)
     Text(page,K.L(not K.ModuleApplicable(module) and "hunterOnlyHelp" or not loaded and "inactiveHelp" or module.key=="units" and "ufUpdate" or module.key=="backdrop" and "abUpdate" or module.key=="quests" and "qjUpdate" or module.key=="details" and "dtUpdate" or module.key=="range" and "hrUpdate" or module.key=="threat" and "ftUpdate" or module.key=="aspect" and "aaUpdate" or "bridge"),12,-257,690,15)
     page:SetHeight(430)
 end
+local chatResetArmed=false
+local function ChatPage()
+ local C=K.Chat;if not C then return end
+ Text(page,C.Text('Hazır temalar','Preset themes'),12,0,690,20,gold)
+ Text(page,C.Text('Tema tüm chat pencerelerine uygulanır. Serbest renk seçimi kapalıdır.','The theme applies to all chat windows. Free color selection is disabled.'),12,-35,690,14,muted)
+ for i,t in ipairs(C.themes)do
+  local id=i;local card=Box(page,0,-80-(i-1)*110,714,98)
+  local preview=Box(card,12,-12,120,74)
+  Rounded(preview,t.body[1],t.body[2],t.body[3],{.3,.33,.29,1},5,false)
+  Text(card,C.Text(t.name,t.en),150,-16,350,17)
+  Text(card,C.ThemeID()==id and C.Text('Seçili','Selected')or '',150,-48,350,13,gold)
+  Button(card,C.Text('Uygula','Apply'),566,-29,130,36,function()C.SetTheme(id);chatResetArmed=false;K.Render()end)
+ end
+ Text(page,C.Text('Yazı boyutu, filtreler ve kanallar için sekmeye sağ tıkla; bu işlemler Blizzard menüsünde kalır.','Right-click a tab for font size, filters and channels; these remain in the Blizzard menu.'),12,-425,690,14,muted)
+ local d=C.ManagedBounds()
+ Text(page,C.Text('Yerleşim','Layout'),12,-485,690,20,gold)
+ local modes={{'Otomatik','Automatic'},{'Dikey','Vertical'},{'Yatay','Horizontal'}}
+ for i,n in ipairs(modes)do local id=i
+  local choice=Button(page,C.Text(n[1],n[2]),(i-1)*240,-525,232,34,function()C.SetLayout('controlMode',id);K.Render()end)
+  Selected(choice,(d.controlMode or 1)==id)
+ end
+ local rows={{'width','Genişlik','Width',10},{'height','Yükseklik','Height',10},{'microGap','Alt menü aralığı','Micro menu spacing',1},{'microSize','Alt menü boyutu','Micro menu size',1}}
+ for i,e in ipairs(rows)do local key,step=e[1],e[4];local y=-580-(i-1)*55
+  Text(page,C.Text(e[2],e[3])..': '..math.floor(d[key]or(key=='microSize'and 32 or 4)),12,y,440,15)
+  Button(page,'−',548,y+8,70,34,function()C.SetLayout(key,(d[key]or(key=='microSize'and 32 or 4))-step);C.Refresh();K.Render()end)
+  Button(page,'+',628,y+8,70,34,function()C.SetLayout(key,(d[key]or(key=='microSize'and 32 or 4))+step);C.Refresh();K.Render()end)
+ end
+ Button(page,C.Text('Konumu düzenle','Edit position'),0,-810,350,36,function()
+  C.OpenEditor()
+ end)
+ Button(page,C.Text('Boyut tutamacı: ','Resize handle: ')..C.Text('',d.unlocked and 'On'or 'Off'),364,-810,350,36,function()C.SetLayout('unlocked',not d.unlocked);K.Render()end)
+ Text(page,C.Text('Sol düğme aralıkları sabittir. Otomatik düzen kısa pencerede yataya geçer.','Side button spacing is fixed. Automatic layout turns horizontal in short windows.'),12,-870,690,14,muted)
+
+ Button(page,C.Text('Kanal türüne göre sekme renkleri: ','Tab colors by channel type: ')..C.Text('',d.channelColors and 'On'or 'Off'),0,-930,714,36,function()C.SetChannelColors(not d.channelColors);chatResetArmed=false;K.Render()end)
+ Text(page,C.Text('Lonca yeşil, grup mavi, raid ve savaş kaydı sıcak tonlar. Karışık kanallar nötr kalır.','Guild is green, party blue, raid and combat log warm tones. Mixed channels stay neutral.'),12,-980,690,14,muted)
+ Text(page,C.Text('Mouse uzaktayken görünürlük','Visibility away from the chat'),12,-1040,690,18,gold)
+ local visibility={{'Her zaman görünür','Always visible'},{'Yazılar görünür','Messages visible'},{'Tamamen gizle','Hide all'}}
+ for i,name in ipairs(visibility)do local id=i
+  local choice=Button(page,C.Text(name[1],name[2]),(i-1)*240,-1080,232,36,function()C.SetVisibilityMode(id);chatResetArmed=false;K.Render()end)
+  Selected(choice,(d.visibilityMode or 1)==id)
+ end
+ Text(page,C.Text('Mouse ile üzerine gelince veya yazarken görünür. Savaşta ve düzenleme sırasında gizlenmez.','Reveals on hover or while typing. Stays visible in combat and while editing.'),12,-1130,690,14,muted)
+ if chatResetArmed then Text(page,C.Text('Chat görünümü, konumu ve boyutu sıfırlanacak. Mesajlar, kanallar ve filtreler korunur. Onaylamak için tekrar bas.','Chat appearance, position and size will reset. Messages, channels and filters are preserved. Press again to confirm.'),12,-1200,690,14,gold)end
+ Button(page,chatResetArmed and C.Text('Onayla: tüm Chat ayarlarını sıfırla','Confirm: reset all Chat settings')or C.Text('Chat ayarlarını varsayılana döndür','Restore default Chat settings'),0,-1265,714,38,function()
+  if chatResetArmed then if C.ResetChatSettings()then chatResetArmed=false end else chatResetArmed=true end;K.Render()
+ end)
+ if chatResetArmed then Button(page,C.Text('Vazgeç','Cancel'),0,-1315,714,34,function()chatResetArmed=false;K.Render()end)end
+ Button(page,C.Text('Mikro menü: ','Micro menu: ')..C.Text('',K.InventoryMenus.Get('microEnabled')and 'On'or 'Off'),0,-1370,714,36,function()K.InventoryMenus.Set('microEnabled',not K.InventoryMenus.Get('microEnabled'));K.Render()end)
+ page:SetHeight(1440)
+end
 function K.ShowPage(key,homeSection)
     if K.LayoutEditor and K.LayoutEditor.IsActive() then K.LayoutEditor.Finish(true) end
+    if key=="home" and homeSection=="imMicro" then key="chat";homeSection=nil end
     if homeSection then section=homeSection end
     if not K.window then return end
     for _,module in ipairs(K.modules) do
         if key==module.key and not K.ModuleApplicable(module) then key="home"; break end
     end
+    if key~="chat" then chatResetArmed=false end
     selection=key or "home"
     K.scroll:SetVerticalScroll(0); K.openingPage=true; K.window:Show(); K.openingPage=nil; K.Render()
 end
 function K.Render()
+    if selection~="chat" then chatResetArmed=false end
     if K.CancelUnitPageBuild then K.CancelUnitPageBuild() end
     if K.layoutEditButton then K.layoutEditButton.label:SetText(K.L('leTitle')) end
     if K.CloseCommunity then K.CloseCommunity() end
@@ -551,7 +604,7 @@ function K.Render()
     if idEdit then idEdit:Hide() end
     used, labelUsed=0,0
     for _,v in ipairs(nav) do
-        v.label:SetText(K.L(v.key))
+        v.label:SetText(v.key=="chat" and K.Chat and K.L("chat")or K.L(v.key))
         local selected=v.key==selection
         Rounded(v,selected and 0.20 or 0.095,selected and 0.245 or 0.105,selected and 0.17 or 0.10,
             selected and {0.43,0.53,0.34,1} or {0.095,0.105,0.10,1},6,false)
@@ -568,7 +621,7 @@ function K.Render()
     end
     if languageMenu then languageMenu:Hide(); languageDismiss:Hide() end
     if languageButton then UpdateLanguageLabel() end
-    heading:SetText(K.L(selection=="home" and (section=="overview" and "quick" or section) or selection))
+    heading:SetText(selection=="chat" and K.Chat and K.L("chat")or K.L(selection=="home" and (section=="overview" and "quick" or section) or selection))
     subtitle:SetText(K.L(selection=="home" and "welcome" or "saved"))
     footer:SetText(K.HasPendingModuleChanges() and K.L("communityReloadWaiting") or "")
     footer:SetTextColor(unpack(K.HasPendingModuleChanges() and gold or muted))
@@ -578,6 +631,7 @@ function K.Render()
     elseif selection=="experience" then K.DrawExperiencePage(page)
     elseif selection=="minimap" then K.DrawMinimapPage(page)
     elseif selection=="inventory" then K.DrawInventoryPage(page)
+    elseif selection=="chat" and K.Chat then ChatPage()
     elseif selection~="home" then
         for _,module in ipairs(K.modules) do if selection==module.key then Module(module); break end end
     elseif section=="overview" then Overview()
@@ -585,7 +639,7 @@ function K.Render()
     elseif section=="combat" then Combat()
     elseif section=="alerts" then Alerts()
     elseif section=="sounds" then Sounds()
-    elseif section=="imMicro" then K.DrawMicroMenuPage(page) end
+    end
     if K.reloadPrompt and K.reloadPrompt:IsShown() then
         if K.HasPendingModuleChanges() then K.ShowReloadPrompt() else K.reloadPrompt:Hide() end
     end
@@ -919,6 +973,7 @@ function K.BuildWindow()
         button.accent:SetSize(3,21); button.accent:SetColorTexture(0.52,0.72,0.43,1)
     end
     local keys={"home"}; for _,m in ipairs(K.VisibleModules()) do keys[#keys+1]=m.key;if m.key=="units" then keys[#keys+1]="minimap";keys[#keys+1]="inventory" end;if m.key=="details" then keys[#keys+1]="experience" end end
+
     for i,key in ipairs(keys) do
         local b=FixedButton(sidebar,K.L(key),10,-12-(i-1)*45,178,39,function()
             selection=key; K.scroll:SetVerticalScroll(0); K.Render()
@@ -941,7 +996,7 @@ function K.BuildWindow()
     profiles:ClearAllPoints();profiles:SetPoint("BOTTOMLEFT",10,61)
     profiles.key="profiles";NavAccent(profiles);nav[#nav+1]=profiles
     introProfiles=profiles
-    for i,key in ipairs({"overview","camera","combat","alerts","sounds","imMicro"}) do
+    for i,key in ipairs({"overview","camera","combat","alerts","sounds"}) do
         local tab=FixedButton(f,K.L(key),220+(i-1)*120,-77,114,32,function()
             section=key; K.scroll:SetVerticalScroll(0); K.Render()
         end)

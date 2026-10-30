@@ -28,7 +28,14 @@ local function Color(g,key,label,get,set)
 end
 function Q.Group(name)
  local g,api
- if name=='units'then
+ if name=='chat'then
+  api=K.Chat;if not api then return end
+  g=Group(name,api.ManagedBounds,api.Refresh)
+  for _,e in ipairs({{'width','Width',348,3000,4},{'height','Height',160,2000,4},{'microGap','Micro menu spacing',0,12,1},{'microSize','Micro menu size',20,40,1}})do
+   local key=e[1];g.Add(key,e[2],e[3],e[4],e[5],function()return api.ManagedBounds()[key]or(key=='microSize'and 32 or 4) end,function(v)return api.SetLayout(key,v)end)
+  end
+  g.Add('controlMode','Controls',nil,nil,nil,function()return api.ManagedBounds().controlMode or 1 end,function(v)return api.SetLayout('controlMode',v)end,{{1,'Automatic'},{2,'Vertical'},{3,'Horizontal'}})
+ elseif name=='units'then
   api=ForeverLeatherUnitsAPI;if not api or not api.GetSettings()or not K.SetUnitOption then return end
   g=Group(name,api.GetSettings,api.Apply)
   local special=false

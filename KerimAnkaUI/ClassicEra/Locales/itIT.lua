@@ -932,3 +932,9 @@ K.locales.itIT["bagSettingsTab"]="Impostazioni"
 K.locales.itIT["bagMoneyTab"]="Denaro dei personaggi"
 
 K.locales.itIT["bagRecordsTab"]="Borse e banca"
+
+K.locales.itIT["xpTexturedBars"]="Usa texture lucida delle barre"
+K.locales.itIT["xpTexturedBarsHelp"]="Disattivato: riempimento uniforme nel colore scelto. Attivato: texture lucida originale per esperienza, reputazione e famiglio."
+
+K.locales.itIT["xpShowBackground"]="Mostra sfondo del pannello"
+K.locales.itIT["xpShowBackgroundHelp"]="Mostra o nasconde lo sfondo del pannello. Barre, testi e cornice decorativa restano separati. L’opacità impostata viene conservata."

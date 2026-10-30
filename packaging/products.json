@@ -13,12 +13,13 @@
         "KerimAnkaUI_HunterRange",
         "KerimAnkaUI_QuestJournal",
         "KerimAnkaUI_Threat",
-        "KerimAnkaUI_UnitFrames"
+        "KerimAnkaUI_UnitFrames",
+        "KerimAnkaUI_Chat"
       ]
     },
     "bags": {
       "archiveName": "KerimAnkaBags-ClassicEra",
-      "curseforgeProjectId": null,
+      "curseforgeProjectId": 1771185,
       "generator": "tools/bags/generate.py",
       "roots": [
         "KerimAnkaUI_Bags"

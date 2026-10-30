@@ -37,10 +37,7 @@ function K.DrawAspectPage(page)
  if not db then return false end
  local w=K.UnitWidgets
  w.Text(page,K.L("aaNote"),8,0,690,13,{.65,.70,.62})
- local notice=w.Box(page,0,-64,714,148)
- w.Text(notice,K.L("aaCombatNoticeTitle"),14,-12,686,14,{.85,.69,.37})
- w.Text(notice,K.L("aaCombatNotice"),14,-38,686,13,{.78,.80,.73})
- local y=-230
+ local y=-64
  for i,item in ipairs({{"cheetah","aaPreview"},{"missing","aaPreviewMissing"},{false,"aaLive"}}) do
   local mode=item[1] or nil
   local b=w.Button(page,K.L(item[2]),(i-1)*240,y,234,34,function()

@@ -24,8 +24,8 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Test separate product boundaries
         run: python3 -m unittest discover -s tests -p test_product_boundaries.py -v
-      - name: Build suite and independent Bags from this tag
-        run: python3 tools/package_products.py --release --output dist
+      - name: Build only the reviewed products for this release
+        run: python3 tools/build_reviewed_release.py --tag "$RELEASE_TAG" --output dist
       - name: Verify reviewed archive hashes
         run: python3 tools/check_product_release.py --tag "$RELEASE_TAG" --output dist
       - name: Publish distinct GitHub release assets

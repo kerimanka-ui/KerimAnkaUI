@@ -1,0 +1,3 @@
+local _,N=...
+N.host=KerimAnkaUIAPI and KerimAnkaUIAPI.GetChatHost and KerimAnkaUIAPI.GetChatHost()
+N.blocked=not N.host

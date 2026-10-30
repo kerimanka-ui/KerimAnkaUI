@@ -932,3 +932,9 @@ K.locales.ruRU["bagSettingsTab"]="Настройки"
 K.locales.ruRU["bagMoneyTab"]="Деньги персонажей"
 
 K.locales.ruRU["bagRecordsTab"]="Сумки и банк"
+
+K.locales.ruRU["xpTexturedBars"]="Использовать глянцевую текстуру полос"
+K.locales.ruRU["xpTexturedBarsHelp"]="Выключено: однотонная заливка выбранного цвета. Включено: исходная глянцевая текстура полос опыта, репутации и питомца."
+
+K.locales.ruRU["xpShowBackground"]="Показывать фон панели"
+K.locales.ruRU["xpShowBackgroundHelp"]="Показывает или скрывает фон панели. Полосы, текст и декоративная рамка остаются независимыми. Настройка прозрачности сохраняется."

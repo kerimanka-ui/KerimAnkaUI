@@ -87,7 +87,7 @@ class ProductBoundaryTests(unittest.TestCase):
     def test_product_destinations_are_distinct(self):
         config = json.loads((ROOT / 'packaging/products.json').read_text())['products']
         self.assertEqual(config['suite']['curseforgeProjectId'], 1761131)
-        self.assertIsNone(config['bags']['curseforgeProjectId'])
+        self.assertEqual(config['bags']['curseforgeProjectId'], 1771185)
         self.assertTrue(set(config['suite']['roots']).isdisjoint(config['bags']['roots']))
 
 if __name__ == '__main__':

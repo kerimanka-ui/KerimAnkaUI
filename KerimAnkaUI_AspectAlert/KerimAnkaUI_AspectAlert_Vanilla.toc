@@ -4,7 +4,7 @@
 ## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Notes: KerimAnka UI companion module for Classic Era.
 ## Author: Kerim Anka
-## Version: 0.35.1
+## Version: 0.36.0
 ## Dependencies: KerimAnkaUI
 ## SavedVariables: KAClassic_HunterAspectAlertDB
 ## SavedVariablesPerCharacter: KAClassic_HunterAspectAlertCharacterDB
