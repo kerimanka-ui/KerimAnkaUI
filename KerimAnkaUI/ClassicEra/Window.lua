@@ -7,6 +7,7 @@ local boldFont = "Interface\\AddOns\\KerimAnkaUI\\Fonts\\Ubuntu-B.ttf"
 local gold, white, muted = {0.73,0.62,0.41}, {0.9,0.91,0.88}, {0.59,0.63,0.61}
 local pool, used, labels, labelUsed = {}, 0, {}, 0
 local nav, tabs = {}, {}
+local textSizeButtons={}
 local languageButton, languageMenu, languageDismiss
 local UpdateLanguageLabel
 local page, subtitle, heading, footer
@@ -91,7 +92,7 @@ local function Text(parent, value, x,y,width,size,color)
     local text = labels[labelUsed]
     if not text then text = page:CreateFontString(nil,"OVERLAY"); labels[labelUsed] = text end
     text:SetParent(parent); text:ClearAllPoints(); text:SetPoint("TOPLEFT",x,y)
-    text:SetWidth(width); K.ApplyTextFont(text,size or 13,false,""); text:SetTextColor(unpack(color or white))
+    text:SetWidth(width);text:SetHeight(0); K.ApplyTextFont(text,size or 13,false,""); text:SetTextColor(unpack(color or white))
     text:SetJustifyH("LEFT"); text:SetJustifyV("TOP"); text:SetWordWrap(true)
     text:SetText(value); text:Show()
     return text
@@ -176,9 +177,12 @@ local function Box(parent,x,y,w,h,button)
         end
         pool[index] = frame
     end
+    frame:SetAlpha(1)
+    if frame.homeThumb then frame.homeThumb:Hide()end
     if frame.skinPreview then frame.skinPreview:Hide() end
     if frame.mbRowIcon then frame.mbRowIcon:Hide() end
     if frame.arSwatch then frame.arSwatch:Hide() end
+    if frame.backingSwatch then frame.backingSwatch:Hide()end
     if frame.xpColorChip then frame.xpColorChip:Hide() end
     frame.xpColorTag=nil
     if frame.choiceAccent then frame.choiceAccent:Hide() end
@@ -283,56 +287,100 @@ local function NumberCard(parent,key,cvar,x,y,w,low,high,step,format)
     local b=Button(card,"+",w-54,-66,36,32,function() Change(1) end)
     if not value then a:Disable(); b:Disable() end
 end
-local function Overview()
-    NumberCard(page,"zoom","cameraDistanceMaxZoomFactor",0,0,349,1,2.6,0.1,"%.1f ×")
-    NumberCard(page,"queue","SpellQueueWindow",365,0,349,0,1000,10,"%.0f ms")
-    local function Card(key,x,y,value,callback,available)
-        local card = Box(page,x,y,349,123)
-        K.ApplyTextFont(Text(card,K.L(key),16,-18,279,16),16,true,"")
-        Help(card,key,311,-14)
-        Text(card,K.L("saved"),16,-78,210,12,muted)
-        Switch(card,value,255,-72,callback,available)
-    end
-    Card("errors",0,-152,K.db.hideErrors,function(v) K.SetErrors(v) end,UIErrorsFrame ~= nil)
-    Card("clicks",365,-152,K.db.muteClicks,function(v) K.SetClicks(v) end,MuteSoundFile ~= nil and UnmuteSoundFile ~= nil)
-    CVarToggle({key="disableDeathEffect",cvar="ffxDeath"},-294)
-    local fps=K.FPS
-    Text(page,K.L("fpsTitle"),0,-385,714,17,gold)
-    if fps then
-        Card("fpsShow",0,-416,fps.Get('enabled'),function(v) fps.Set('enabled',v) end,not K.InCombat())
-        Card("fpsLock",365,-416,fps.Get('locked'),function(v) fps.Set('locked',v) end,not K.InCombat())
-        Card("fpsShowMS",0,-555,fps.Get('showMS'),function(v) fps.Set('showMS',v) end,not K.InCombat())
-        local reset=Button(page,K.L('fpsReset'),365,-555,349,34,function() fps.ResetPosition() end)
-        if K.InCombat() then reset:Disable() end
-    end
-    Text(page,K.L('fpsHomeHelp'),8,-700,690,13,muted)
-    Text(page,K.L("state"),0,-790,714,17,gold)
-    for i,module in ipairs(K.VisibleModules()) do
-        local exists, enabled, loaded = K.ModuleState(module)
-        local x = i%2 == 1 and 0 or 365
-        local y = -821 - math.floor((i-1)/2)*48
-        local b = Button(page,K.L(module.key=="details" and "dmDetails" or module.key),x,y,349,38,function() selection=module.key; K.Render() end)
-        b.label:ClearAllPoints(); b.label:SetPoint("LEFT",12,0); b.label:SetWidth(204); b.label:SetJustifyH("LEFT")
-        Text(b,K.L(K.ModuleStatus(module)),216,-9,123,11,K.ModuleStatus(module)=="loaded" and {0.58,0.76,0.48} or muted)
-    end
-    page:SetHeight(851+math.ceil(#K.VisibleModules()/2)*48)
+
+-- Session-only presentation state. Expanding a group never changes gameplay settings.
+local homeOpen={fps=true,modules=true,audio=true,shortcut=false,cast=false,swing=false,custom=false}
+local function HomeRefresh()
+ local position=K.scroll:GetVerticalScroll();K.HideTooltip();K.Render()
+ K.scroll:SetVerticalScroll(math.min(position,K.scroll:GetVerticalScrollRange()))
 end
-local function Camera()
-    NumberCard(page,"zoom","cameraDistanceMaxZoomFactor",0,0,714,1,2.6,0.1,"%.1f ×")
-    Text(page,K.L("zoomNote"),12,-158,690,14,muted)
-    page:SetHeight(230)
+local function HomeSwitch(parent,value,x,y,callback,available)
+ local b=Button(parent,'',x,y,76,26,function()callback(not value);HomeRefresh()end)
+ Rounded(b,value and .30 or .25,value and .49 or .28,value and .27 or .24,nil,12,false)
+ if not b.homeThumb then b.homeThumb=CreateFrame('Frame',nil,b,'BackdropTemplate');b.homeThumb:EnableMouse(false)end
+ local t=b.homeThumb;t:ClearAllPoints();t:SetPoint('TOPLEFT',value and 53 or 3,-3);t:SetSize(20,20)
+ t:SetFrameLevel(b:GetFrameLevel()+1);Rounded(t,.86,.90,.83,{.79,.84,.75,1},10,false);t:Show()
+ b.label:ClearAllPoints();b.label:SetPoint(value and 'LEFT'or'RIGHT',value and 5 or -5,0)
+ b.label:SetWidth(44);K.ApplyTextFont(b.label,9,true,'');b.label:SetText(K.L(value and'on'or'off'));local textWidth=b.label:GetStringWidth();if textWidth>44 then K.ApplyTextFont(b.label,9*44/textWidth,true,'')end;b.label:SetTextColor(unpack(white))
+ b:SetAlpha(available==false and .45 or 1);if available==false then b:Disable()end
+ return b
+end
+local function HomeToggle(parent,key,x,y,width,value,callback,available)
+ local c=Box(parent,x,y,width,64)
+ local title=Text(c,K.L(key),13,-13,width-142,13,white);title:SetHeight(44)
+ Help(c,key,width-124,-20);HomeSwitch(c,value,width-90,-19,callback,available)
+ return c
+end
+local function HomeFold(id,title,y,draw)
+ local header=Button(page,'',0,y,714,42,function()homeOpen[id]=not homeOpen[id];HomeRefresh()end)
+ Text(header,K.L(title),13,-12,650,15,gold)
+ Text(header,homeOpen[id]and'−'or'+',677,-10,24,18,white)
+ y=y-54
+ if homeOpen[id]then y=draw(y)end
+ return y-12
+end
+local function HomeNumber(key,cvar,x,y,width,low,high,step,format)
+ local c=Box(page,x,y,width,94);Text(c,K.L(key),13,-13,width-55,14,white);Help(c,key,width-35,-11)
+ local current=tonumber(K.GetCVar(cvar))
+ Text(c,current and string.format(format,current)or K.L('unavailable'),13,-51,width-117,22,white)
+ for i,direction in ipairs({-1,1})do
+  local delta=direction
+  local button=Button(c,delta<0 and'−'or'+',width-94+(i-1)*43,-49,35,30,function()
+   if current then K.SetCVar(cvar,math.max(low,math.min(high,math.floor((current+delta*step)/step+.5)*step)))end
+   HomeRefresh()
+  end)
+  if not current then button:Disable()end
+ end
+end
+local function HomeWidgets()
+ local widgets={};for key,value in pairs(K.UnitWidgets)do widgets[key]=value end
+ widgets.Switch=HomeSwitch
+ return widgets
+end
+local function Overview()
+ HomeNumber('zoom','cameraDistanceMaxZoomFactor',0,0,349,1,2.6,.1,'%.1f ×')
+ HomeNumber('queue','SpellQueueWindow',365,0,349,0,1000,10,'%.0f ms')
+ HomeToggle(page,'errors',0,-108,349,K.db.hideErrors,function(v)K.SetErrors(v)end,UIErrorsFrame~=nil)
+ HomeToggle(page,'clicks',365,-108,349,K.db.muteClicks,function(v)K.SetClicks(v)end,MuteSoundFile~=nil and UnmuteSoundFile~=nil)
+ local death=K.GetCVar('ffxDeath')
+ HomeToggle(page,'disableDeathEffect',0,-184,714,death=='0',function(v)K.SetCVar('ffxDeath',v and 0 or 1)end,death~=nil)
+ local y=HomeFold('fps','fpsTitle',-264,function(at)
+  local fps=K.FPS;if not fps then Text(page,K.L('unavailable'),13,at,680,13,muted);return at-40 end
+  local allowed=not InCombatLockdown()
+  HomeToggle(page,'fpsShow',0,at,349,fps.Get('enabled'),function(v)fps.Set('enabled',v)end,allowed)
+  HomeToggle(page,'fpsLock',365,at,349,fps.Get('locked'),function(v)fps.Set('locked',v)end,allowed)
+  HomeToggle(page,'fpsShowMS',0,at-76,349,fps.Get('showMS'),function(v)fps.Set('showMS',v)end,allowed)
+  local reset=Button(page,K.L('fpsReset'),365,at-90,349,34,function()fps.ResetPosition();HomeRefresh()end)
+  if not allowed then reset:Disable()end
+  Text(page,K.L('fpsHomeHelp'),10,at-154,694,12,muted):SetHeight(48)
+  return at-210
+ end)
+ y=HomeFold('modules','state',y,function(at)
+  local modules=K.VisibleModules()
+  for i,module in ipairs(modules)do
+   local entry=module;local status=K.ModuleStatus(module)
+   if module.key=='quests'and ForeverQuestJournalAPI and ForeverQuestJournalAPI.IsSuspended and ForeverQuestJournalAPI.IsSuspended()then status='homeSuspended'end
+   local x=i%2==1 and 0 or 365;local yy=at-math.floor((i-1)/2)*58
+   local button=Button(page,'',x,yy,349,48,function()selection=entry.key;K.scroll:SetVerticalScroll(0);K.Render()end)
+   Text(button,K.L(module.key=='details'and'dmDetails'or module.key),12,-8,325,13,white)
+   Text(button,K.L(status),12,-28,325,11,status=='loaded'and{.58,.76,.48}or muted)
+  end
+  return at-math.ceil(#modules/2)*58
+ end)
+ page:SetHeight(-y+12)
 end
 local function Combat()
-    NumberCard(page,"queue","SpellQueueWindow",0,0,714,0,1000,10,"%.0f ms")
-    Text(page,K.L("queueHelp"),12,-160,690,14,muted)
-    local bottom=-220
-    if K.DrawClassicCastOptions then bottom=K.DrawClassicCastOptions(page,K.UnitWidgets,bottom) end
-    if K.DrawClassicSwingOptions then bottom=K.DrawClassicSwingOptions(page,K.UnitWidgets,bottom) end
-    page:SetHeight(math.max(245,-bottom+24))
+ HomeNumber('queue','SpellQueueWindow',0,0,714,0,1000,10,'%.0f ms')
+ Text(page,K.L('queueHelp'),12,-108,690,13,muted):SetHeight(52)
+ local y=-178
+ if K.DrawClassicCastOptions then y=HomeFold('cast','pcTitle',y,function(at)return K.DrawClassicCastOptions(page,HomeWidgets(),at)end)end
+ if K.DrawClassicSwingOptions then y=HomeFold('swing','swTitle',y,function(at)return K.DrawClassicSwingOptions(page,HomeWidgets(),at)end)end
+ page:SetHeight(-y+20)
 end
 local function Alerts()
-    local y=K.DrawErrorOptions(page)
-    CVarToggle({key="disableDeathEffect",cvar="ffxDeath"},y-24)
+    local y=K.DrawErrorOptions(page,HomeWidgets())
+    local death=K.GetCVar('ffxDeath')
+    HomeToggle(page,'disableDeathEffect',0,y-24,714,death=='0',function(v)K.SetCVar('ffxDeath',v and 0 or 1)end,death~=nil)
     page:SetHeight(-y+120)
 end
 local idEdit
@@ -342,23 +390,33 @@ local function RefreshSoundSettings()
     K.Render();K.scroll:SetVerticalScroll(offset)
 end
 local function Sounds()
-    Text(page,K.L("soundInfo"),0,0,714,13,muted)
-    ToggleRow("clicks",-43,function() return K.db.muteClicks end,function(v) K.SetClicks(v) end,MuteSoundFile ~= nil and UnmuteSoundFile ~= nil)
-    for i,option in ipairs(K.soundOptions) do CVarToggle(option,-43-i*70) end
-    local y=-43-(#K.soundOptions+1)*70
+    Text(page,K.L('soundInfo'),0,0,714,13,muted):SetHeight(44)
+    local y=HomeFold('audio','homeAudio',-58,function(at)
+        HomeToggle(page,'clicks',0,at,714,K.db.muteClicks,function(v)K.SetClicks(v)end,MuteSoundFile~=nil and UnmuteSoundFile~=nil)
+        at=at-76
+        for i,option in ipairs(K.soundOptions)do
+            local entry=option;local value=K.GetCVar(entry.cvar)
+            HomeToggle(page,entry.key,i%2==1 and 0 or 365,at-math.floor((i-1)/2)*76,349,value=='0',function(v)K.SetCVar(entry.cvar,v and 0 or 1)end,value~=nil)
+        end
+        return at-math.ceil(#K.soundOptions/2)*76
+    end)
     if K.SoundShortcut then
-        local shortcut=K.SoundShortcut
-        ToggleRow("soundShortcutShow",y,function() return shortcut.Get('enabled') end,function(v) shortcut.Set('enabled',v) end,true)
-        ToggleRow("soundShortcutLock",y-70,function() return shortcut.Get('locked') end,function(v) shortcut.Set('locked',v) end,true)
-        local bottom=y-140
-        if K.DrawSoundShortcutSize then bottom=K.DrawSoundShortcutSize(page,{Box=Box,Text=Text,Button=Button},bottom) end
-        Button(page,K.L('soundShortcutReset'),0,bottom,714,34,function() shortcut.ResetPosition() end)
-        y=bottom-56
+        y=HomeFold('shortcut','soundShortcutShow',y,function(at)
+            local shortcut=K.SoundShortcut
+            HomeToggle(page,'soundShortcutShow',0,at,349,shortcut.Get('enabled'),function(v)shortcut.Set('enabled',v)end,true)
+            HomeToggle(page,'soundShortcutLock',365,at,349,shortcut.Get('locked'),function(v)shortcut.Set('locked',v)end,true)
+            at=at-82
+            if K.DrawSoundShortcutSize then at=K.DrawSoundShortcutSize(page,{Box=Box,Text=Text,Button=Button},at)end
+            Button(page,K.L('soundShortcutReset'),0,at,714,34,function()shortcut.ResetPosition();HomeRefresh()end)
+            return at-50
+        end)
     end
-    if K.DrawSoundGroups then
-        y=K.DrawSoundGroups(page,{Box=Box,Text=Text,Button=Button,Tip=Tip},y,RefreshSoundSettings)
-    end
-    Text(page,K.L("custom"),0,y,680,19,gold); Help(page,"custom",688,y+3)
+    if K.DrawSoundGroups then y=K.DrawSoundGroups(page,{Box=Box,Text=Text,Button=Button,Tip=Tip},y,RefreshSoundSettings)-12 end
+    local customHeader=Button(page,'',0,y,714,42,function()homeOpen.custom=not homeOpen.custom;HomeRefresh()end)
+    Text(customHeader,K.L('custom'),13,-12,650,15,gold);Text(customHeader,homeOpen.custom and'−'or'+',677,-10,24,18,white)
+    y=y-54
+    if not homeOpen.custom then page:SetHeight(-y+20);return end
+    Help(page,"custom",680,y+3)
     Text(page,K.L("fileIds"),0,y-38,700,12,muted)
     local function addSounds()
         if K.AddSounds(idEdit:GetText()) then
@@ -421,13 +479,13 @@ local function Interface()
     end
     Button(card,"−",602,-72,36,32,function() Scale(-0.05) end)
     Button(card,"+",652,-72,36,32,function() Scale(0.05) end)
-    ToggleRow("launcher",-148,function() return not KAClassic_KerimAnkaUIDB.minimap.hide end,function(v)
+    HomeToggle(page,"launcher",0,-148,714,not KAClassic_KerimAnkaUIDB.minimap.hide,function(v)
         KAClassic_KerimAnkaUIDB.minimap.hide = not v; K.UpdateLauncher()
     end,true)
-    ToggleRow("cardGlow",-222,function() return KAClassic_KerimAnkaUIDB.cardGlow ~= false end,function(v)
+    HomeToggle(page,"cardGlow",0,-222,714,KAClassic_KerimAnkaUIDB.cardGlow ~= false,function(v)
         KAClassic_KerimAnkaUIDB.cardGlow=v
     end,true)
-    ToggleRow("hideActionBarStatues",-296,function() return K.db.hideActionBarStatues==true end,function(v)
+    HomeToggle(page,"hideActionBarStatues",0,-296,714,K.db.hideActionBarStatues==true,function(v)
         K.SetActionBarStatues(v)
     end,not K.InCombat())
     local y=-384
@@ -490,7 +548,8 @@ local function AddonControls(module)
     Text(card,K.L(K.ModuleStatus(module)),16,-12,660,13,gold)
     Text(card,K.L("addonControl"),16,-53,490,15)
     local help=Button(card,"?",584,-47,22,22,function() end); Tip(help,"addonControl","addonControlHelp")
-    Switch(card,enabled,620,-44,function(value) K.ToggleModule(module,value) end,exists and K.ModuleApplicable(module))
+    local switch=(module.key=='backdrop'or module.key=='art'or module.key=='details'or module.key=='threat'or module.key=='range'or module.key=='aspect')and HomeSwitch or Switch
+    switch(card,enabled,620,-44,function(value) K.ToggleModule(module,value) end,exists and K.ModuleApplicable(module))
     page:SetHeight(-y+110)
 end
 local function Module(module)
@@ -502,7 +561,7 @@ local function Module(module)
     if loaded and K.ModuleApplicable(module) then
         if (module.key=="backdrop" or module.key=="art") and K.DrawActionBarPage and K.DrawActionBarPage(page,module.key) then AddonControls(module); return end
         if module.key=="units" and K.DrawUnitsPage and ForeverLeatherUnitsAPI and ForeverLeatherUnitsAPI.version>=2 and ForeverLeatherUnitsAPI.GetSettings() then
-            K.DrawUnitsPage(page,function() AddonControls(module) end); return
+            K.DrawUnitsPage(page,function()if not K.UnitSettingsView then AddonControls(module)end end); return
         end
         if module.key=="quests" and K.DrawQuestPage and K.DrawQuestPage(page) then AddonControls(module); return end
         if module.key=="details" and K.DrawDetailsPage and K.DrawDetailsPage(page) then AddonControls(module); return end
@@ -518,60 +577,104 @@ local function Module(module)
     Text(page,K.L(not K.ModuleApplicable(module) and "hunterOnlyHelp" or not loaded and "inactiveHelp" or module.key=="units" and "ufUpdate" or module.key=="backdrop" and "abUpdate" or module.key=="quests" and "qjUpdate" or module.key=="details" and "dtUpdate" or module.key=="range" and "hrUpdate" or module.key=="threat" and "ftUpdate" or module.key=="aspect" and "aaUpdate" or "bridge"),12,-257,690,15)
     page:SetHeight(430)
 end
+
 local chatResetArmed=false
+local chatSettingsTab='appearance'
 local function ChatPage()
  local C=K.Chat;if not C then return end
- Text(page,C.Text('Hazır temalar','Preset themes'),12,0,690,20,gold)
- Text(page,C.Text('Tema tüm chat pencerelerine uygulanır. Serbest renk seçimi kapalıdır.','The theme applies to all chat windows. Free color selection is disabled.'),12,-35,690,14,muted)
- for i,t in ipairs(C.themes)do
-  local id=i;local card=Box(page,0,-80-(i-1)*110,714,98)
-  local preview=Box(card,12,-12,120,74)
-  Rounded(preview,t.body[1],t.body[2],t.body[3],{.3,.33,.29,1},5,false)
-  Text(card,C.Text(t.name,t.en),150,-16,350,17)
-  Text(card,C.ThemeID()==id and C.Text('Seçili','Selected')or '',150,-48,350,13,gold)
-  Button(card,C.Text('Uygula','Apply'),566,-29,130,36,function()C.SetTheme(id);chatResetArmed=false;K.Render()end)
+ local tabNames={{'appearance','csAppearance'},{'layout','csLayout'},{'visibility','csVisibility'},{'micro','csMicro'}}
+ for i,entry in ipairs(tabNames)do
+  local id=entry[1]
+  local button=Button(page,K.L(entry[2]),(i-1)*180,0,174,36,function()
+   chatSettingsTab=id;chatResetArmed=false;K.scroll:SetVerticalScroll(0);K.Render()
+  end)
+  Selected(button,chatSettingsTab==id)
  end
- Text(page,C.Text('Yazı boyutu, filtreler ve kanallar için sekmeye sağ tıkla; bu işlemler Blizzard menüsünde kalır.','Right-click a tab for font size, filters and channels; these remain in the Blizzard menu.'),12,-425,690,14,muted)
  local d=C.ManagedBounds()
- Text(page,C.Text('Yerleşim','Layout'),12,-485,690,20,gold)
- local modes={{'Otomatik','Automatic'},{'Dikey','Vertical'},{'Yatay','Horizontal'}}
- for i,n in ipairs(modes)do local id=i
-  local choice=Button(page,C.Text(n[1],n[2]),(i-1)*240,-525,232,34,function()C.SetLayout('controlMode',id);K.Render()end)
-  Selected(choice,(d.controlMode or 1)==id)
+ if not d then Text(page,K.L('unavailable'),12,-65,690,14,muted);page:SetHeight(140);return end
+ local function Toggle(label,y,value,apply,help)
+  local box=Box(page,0,y,714,64)
+  Text(box,label,13,-14,550,14,white):SetHeight(40)
+  if help then
+   local question=Button(box,'?',584,-19,22,26,function()end)
+   question:SetScript('OnEnter',function(self)K.ShowTooltip(self,label,help)end);question:SetScript('OnLeave',K.HideTooltip)
+  end
+  HomeSwitch(box,value,624,-19,function(v)if apply(v)~=false then chatResetArmed=false end end,not InCombatLockdown())
  end
- local rows={{'width','Genişlik','Width',10},{'height','Yükseklik','Height',10},{'microGap','Alt menü aralığı','Micro menu spacing',1},{'microSize','Alt menü boyutu','Micro menu size',1}}
- for i,e in ipairs(rows)do local key,step=e[1],e[4];local y=-580-(i-1)*55
-  Text(page,C.Text(e[2],e[3])..': '..math.floor(d[key]or(key=='microSize'and 32 or 4)),12,y,440,15)
-  Button(page,'−',548,y+8,70,34,function()C.SetLayout(key,(d[key]or(key=='microSize'and 32 or 4))-step);C.Refresh();K.Render()end)
-  Button(page,'+',628,y+8,70,34,function()C.SetLayout(key,(d[key]or(key=='microSize'and 32 or 4))+step);C.Refresh();K.Render()end)
+ local function Number(key,label,x,y,step)
+  local default=key=='microSize'and 32 or 4;local value=math.floor(d[key]or default)
+  local box=Box(page,x,y,349,94);Text(box,label,13,-13,310,14,white)
+  Text(box,tostring(value),13,-53,220,21,white)
+  for i,delta in ipairs({-step,step})do
+   local change=delta
+   local button=Button(box,delta<0 and'−'or'+',255+(i-1)*43,-51,35,30,function()
+    if C.SetLayout(key,(d[key]or default)+change)then C.Refresh();HomeRefresh()end
+   end)
+   if InCombatLockdown()then button:Disable()end
+  end
  end
- Button(page,C.Text('Konumu düzenle','Edit position'),0,-810,350,36,function()
-  C.OpenEditor()
- end)
- Button(page,C.Text('Boyut tutamacı: ','Resize handle: ')..C.Text('',d.unlocked and 'On'or 'Off'),364,-810,350,36,function()C.SetLayout('unlocked',not d.unlocked);K.Render()end)
- Text(page,C.Text('Sol düğme aralıkları sabittir. Otomatik düzen kısa pencerede yataya geçer.','Side button spacing is fixed. Automatic layout turns horizontal in short windows.'),12,-870,690,14,muted)
-
- Button(page,C.Text('Kanal türüne göre sekme renkleri: ','Tab colors by channel type: ')..C.Text('',d.channelColors and 'On'or 'Off'),0,-930,714,36,function()C.SetChannelColors(not d.channelColors);chatResetArmed=false;K.Render()end)
- Text(page,C.Text('Lonca yeşil, grup mavi, raid ve savaş kaydı sıcak tonlar. Karışık kanallar nötr kalır.','Guild is green, party blue, raid and combat log warm tones. Mixed channels stay neutral.'),12,-980,690,14,muted)
- Text(page,C.Text('Mouse uzaktayken görünürlük','Visibility away from the chat'),12,-1040,690,18,gold)
- local visibility={{'Her zaman görünür','Always visible'},{'Yazılar görünür','Messages visible'},{'Tamamen gizle','Hide all'}}
- for i,name in ipairs(visibility)do local id=i
-  local choice=Button(page,C.Text(name[1],name[2]),(i-1)*240,-1080,232,36,function()C.SetVisibilityMode(id);chatResetArmed=false;K.Render()end)
-  Selected(choice,(d.visibilityMode or 1)==id)
+ if chatSettingsTab=='appearance'then
+  Text(page,C.Text('Hazır temalar','Preset themes'),12,-60,690,18,gold)
+  Text(page,C.Text('Tema tüm chat pencerelerine uygulanır. Serbest renk seçimi kapalıdır.','The theme applies to all chat windows. Free color selection is disabled.'),12,-91,690,13,muted):SetHeight(40)
+  for i,t in ipairs(C.themes)do
+   local id=i;local selected=C.ThemeID()==id
+   local card=Button(page,'',(i-1)*243,-140,228,148,function()if C.SetTheme(id)~=false then chatResetArmed=false;HomeRefresh()end end)
+   Selected(card,selected)
+   local preview=Box(card,12,-12,204,62);Rounded(preview,t.body[1],t.body[2],t.body[3],{.3,.33,.29,1},5,false)
+   Text(card,C.Text(t.name,t.en),12,-85,204,14,white):SetHeight(30)
+   if selected then Text(card,C.Text('Seçili','Selected'),12,-120,204,12,gold)end
+  end
+  Text(page,C.Text('Yazı boyutu, filtre ve kanallar için sekmeye sağ tıkla; bu işlemler Blizzard menüsünde kalır.','Right-click a tab for font size, filters and channels; these remain in the Blizzard menu.'),12,-308,690,13,muted):SetHeight(48)
+  Toggle(C.Text('Kanal türüne göre sekme renkleri: ','Tab colors by channel type: '):gsub(':%s*$',''),-372,d.channelColors,function(v)return C.SetChannelColors(v)end)
+  Text(page,C.Text('Lonca yeşil, grup mavi, raid ve savaş kaydı sıcak tonlar. Karışık kanallar nötr kalır.','Guild is green, party blue, raid and combat log warm tones. Mixed channels stay neutral.'),12,-450,690,13,muted):SetHeight(44)
+  local bottom=HomeFold('chatReset','csReset',-510,function(y)
+   Text(page,C.Text('Chat görünümü, konumu ve boyutu sıfırlanacak. Mesajlar, kanallar ve filtreler korunur. Onaylamak için tekrar bas.','Chat appearance, position and size will reset. Messages, channels and filters are preserved. Press again to confirm.'),12,y,690,13,chatResetArmed and gold or muted):SetHeight(58)
+   local reset=Button(page,chatResetArmed and C.Text('Onayla: tüm Chat ayarlarını sıfırla','Confirm: reset all Chat settings')or C.Text('Chat görünümünü varsayılana döndür','Restore default Chat settings'),0,y-72,714,36,function()
+    if chatResetArmed then if C.ResetChatSettings()then chatResetArmed=false end else chatResetArmed=true end;HomeRefresh()
+   end)
+   if InCombatLockdown()then reset:Disable()end
+   if chatResetArmed then Button(page,C.Text('Vazgeç','Cancel'),0,y-120,714,34,function()chatResetArmed=false;HomeRefresh()end)end
+   return y-(chatResetArmed and 170 or 122)
+  end)
+  page:SetHeight(-bottom+12)
+ elseif chatSettingsTab=='layout'then
+  Text(page,K.L('csLayout'),12,-60,690,18,gold)
+  local modes={{'Otomatik','Automatic'},{'Dikey','Vertical'},{'Yatay','Horizontal'}}
+  for i,n in ipairs(modes)do local id=i
+   local choice=Button(page,C.Text(n[1],n[2]),(i-1)*240,-101,232,34,function()C.SetLayout('controlMode',id);HomeRefresh()end)
+   Selected(choice,(d.controlMode or 1)==id);if InCombatLockdown()then choice:Disable()end
+  end
+  Number('width',C.Text('Genişlik','Width'),0,-155,10);Number('height',C.Text('Yükseklik','Height'),365,-155,10)
+  local edit=Button(page,C.Text('Konumu düzenle','Edit position'),0,-270,350,36,function()C.OpenEditor()end)
+  if InCombatLockdown()then edit:Disable()end
+  Toggle(C.Text('Boyut tutamacı: ','Resize handle: '):gsub(':%s*$',''),-326,d.unlocked,function(v)return C.SetLayout('unlocked',v)end)
+  Text(page,C.Text('Sol düğme aralıkları sabittir. Otomatik düzen kısa pencerede yataya geçer.','Side button spacing is fixed. Automatic layout turns horizontal in short windows.'),12,-411,690,13,muted):SetHeight(52)
+  page:SetHeight(480)
+ elseif chatSettingsTab=='visibility'then
+  Text(page,K.L('csVisibility'),12,-60,690,18,gold)
+  Text(page,C.Text('Mouse uzaktayken görünürlük','Visibility away from the chat'),12,-95,690,14,white)
+  local modes={{'Her zaman görünür','Always visible'},{'Yazılar görünür','Messages visible'},{'Tamamen gizle','Hide all'}}
+  for i,n in ipairs(modes)do local id=i
+   local choice=Button(page,C.Text(n[1],n[2]),(i-1)*240,-140,232,36,function()C.SetVisibilityMode(id);chatResetArmed=false;HomeRefresh()end)
+   Selected(choice,(d.visibilityMode or 1)==id);if InCombatLockdown()then choice:Disable()end
+  end
+  local description=({'csAlwaysHelp','csMessagesHelp','csHideHelp'})[d.visibilityMode or 1]or'csAlwaysHelp'
+  local box=Box(page,0,-198,714,154);Text(box,K.L(description),14,-16,686,14,white):SetHeight(60)
+  Text(box,C.Text('Mouse ile üzerine gelince veya yazarken görünür. Savaşta ve düzenlenirken gizlenmez.','Reveals on hover or while typing. Stays visible in combat and while editing.'),14,-89,686,13,muted):SetHeight(52)
+  page:SetHeight(378)
+ else
+  Text(page,K.L('csMicro'),12,-60,690,18,gold)
+  Toggle(C.Text('Mikro menü: ','Micro menu: '):gsub(':%s*$',''),-104,K.InventoryMenus.Get('microEnabled')==true,function(v)return K.InventoryMenus.Set('microEnabled',v)end)
+  Number('microSize',C.Text('Alt menü boyutu','Micro menu size'),0,-191,1)
+  Number('microGap',C.Text('Alt menü aralığı','Micro menu spacing'),365,-191,1)
+  page:SetHeight(312)
  end
- Text(page,C.Text('Mouse ile üzerine gelince veya yazarken görünür. Savaşta ve düzenleme sırasında gizlenmez.','Reveals on hover or while typing. Stays visible in combat and while editing.'),12,-1130,690,14,muted)
- if chatResetArmed then Text(page,C.Text('Chat görünümü, konumu ve boyutu sıfırlanacak. Mesajlar, kanallar ve filtreler korunur. Onaylamak için tekrar bas.','Chat appearance, position and size will reset. Messages, channels and filters are preserved. Press again to confirm.'),12,-1200,690,14,gold)end
- Button(page,chatResetArmed and C.Text('Onayla: tüm Chat ayarlarını sıfırla','Confirm: reset all Chat settings')or C.Text('Chat ayarlarını varsayılana döndür','Restore default Chat settings'),0,-1265,714,38,function()
-  if chatResetArmed then if C.ResetChatSettings()then chatResetArmed=false end else chatResetArmed=true end;K.Render()
- end)
- if chatResetArmed then Button(page,C.Text('Vazgeç','Cancel'),0,-1315,714,34,function()chatResetArmed=false;K.Render()end)end
- Button(page,C.Text('Mikro menü: ','Micro menu: ')..C.Text('',K.InventoryMenus.Get('microEnabled')and 'On'or 'Off'),0,-1370,714,36,function()K.InventoryMenus.Set('microEnabled',not K.InventoryMenus.Get('microEnabled'));K.Render()end)
- page:SetHeight(1440)
 end
 function K.ShowPage(key,homeSection)
+    if key=="quests"then key="home";homeSection="overview"end
     if K.LayoutEditor and K.LayoutEditor.IsActive() then K.LayoutEditor.Finish(true) end
     if key=="home" and homeSection=="imMicro" then key="chat";homeSection=nil end
-    if homeSection then section=homeSection end
+    if homeSection then section=homeSection=="camera"and"overview"or homeSection end
     if not K.window then return end
     for _,module in ipairs(K.modules) do
         if key==module.key and not K.ModuleApplicable(module) then key="home"; break end
@@ -581,6 +684,9 @@ function K.ShowPage(key,homeSection)
     K.scroll:SetVerticalScroll(0); K.openingPage=true; K.window:Show(); K.openingPage=nil; K.Render()
 end
 function K.Render()
+    if K.UnitSettingsView and (selection~='units' or not ForeverLeatherUnitsAPI or not ForeverLeatherUnitsAPI.GetSettings())then K.UnitSettingsView.Hide()end
+    K.economySettingsVisible=selection=='economy'
+    if K.ClassicEconomyView and selection~='economy' then K.ClassicEconomyView.Hide() end
     if selection~="chat" then chatResetArmed=false end
     if K.CancelUnitPageBuild then K.CancelUnitPageBuild() end
     if K.layoutEditButton then K.layoutEditButton.label:SetText(K.L('leTitle')) end
@@ -631,11 +737,11 @@ function K.Render()
     elseif selection=="experience" then K.DrawExperiencePage(page)
     elseif selection=="minimap" then K.DrawMinimapPage(page)
     elseif selection=="inventory" then K.DrawInventoryPage(page)
+    elseif selection=="economy" then K.DrawEconomyPage(page)
     elseif selection=="chat" and K.Chat then ChatPage()
     elseif selection~="home" then
         for _,module in ipairs(K.modules) do if selection==module.key then Module(module); break end end
     elseif section=="overview" then Overview()
-    elseif section=="camera" then Camera()
     elseif section=="combat" then Combat()
     elseif section=="alerts" then Alerts()
     elseif section=="sounds" then Sounds()
@@ -643,6 +749,8 @@ function K.Render()
     if K.reloadPrompt and K.reloadPrompt:IsShown() then
         if K.HasPendingModuleChanges() then K.ShowReloadPrompt() else K.reloadPrompt:Hide() end
     end
+    for i,button in ipairs(textSizeButtons)do Selected(button,K.PanelTextSize()==i)end
+    if K.QueuePanelTextFit then K.QueuePanelTextFit()end
     if K.UpdateIntro then K.UpdateIntro() end
     -- Do not reset scroll while a user is editing a long sound list.
 end
@@ -826,7 +934,7 @@ function K.ScheduleScaleApply()
         K.ApplyWindowScale()
         RefreshScaleViewport()
         -- Refresh clipping once more after the client settles the scaled layout.
-        C_Timer.After(0,RefreshScaleViewport)
+        C_Timer.After(0,function() RefreshScaleViewport();if K.ClassicEconomyView then K.ClassicEconomyView.Reflow() end end)
     end)
 end
 local resizing
@@ -841,7 +949,13 @@ function K.StopResize()
         K.db.position={x=dx,y=dy}
         f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",dx,dy)
     end
-    if f:IsShown() then K.Render(); RefreshScaleViewport() end
+    if f:IsShown() then
+        -- Scaling this fixed-width page changes its viewport, not its option cards.
+        if selection=="units" and K.UnitOptionPositions and not K.unitPageBuilding then
+            if K.UpdateUnitPreview then K.UpdateUnitPreview()end
+        else K.Render()end
+        RefreshScaleViewport();if K.ClassicEconomyView then K.ClassicEconomyView.Reflow() end
+    end
 end
 local function StartResize()
     local f=K.window
@@ -868,6 +982,17 @@ function K.CenterWindow()
     K.StopResize()
     K.db.position={x=0,y=0}; K.window:ClearAllPoints(); K.window:SetPoint("CENTER")
 end
+-- Module entries share one left edge; Profiles and Interface stay centered.
+-- Long titles can use two lines
+-- at the selected panel text size instead of shrinking beside a module badge.
+local function StyleNavigationLabel(button)
+ local label=button.label
+ local centered=button.key=='profiles'or button.key=='interface'
+ label:ClearAllPoints()
+ if centered then label:SetPoint('CENTER')else label:SetPoint('LEFT',12,0)end
+ label:SetWidth(button.moduleBadge and 122 or 151);label:SetHeight(34)
+ label:SetJustifyH(centered and'CENTER'or'LEFT');label:SetJustifyV('MIDDLE');label:SetWordWrap(true)
+end
 function K.LayoutWindow()
     local f=K.window
     if not f or not f.layoutParts then return end
@@ -878,6 +1003,7 @@ function K.LayoutWindow()
     local step=math.min(45,(height-273)/math.max(1,count-1))
     local index=0
     for _,button in ipairs(nav) do
+        StyleNavigationLabel(button)
         if button.key~="profiles" and button.key~="interface" then
             button:SetHeight(math.min(39,step-3))
             button:ClearAllPoints();button:SetPoint("TOPLEFT",10,-12-index*step);index=index+1
@@ -972,32 +1098,31 @@ function K.BuildWindow()
         button.accent=button:CreateTexture(nil,"OVERLAY"); button.accent:SetPoint("LEFT",1,0)
         button.accent:SetSize(3,21); button.accent:SetColorTexture(0.52,0.72,0.43,1)
     end
-    local keys={"home"}; for _,m in ipairs(K.VisibleModules()) do keys[#keys+1]=m.key;if m.key=="units" then keys[#keys+1]="minimap";keys[#keys+1]="inventory" end;if m.key=="details" then keys[#keys+1]="experience" end end
+    local keys={"home"}; for _,m in ipairs(K.VisibleModules()) do keys[#keys+1]=m.key;if m.key=="units" then keys[#keys+1]="minimap";keys[#keys+1]="inventory";keys[#keys+1]="economy" end;if m.key=="details" then keys[#keys+1]="experience" end end
 
     for i,key in ipairs(keys) do
         local b=FixedButton(sidebar,K.L(key),10,-12-(i-1)*45,178,39,function()
             selection=key; K.scroll:SetVerticalScroll(0); K.Render()
         end)
-        b.key=key; b.label:SetJustifyH("LEFT"); b.label:ClearAllPoints(); b.label:SetPoint("LEFT",15,0); b.label:SetWidth(151)
+        b.key=key
         for _,module in ipairs(K.modules) do
             if module.key==key and key~="details" then
-                b.label:SetPoint("LEFT",12,0); b.label:SetWidth(122); b.label:SetWordWrap(false)
                 ModuleBadge(b,module); break
             end
         end
-        NavAccent(b); nav[#nav+1]=b
+        StyleNavigationLabel(b); NavAccent(b); nav[#nav+1]=b
     end
     local b=FixedButton(sidebar,K.L("interface"),10,-513,178,39,function() selection="interface"; K.scroll:SetVerticalScroll(0); K.Render() end)
     b:ClearAllPoints(); b:SetPoint("BOTTOMLEFT",10,14)
-    b.key="interface"; NavAccent(b); nav[#nav+1]=b
+    b.key="interface"; StyleNavigationLabel(b); NavAccent(b); nav[#nav+1]=b
     local profiles=FixedButton(sidebar,K.L("profiles"),10,-466,178,39,function()
         selection="profiles"; K.scroll:SetVerticalScroll(0); K.Render()
     end)
     profiles:ClearAllPoints();profiles:SetPoint("BOTTOMLEFT",10,61)
-    profiles.key="profiles";NavAccent(profiles);nav[#nav+1]=profiles
+    profiles.key="profiles";StyleNavigationLabel(profiles);NavAccent(profiles);nav[#nav+1]=profiles
     introProfiles=profiles
-    for i,key in ipairs({"overview","camera","combat","alerts","sounds"}) do
-        local tab=FixedButton(f,K.L(key),220+(i-1)*120,-77,114,32,function()
+    for i,key in ipairs({"overview","combat","alerts","sounds"}) do
+        local tab=FixedButton(f,K.L(key),220+(i-1)*182,-77,174,32,function()
             section=key; K.scroll:SetVerticalScroll(0); K.Render()
         end)
         tab.underline=tab:CreateTexture(nil,"OVERLAY"); tab.underline:SetPoint("BOTTOMLEFT",2,0); tab.underline:SetPoint("BOTTOMRIGHT",-2,0)
@@ -1005,6 +1130,13 @@ function K.BuildWindow()
         tab.key=key; tabs[#tabs+1]=tab
     end
     heading=f:CreateFontString(nil,"OVERLAY"); K.ApplyTextFont(heading,25,true,""); heading:SetTextColor(unpack(white)); heading:SetPoint("TOPLEFT",222,-131)
+    heading:SetWidth(330);heading:SetHeight(32);heading:SetWordWrap(false);heading:SetJustifyH("LEFT");heading:SetJustifyV("TOP")
+    for i,key in ipairs({'panelTextNormal','panelTextLarge','panelTextLargest'})do
+        local value=i
+        local button=FixedButton(f,'A',854+(i-1)*37,-129,32,30,function()K.SetPanelTextSize(value)end)
+        button.label.panelTextFixed=true;K.ApplyTextFont(button.label,11+(i-1)*3,true,'')
+        Tip(button,key,'panelTextHelp');textSizeButtons[i]=button
+    end
     subtitle=f:CreateFontString(nil,"OVERLAY"); K.ApplyTextFont(subtitle,13,false,""); subtitle:SetTextColor(unpack(muted)); subtitle:SetPoint("TOPLEFT",222,-166); subtitle:SetWidth(730); subtitle:SetJustifyH("LEFT")
     local scroll=CreateFrame("ScrollFrame",nil,f,"UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT",220,-205); scroll:SetSize(734,415); K.scroll=scroll
@@ -1024,7 +1156,7 @@ function K.BuildWindow()
     local function StopHeightDrag()
         if not heightDragging then return end
         heightDragging=false; heightGrip:SetScript("OnUpdate",nil)
-        SavePosition(); K.LayoutWindow(); RefreshScaleViewport()
+        SavePosition(); K.LayoutWindow(); RefreshScaleViewport();if K.ClassicEconomyView then K.ClassicEconomyView.Reflow() end
     end
     heightGrip:SetScript("OnMouseDown",function(_,button)
         if button~="LeftButton" then return end
@@ -1052,302 +1184,11 @@ function K.BuildWindow()
 end
 K.UnitWidgets={Selected=Selected,Box=Box,Text=Text,Button=Button,Tip=Tip,Switch=Switch,Rounded=Rounded}
 
--- Profile page shares the same widget pool and scrolling viewport.
-do
-local profileInputs={}
-local profileSelection=1
-local validationCode,profileStatus,applyArmed,deleteArmed,selectedArmed,fullArmed
-local saveStatus,saveResultName,deleteStatus,deletedLabel
-local transferStatus
-local transferOpen=false
-local pendingTransferCode
-local function ProfileText(key) return K.L(key) end
-function K.HideProfileInputs()
- if K.Profiles.profileMenu then K.Profiles.profileMenu:Hide() end
- for _,frame in pairs(profileInputs) do frame:Hide() end
-end
-function K.EndProfileSession()
- validationCode=nil;applyArmed=nil;deleteArmed=nil;selectedArmed=nil;fullArmed=nil;profileStatus=nil;saveStatus=nil;saveResultName=nil;deleteStatus=nil;deletedLabel=nil;transferStatus=nil
- K.Profiles.restoreArmed=nil;K.Profiles.deleteBackupArmed=nil
- for _,entry in pairs(profileInputs) do entry.edit:ClearFocus() end
- if profileInputs.code then profileInputs.code.edit:SetText("") end
-end
-local function ProfileInput(kind,parent,x,y,width,height)
- local entry=profileInputs[kind]
- if not entry then
-  entry=CreateFrame(kind=="code" and "ScrollFrame" or "Frame",nil,parent,kind=="code" and "UIPanelScrollFrameTemplate" or nil)
-  entry.edit=CreateFrame("EditBox",nil,entry,kind=="code" and nil or "InputBoxTemplate")
-  entry.edit:SetAutoFocus(false);K.ApplyTextFont(entry.edit,13,false,"")
-  entry.edit:SetMaxLetters(kind=="code" and K.Profiles.MAX_CODE+4096 or 48)
-  entry.edit:SetMultiLine(kind=="code")
-  entry.edit:SetScript("OnEscapePressed",function(self) self:ClearFocus() end)
-  if kind=="code" then
-   entry:SetScrollChild(entry.edit)
-   entry.edit:SetWidth(width-18);entry.edit:SetHeight(height)
-   entry.edit:SetScript("OnTextChanged",function(self,user)
-    if user then
-     validationCode=nil;applyArmed=nil;transferStatus="pfNeedsValidation"
-     K.Profiles.validationInfo=nil
-     local apply=K.Profiles.applyButton
-     if apply then
-      apply:Disable();apply.label:SetText(K.L("pfApply"))
-      Rounded(apply,.14,.15,.14,nil,5,false);apply.label:SetTextColor(unpack(white))
-     end
-     if K.Profiles.transferStatusText then
-      K.Profiles.transferStatusText:SetText(K.L("pfNeedsValidation"))
-      K.Profiles.transferStatusText:SetTextColor(unpack(gold))
-     end
-    end
-   end)
-   entry.edit:SetScript("OnCursorChanged",function(self,_,cy,_,ch)
-    local offset=entry:GetVerticalScroll();local pos=-cy
-    if pos<offset then entry:SetVerticalScroll(math.max(0,pos))
-    elseif pos+ch>offset+entry:GetHeight() then entry:SetVerticalScroll(pos+ch-entry:GetHeight()) end
-   end)
-  else entry.edit:SetAllPoints() end
-  profileInputs[kind]=entry
- end
- entry:SetParent(parent);entry:ClearAllPoints();entry:SetPoint("TOPLEFT",x,y);entry:SetSize(width,height);entry:Show()
- return entry.edit
-end
-local function ProfileReport(key)
- profileStatus=key;C_Timer.After(0,function()
-  if K.window:IsShown() then K.Render();if key=="pfQueued" then K.scroll:SetVerticalScroll(0) end end
- end)
-end
-local function RefreshProfilesInPlace()
- local offset=K.scroll:GetVerticalScroll()
- C_Timer.After(0,function()
-  if K.window:IsShown() then K.Render();K.scroll:SetVerticalScroll(offset) end
- end)
-end
-local function TransferReport(key)
- transferStatus=key;profileStatus=nil
- RefreshProfilesInPlace()
-end
-local function ProfileDropdown(owner,entries)
- local menu=K.Profiles.profileMenu
- if menu and menu:IsShown() then menu:Hide();return end
- if not menu then
-  menu=CreateFrame("Frame",nil,K.window,"BackdropTemplate");K.Profiles.profileMenu=menu
-  Backdrop(menu,.10,.12,.10,{.43,.48,.38,1});menu:SetFrameStrata("DIALOG")
-  menu.scroll=CreateFrame("ScrollFrame",nil,menu,"UIPanelScrollFrameTemplate")
-  menu.scroll:SetPoint("TOPLEFT",8,-8);menu.scroll:SetPoint("BOTTOMRIGHT",-30,8)
-  menu.content=CreateFrame("Frame",nil,menu.scroll);menu.content:SetWidth(636);menu.scroll:SetScrollChild(menu.content)
-  menu.rows={}
- end
- menu:SetFrameLevel(K.window:GetFrameLevel()+80)
- menu:ClearAllPoints();menu:SetPoint("TOPLEFT",owner,"BOTTOMLEFT",0,-4)
- menu:SetSize(682,math.min(8,math.max(1,#entries))*34+16)
- menu.content:SetHeight(math.max(34,#entries*34))
- for _,row in ipairs(menu.rows) do row:Hide() end
- for i,entry in ipairs(entries) do
-  local index=i
-  local row=menu.rows[i]
-  if not row then row=FixedButton(menu.content,"",0,-(i-1)*34,636,32,function() end);menu.rows[i]=row end
-  row.label:SetText(K.L(entry.group=="named" and "pfNamed" or "pfCharacter")..": "..entry.key.." · "..(entry.record.class or ""))
-  row:SetScript("OnClick",function()
-   profileSelection=index;K.db.profileSelection={group=entry.group,key=entry.key};selectedArmed=nil;deleteArmed=nil;fullArmed=nil;menu:Hide();K.Render()
-  end)
-  row:Show()
- end
- menu.scroll:SetVerticalScroll(0);menu:Show()
-end
+-- Profile workflow implementation is separate from the shared panel widgets.
 function K.DrawProfilesPage()
- local P=K.Profiles
- if not P then return end
- if not P.ready then P.Initialize() end
- if P.failed then Text(page,K.L("pfFailed"),8,0,690,15,gold);page:SetHeight(130);return end
- P.transferStatusText=nil
- local y=0
- if K.ClassPresets and not K.db.profileTransaction then y=K.ClassPresets.Draw(page,{Box=Box,Text=Text,Button=Button},y) end
- local transferOffset=0
- local pending=K.db.profileTransaction~=nil
- if pending then
-  local queued=Box(page,0,y,714,100)
-  Text(queued,K.L("pfPendingActions"),16,-14,680,14,gold)
-  Button(queued,K.L("reload"),16,-58,327,30,K.Reload)
-  Button(queued,K.L("pfCancelPending"),365,-58,333,30,function()
-   if P.CancelPending() then selectedArmed=nil;applyArmed=nil;ProfileReport("pfCancelled") end
-  end)
-  y=y-118
- end
- if P.deferredError or P.failedApply then
-  Text(page,K.L("pfFailed"),8,y,690,14,gold);y=y-48
- end
- if K.FullLayout and K.FullLayout.status then
-  Text(page,K.L(K.FullLayout.status),8,y,690,14,gold);y=y-100
- end
- if profileStatus and not pending then
- local status=profileStatus and ProfileText(profileStatus) or ProfileText("pfTransferHelp")
- if profileStatus=="pfValid" and P.validationInfo then status=P.validationInfo end
- P.statusText=Text(page,status,8,y,690,14,profileStatus=="pfInvalid" and {.9,.4,.3} or gold);y=y-90
- end
- Text(page,ProfileText("pfIntro"),8,y,690,13,muted);y=y-124
- local card=Box(page,0,y,714,162)
- Text(card,ProfileText("pfSaveName"),16,-12,660,14)
- local name=ProfileInput("name",card,22,-48,470,30)
- local save=Button(card,ProfileText("pfSave"),516,-46,182,34,function()
-  if K.InCombat() then return end
-  selectedArmed=nil
-  local savedName=(name:GetText() or ""):match("^%s*(.-)%s*$")
-  local ok,err=P.Save(savedName)
-  if ok then
-   K.db.profileSelection={group="named",key=savedName}
-   name:SetText("");name:ClearFocus()
-   if K.Message then K.Message("pfSaved") end
-  end
-  -- Keep save feedback next to its action and preserve the current viewport.
-  deleteStatus=nil;deletedLabel=nil
-  saveStatus=ok and "pfSaved" or err;saveResultName=ok and savedName or nil
-  profileStatus=nil
-  local offset=K.scroll:GetVerticalScroll()
-  C_Timer.After(0,function()
-   if K.window:IsShown() then K.Render();K.scroll:SetVerticalScroll(offset) end
-  end)
- end)
- if pending then save:Disable() end
- if saveStatus then
-  local success=saveStatus=="pfSaved"
-  local color=success and {.55,.90,.55} or {.95,.48,.38}
-  Rounded(card,.10,.13,.10,success and {.40,.73,.40,1} or {.82,.40,.30,1},8,true)
-  local message=(saveResultName and (saveResultName..": ") or "")..ProfileText(saveStatus)
-  P.saveStatusText=Text(card,message,22,-94,670,13,color)
- else P.saveStatusText=nil end
- y=y-182
- local entries=P.Entries()
- local remembered=K.db.profileSelection
- if type(remembered)=="table" then
-  for index,entry in ipairs(entries) do
-   if entry.group==remembered.group and entry.key==remembered.key then profileSelection=index;break end
-  end
- end
- profileSelection=math.max(1,math.min(#entries,profileSelection))
- local selected=entries[profileSelection]
- local choose=Box(page,0,y,714,448)
- Text(choose,ProfileText("pfChoose"),16,-12,660,14)
- local label=selected and (ProfileText(selected.group=="named" and "pfNamed" or "pfCharacter")..": "..selected.key) or ProfileText("pfEmpty")
- local dropdown=Button(choose,label.."  ▾",16,-40,682,32,function(self) ProfileDropdown(self,entries) end)
- if not selected then dropdown:Disable() end
- if selected then Text(choose,date("%Y-%m-%d %H:%M",selected.record.stamp).." · "..(selected.record.class or ""),16,-78,660,12,muted) end
- if selected and K.ProfileLayouts then Text(choose,K.ProfileLayouts.Description(selected.record),16,-100,660,12,muted) end
- local notice=Text(choose,ProfileText(selectedArmed and "pfApplyWarning" or "pfSelectedHint"),16,-190,680,13,selectedArmed and gold or muted)
- local function HighlightApply(button)
-  Rounded(button,.28,.23,.12,{.94,.77,.30,1},8,true)
-  button.label:SetTextColor(1,.88,.52)
- end
- local use=Button(choose,ProfileText(selectedArmed and "pfConfirmApply" or "pfUseSelected"),16,-146,682,32,function(self)
-  if not selected or K.InCombat() then return end
-  if not selectedArmed then
-   -- Cosmetic confirmation only: keep the clicked card and scroll position.
-   selectedArmed=true;self.label:SetText(ProfileText("pfConfirmApply"));HighlightApply(self)
-   notice:SetText(ProfileText("pfApplyWarning"));notice:SetTextColor(unpack(gold));return
-  end
-  local ok,err
-  if K.ProfileLayouts then ok,err=K.ProfileLayouts.Queue(selected.record,selected.key) else ok,err=P.Apply(selected.record.code,selected.key) end
-  selectedArmed=nil;ProfileReport(err or (ok and "pfQueued" or "pfFailed"))
- end)
- if selectedArmed then HighlightApply(use) end
- local load=Button(choose,ProfileText("pfLoadCode"),16,-250,327,30,function()
-  if not selected then return end
-  pendingTransferCode=selected.record.code;transferOpen=true
-  validationCode=nil;applyArmed=nil;deleteArmed=nil;TransferReport("pfNeedsValidation")
-  K.scroll:SetVerticalScroll(math.min(transferOffset,K.scroll:GetVerticalScrollRange()))
- end)
- local remove=Button(choose,ProfileText(deleteArmed and "pfConfirmDelete" or "pfDelete"),365,-250,333,30,function()
-  if not selected or K.InCombat() then return end
-  saveStatus=nil;saveResultName=nil;profileStatus=nil
-  if not deleteArmed or deleteArmed.group~=selected.group or deleteArmed.key~=selected.key then
-   deleteArmed={group=selected.group,key=selected.key};deleteStatus=nil;deletedLabel=nil
-   RefreshProfilesInPlace();return
-  end
-  local ok=P.Delete(selected.group,selected.key)
-  deletedLabel=label;deleteStatus=ok and "pfDeleted" or "pfFailed"
-  deleteArmed=nil;selectedArmed=nil
-  RefreshProfilesInPlace()
- end)
- if deleteArmed then
-  Rounded(remove,.28,.12,.10,{.95,.48,.32,1},8,true)
-  remove.label:SetTextColor(1,.75,.55)
-  P.deleteStatusText=Text(choose,label..": "..ProfileText("pfConfirmDelete"),16,-294,680,13,{1,.75,.55})
- elseif deleteStatus then
-  local color=deleteStatus=="pfDeleted" and {.55,.90,.55} or {.95,.48,.38}
-  Rounded(choose,.10,.13,.10,deleteStatus=="pfDeleted" and {.40,.73,.40,1} or {.82,.40,.30,1},8,true)
-  P.deleteStatusText=Text(choose,(deletedLabel or "")..": "..ProfileText(deleteStatus),16,-294,680,13,color)
- else P.deleteStatusText=nil end
- if not selected then load:Disable();remove:Disable();use:Disable() end
- if pending then use:Disable() end
- if selected then Text(choose,ProfileText("pfSourceHint"),16,-366,680,13,muted) end
- y=y-468
- transferOffset=-y
- Button(page,ProfileText("pfTransfer")..(transferOpen and "  ▴" or "  ▾"),0,y,714,36,function() transferOpen=not transferOpen;K.Render() end)
- y=y-48
- if transferOpen then
- local transfer=Box(page,0,y,714,374)
- Text(transfer,ProfileText("pfTransfer"),16,-12,660,15)
- local edit=ProfileInput("code",transfer,18,-44,654,144)
- if pendingTransferCode then edit:SetText(pendingTransferCode);pendingTransferCode=nil end
- local function generate()
-  if K.InCombat() then return end
-  local code,err=P.Encode(P.Capture())
-  if not code then TransferReport(err);return end
-  edit:SetText(code);edit:SetFocus();edit:HighlightText()
-  validationCode=nil;applyArmed=nil;TransferReport("pfGenerated")
- end
- Button(transfer,ProfileText("pfGenerate"),16,-204,218,34,generate)
- Button(transfer,ProfileText("pfValidate"),246,-204,218,34,function()
-  local value,err=P.Decode(edit:GetText())
-  validationCode=value and edit:GetText() or nil;applyArmed=nil
-  if value then
-   local n=0;for key in pairs(value.settings) do if key~="root" and key~="appearance" then n=n+1 end end
-   P.validationInfo=string.format(ProfileText("pfValidated"),value.class,n)
-   TransferReport("pfValid")
-  else P.validationInfo=nil;TransferReport(err) end
- end)
- local apply=Button(transfer,ProfileText(applyArmed and "pfConfirmApply" or "pfApply"),476,-204,222,34,function()
-  if validationCode~=edit:GetText() then TransferReport("pfNeedsValidation");return end
-  if K.InCombat() then return end
-  if not applyArmed then applyArmed=true;TransferReport("pfApplyWarning");return end
-  local ok,err=P.Apply(validationCode,ProfileText("pfBeforeApply"))
-  applyArmed=nil
-  if ok then transferStatus=nil;ProfileReport(err or "pfQueued")
-  else TransferReport(err or "pfFailed") end
- end)
- if applyArmed then
-  Rounded(apply,.28,.23,.12,{.94,.77,.30,1},8,true)
-  apply.label:SetTextColor(1,.88,.52)
- end
- local message=transferStatus and ProfileText(transferStatus) or ProfileText("pfTransferHelp")
- if transferStatus=="pfValid" and P.validationInfo then message=P.validationInfo end
- local success=transferStatus=="pfValid"
- local warning=not transferStatus or transferStatus=="pfGenerated" or transferStatus=="pfNeedsValidation" or transferStatus=="pfApplyWarning"
- local color=success and {.55,.90,.55} or (warning and gold or {.95,.48,.38})
- P.transferStatusText=Text(transfer,message,16,-254,680,13,color)
- if validationCode~=edit:GetText() or pending then apply:Disable() end
- P.applyButton=apply
- y=y-394
- end
- local backup=K.db.profileBackup
- local backupCard=Box(page,0,y,714,140)
- Text(backupCard,ProfileText("pfBackup"),16,-12,660,15)
- Text(backupCard,backup and (date("%Y-%m-%d %H:%M",backup.stamp).." · "..(backup.name or "")) or ProfileText("pfNoBackup"),16,-44,660,13,muted)
- local restore=Button(backupCard,ProfileText(P.restoreArmed and "pfConfirmRestore" or "pfRestore"),16,-88,327,34,function()
-  if K.InCombat() then return end
-  if not P.restoreArmed then P.restoreArmed=true;ProfileReport("pfRestoreWarning");return end
-  P.restoreArmed=nil;local ok,err=P.RestoreBackup();ProfileReport(err or (ok and "pfQueued" or "pfFailed"))
- end)
- local forget=Button(backupCard,ProfileText(P.deleteBackupArmed and "pfConfirmDelete" or "pfDeleteBackup"),365,-88,333,34,function()
-  if K.InCombat() then return end
-  if not P.deleteBackupArmed then P.deleteBackupArmed=true;K.Render();return end
-  K.db.profileBackup=nil;P.deleteBackupArmed=nil;P.restoreArmed=nil;ProfileReport("pfDeleted")
- end)
- if not backup or pending then restore:Disable();forget:Disable() end
- y=y-160
- Text(page,ProfileText("pfBackupHelp"),8,y,690,13,muted);y=y-92
- local count=#entries
- Text(page,string.format(ProfileText("pfStorage"),P.StorageBytes()/1024,P.MAX_TOTAL/1024,count),8,y,690,13,gold);y=y-40
- Text(page,ProfileText("pfStorageHelp"),8,y,690,13,muted)
- page:SetHeight(-y+120)
+ K.ProfilePage.Draw({page=page,Box=Box,Text=Text,Button=Button,FixedButton=FixedButton,
+  Backdrop=Backdrop,Rounded=Rounded,gold=gold,muted=muted,white=white})
 end
 
-end
+-- Shared compact settings widgets for grouped Classic pages.
+K.CompactSettingsWidgets=HomeWidgets

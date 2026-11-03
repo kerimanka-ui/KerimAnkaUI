@@ -653,7 +653,7 @@ K.locales.zhCN["enableHelp"]="更改此角色的插件列表。需要重新加�
 
 K.locales.zhCN["errorCustomHelp"]="开启会隐藏该类错误，关闭会显示。重要或未识别的错误仍然可见。此模式仅过滤已知错误；如需隐藏其他所有类型，请选择仅保留重要提示模式。"
 
-K.locales.zhCN["errorImportantHelp"]="隐藏所有红色错误，但保留背包或银行已满、任务日志已满、金币不足以及物品数量上限提示。关闭保留重要提示后也会隐藏这些错误。任务进度消息不受影响。"
+K.locales.zhCN["errorImportantHelp"]="保留存储空间或任务日志已满、金币不足、物品数量上限及战斗限制提示。隐藏其他红色错误，不影响任务进度。"
 
 K.locales.zhCN["errorShowHelp"]="使用暴雪默认错误显示，不进行额外文本过滤。"
 
@@ -677,7 +677,7 @@ K.locales.zhCN["hunterOnlyHelp"]="此模块仅供猎人使用。其他职业会�
 
 K.locales.zhCN["invalidIds"]="仅可输入正整数文件 ID，最多 30 个自定义条目。"
 
-K.locales.zhCN["keepImportantErrorsHelp"]="在仅保留重要提示模式下，保留背包或银行已满、任务日志已满、金币不足及物品数量上限错误。关闭后隐藏所有红色错误。"
+K.locales.zhCN["keepImportantErrorsHelp"]="在此模式下保留存储空间、任务日志、金币、物品上限及战斗限制提示，例如战斗中不允许的进食或装备更换。关闭后隐藏所有红色错误。"
 
 K.locales.zhCN["loaded"]="已加载"
 
@@ -726,7 +726,7 @@ K.locales.zhCN["barsEditor"]="打开暴雪编辑模式"
 K.locales.zhCN["barsLocked"]="固定模式下暂停跟随动作条。请先选择上方的重新适配动作条，再更改此选择。"
 K.locales.zhCN["barsMissingBT"]="已选择 Bartender，但其动作条未启用。请启用并重新加载界面，或选择自动／暴雪。"
 K.locales.zhCN["barsNative"]="暴雪"
-K.locales.zhCN["barsNativeActive"]="正在使用暴雪动作条。请在游戏设置中启用动作条 2 和 3，并在编辑模式中将三条水平动作条上下排列。装饰跟随选中且可见的动作条。"
+K.locales.zhCN["barsNativeActive"]="正在使用暴雪动作条。请在游戏设置中启用所需动作条。例如启用第2和第3条并排列为三个横排，但这不是必须的。装饰跟随所选的可见动作条。"
 K.locales.zhCN["barsNativeList"]="包含的暴雪动作条"
 K.locales.zhCN["barsNoEditor"]="暴雪编辑模式目前不可用。请在脱离战斗后通过游戏菜单打开。"
 K.locales.zhCN["barsSource"]="动作条来源"
@@ -1140,3 +1140,110 @@ K.locales.zhCN["xpTexturedBarsHelp"]="关闭时使用所选颜色的纯色填充
 
 K.locales.zhCN["xpShowBackground"]="显示面板背景"
 K.locales.zhCN["xpShowBackgroundHelp"]="显示或隐藏面板背景。进度条、文字和装饰边框保持独立。保留背景透明度设置。"
+
+-- Classic home page groups.
+K.locales["zhCN"]["homeAudio"]="游戏声音"
+K.locales["zhCN"]["homeSuspended"]="经典版中不可用"
+
+-- Grouped Chat settings navigation.
+K.locales["zhCN"]["csAppearance"]="外观"
+K.locales["zhCN"]["csLayout"]="布局"
+K.locales["zhCN"]["csVisibility"]="可见性"
+K.locales["zhCN"]["csMicro"]="微型菜单"
+K.locales["zhCN"]["csReset"]="重置"
+K.locales["zhCN"]["csAlwaysHelp"]="鼠标移开后，聊天文字、背景和控件仍然可见。"
+K.locales["zhCN"]["csMessagesHelp"]="鼠标移开后保留聊天文字，隐藏背景和控件。"
+K.locales["zhCN"]["csHideHelp"]="鼠标移开后隐藏聊天文字、背景和控件。"
+
+-- Grouped action-button backdrop settings.
+K.locales["zhCN"]["bdAppearance"]="外观"
+K.locales["zhCN"]["bdLabels"]="文字与距离"
+K.locales["zhCN"]["bdBars"]="选择动作条"
+K.locales["zhCN"]["bdStyledBars"]="应用按钮样式的动作条"
+K.locales["zhCN"]["bdScopeHelp"]="此选择不会显示或隐藏游戏动作条，只决定哪些动作条按钮使用背景和边框样式。职业装饰框架有独立的动作条选择；动作条来源设置则由两个页面共用。"
+K.locales["zhCN"]["bdSharedColorHelp"]="此面板颜色与职业装饰共用。它改变动作按钮后面的装饰面板，而不是上方的单个按钮边框设置。"
+K.locales["zhCN"]["bdNativeLabelsHelp"]="这里的快捷键和宏名称设置用于暴雪动作条。Bartender 动作条的文字请在 Bartender 中设置。"
+
+-- Shared action bar source status, without a duplicate source editor.
+K.locales["zhCN"]["bdActiveSource"]="当前动作条来源"
+K.locales["zhCN"]["bdSourceHint"]="此来源与职业装饰共用。更改来源会同时改变装饰图案和按钮样式所跟随的动作条。请在职业装饰页面修改来源。"
+K.locales["zhCN"]["bdEditSource"]="在职业装饰中更改来源"
+
+-- Grouped class-art settings.
+K.locales["zhCN"]["artPageDesign"]="设计"
+K.locales["zhCN"]["artPageLayout"]="布局"
+K.locales["zhCN"]["artPageBars"]="来源与动作条"
+K.locales["zhCN"]["artSelectedDetails"]="所选设计的细节"
+K.locales["zhCN"]["artPetGroup"]="宠物动作条"
+K.locales["zhCN"]["artPetHelp"]="存在可用的宠物动作条时生效。不会召唤宠物，也不会强制显示宠物动作条。"
+K.locales["zhCN"]["artSourceHelp"]="推荐使用自动：识别当前使用的暴雪或 Bartender 来源。只有需要指定来源时才选其他选项。此设置也影响按钮背景。"
+K.locales["zhCN"]["artScopeHelp"]="选择职业装饰跟随的动作条。不会显示或隐藏游戏动作条。按钮背景样式有独立的动作条选择。"
+K.locales["zhCN"]["artDecoratedBars"]="装饰所跟随的动作条"
+K.locales["zhCN"]["artResetHelp"]="使用原有功能恢复职业装饰设置，不会重置聊天、配置或游戏按键。再次点击确认。"
+
+-- Grouped minimap settings.
+K.locales["zhCN"]["mmPageAppearance"]="外观"
+K.locales["zhCN"]["mmPageDetails"]="时钟与坐标"
+K.locales["zhCN"]["mmSunGroup"]="昼夜图标"
+K.locales["zhCN"]["mmClockX"]="时钟：水平位置"
+K.locales["zhCN"]["mmClockY"]="时钟：垂直位置"
+K.locales["zhCN"]["mmPanelLayout"]="面板布局"
+K.locales["zhCN"]["mmPanelPosition"]="面板按钮位置"
+K.locales["zhCN"]["mmPanelButtonHelp"]="此按钮打开收集的插件图标。左键打开图标面板，右键打开小地图设置。解锁后可沿小地图边缘拖动。"
+
+-- Grouped bag settings and economy navigation.
+K.locales["zhCN"]["bgAppearance"]="外观"
+K.locales["zhCN"]["bgSorting"]="排序与出售"
+K.locales["zhCN"]["bgShortcut"]="按钮与背包栏"
+K.locales["zhCN"]["bgStrip"]="背包栏"
+K.locales["zhCN"]["bgOrganized"]="分类"
+K.locales["zhCN"]["bgOrganizedHelp"]="按类别显示物品。"
+K.locales["zhCN"]["bgBankAppearance"]="银行外观"
+K.locales["zhCN"]["bgBankHelp"]="分类背包保持启用，此选项决定银行使用的外观。"
+K.locales["zhCN"]["bgItemLooks"]="物品外观"
+K.locales["zhCN"]["economy"]="经济"
+
+-- Settings text size.
+K.locales["zhCN"]["panelTextNormal"]="正常文字"
+K.locales["zhCN"]["panelTextLarge"]="大号文字"
+K.locales["zhCN"]["panelTextLargest"]="特大文字"
+K.locales["zhCN"]["panelTextHelp"]="更改所有设置页面的文字大小，不影响游戏内文字和预览模型。较长文字会根据可用空间调整，以防超出边界。"
+
+-- Classic Details-only settings.
+K.locales["zhCN"]["dtNote"]="调整 Details 窗口的外观。统计、内容和窗口管理由 Details 提供。"
+K.locales["zhCN"]["dmClassicDetailsRequired"]="此功能需要安装并启用 Details 插件。"
+
+-- Grouped Experience settings.
+K.locales["zhCN"]["xpPageGeneral"]="常规"
+K.locales["zhCN"]["xpPageContent"]="显示内容"
+K.locales["zhCN"]["xpPageAppearance"]="外观"
+K.locales["zhCN"]["xpPageText"]="文字"
+
+-- Grouped Threat settings.
+K.locales["zhCN"]["ftGroupGeneral"]="指示器"
+K.locales["zhCN"]["ftGroupAppearance"]="文字与颜色"
+K.locales["zhCN"]["ftGroupPosition"]="位置"
+
+-- Complete Aspect settings; retain existing translations and custom runtime text.
+K.locales["zhCN"]["aaCheetah"]=K.locales["zhCN"]["aaCheetah"] or "猎豹守护警告文字"
+K.locales["zhCN"]["aaEnabled"]=K.locales["zhCN"]["aaEnabled"] or "启用守护警告"
+K.locales["zhCN"]["aaGlow"]=K.locales["zhCN"]["aaGlow"] or "战斗中猎豹守护发光"
+K.locales["zhCN"]["aaHelp"]=K.locales["zhCN"]["aaHelp"] or "单独控制已加载的警告功能，不影响插件加载。未学会的守护及旅行中的隐藏规则保持不变。解锁后显示位置示例，调整完毕请重新锁定。"
+K.locales["zhCN"]["aaLive"]=K.locales["zhCN"]["aaLive"] or "返回实时警告"
+K.locales["zhCN"]["aaLock"]=K.locales["zhCN"]["aaLock"] or "锁定位置"
+K.locales["zhCN"]["aaMissing"]=K.locales["zhCN"]["aaMissing"] or "未启用守护的文字"
+K.locales["zhCN"]["aaNote"]=K.locales["zhCN"]["aaNote"] or "设置仅用于当前角色。首次使用时会复制旧的共享设置。解锁后拖动警告以调整位置。"
+K.locales["zhCN"]["aaOriginal"]=K.locales["zhCN"]["aaOriginal"] or "打开原始守护设置"
+K.locales["zhCN"]["aaPreview"]=K.locales["zhCN"]["aaPreview"] or "预览猎豹守护"
+K.locales["zhCN"]["aaPreviewHelp"]=K.locales["zhCN"]["aaPreviewHelp"] or "在实际警告位置显示临时示例。请先启用警告。切换页面或关闭面板会结束此预览。未锁定时仍可能显示位置示例。旅行中的隐藏规则仍然有效。"
+K.locales["zhCN"]["aaPreviewMissing"]=K.locales["zhCN"]["aaPreviewMissing"] or "预览未启用守护"
+K.locales["zhCN"]["aaRefresh"]=K.locales["zhCN"]["aaRefresh"] or "刷新数值"
+K.locales["zhCN"]["aaResetPosition"]=K.locales["zhCN"]["aaResetPosition"] or "重置警告位置"
+K.locales["zhCN"]["aaResetTexts"]=K.locales["zhCN"]["aaResetTexts"] or "恢复默认警告文字"
+K.locales["zhCN"]["aaText"]=K.locales["zhCN"]["aaText"] or "显示警告文字"
+K.locales["zhCN"]["aaTextHelp"]=K.locales["zhCN"]["aaTextHelp"] or "自定义文字最多100个字符，输入时自动保存，仅用于当前角色。切换面板语言不会翻译自定义文字。"
+K.locales["zhCN"]["aaUpdate"]=K.locales["zhCN"]["aaUpdate"] or "请安装随附的HunterAspectAlert更新以使用这些设置。"
+K.locales["zhCN"]["hunterAspect_cheetahText"]=K.locales["zhCN"]["hunterAspect_cheetahText"] or "猎豹守护生效：请切换守护！"
+K.locales["zhCN"]["hunterAspect_missingText"]=K.locales["zhCN"]["hunterAspect_missingText"] or "请选择一个守护！"
+K.locales["zhCN"]["aaCombatNoticeTitle"]=K.locales["zhCN"]["aaCombatNoticeTitle"] or "测试版：战斗中的守护追踪"
+K.locales["zhCN"]["aaCombatNotice"]=K.locales["zhCN"]["aaCombatNotice"] or "脱离战斗时可以追踪守护。战斗中游戏会限制增益信息：可能检测到初始状态或一次变化，但后续变化可能无法追踪，警告也可能消失。没有警告并不表示守护未激活。请查看游戏自带的增益图标。本功能在测试版期间开发，游戏限制与行为可能改变。"

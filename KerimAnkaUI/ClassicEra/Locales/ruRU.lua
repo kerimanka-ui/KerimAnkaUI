@@ -41,7 +41,7 @@ K.locales.ruRU={
  ["enableHelp"]="Меняет список аддонов этого персонажа. Требуется перезагрузка интерфейса; уже загруженный аддон продолжает работать до неё. Зависимости не включаются и не отключаются автоматически.",
  ["errorCustom"]="Свои фильтры",
  ["errorCustomHelp"]="ВКЛ скрывает эту группу ошибок, ВЫКЛ показывает её. Важные и неизвестные ошибки остаются видимыми. Фильтруются только известные ошибки. Чтобы скрыть все остальные типы, выберите режим важных ошибок.",
- ["errorImportantHelp"]="Скрывает все красные ошибки, кроме заполненных сумок или банка, заполненного журнала заданий, нехватки денег и ограничений количества предметов. Отключите «Сохранять важные ошибки», чтобы скрыть и их. Сообщения о прогрессе заданий не затрагиваются.",
+ ["errorImportantHelp"]="Сохраняет предупреждения о заполненных сумках/банке и журнале заданий, деньгах, лимитах предметов и запретах в бою. Остальные красные ошибки скрыты. Прогресс заданий не меняется.",
  ["errorImportantOnly"]="Только важные ошибки",
  ["errorShowAll"]="Показывать все",
  ["errorShowHelp"]="Обычное отображение ошибок Blizzard без дополнительной фильтрации текста.",
@@ -70,7 +70,7 @@ K.locales.ruRU={
  ["invalidIds"]="Введите положительные числовые ID файлов. Можно добавить не более 30 записей.",
  ["inventory"]="Сумки",
  ["keepImportantErrors"]="Сохранять важные ошибки",
- ["keepImportantErrorsHelp"]="В этом режиме оставляет видимыми ошибки заполненных сумок или банка, заполненного журнала заданий, нехватки денег и ограничений количества предметов. Выключите, чтобы скрыть все красные ошибки.",
+ ["keepImportantErrorsHelp"]="В этом режиме сохраняет предупреждения о месте, заданиях, деньгах, количестве предметов и запретах в бою, например еде или смене экипировки, когда это запрещено. Выключите, чтобы скрыть все красные ошибки.",
  ["language"]="Язык",
  ["languageHelp"]="Выберите язык панели. Непереведённый текст отображается на английском.",
  ["listen"]="Слушать",
@@ -159,7 +159,7 @@ K.locales.ruRU["barsEditor"]="Открыть режим редактирован
 K.locales.ruRU["barsLocked"]="В фиксированном режиме следование за панелями приостановлено. Чтобы изменить выбор, вернитесь к подгонке под панели кнопкой выше."
 K.locales.ruRU["barsMissingBT"]="Выбран Bartender, но его панели неактивны. Включите его и перезагрузите интерфейс либо выберите «Автоматически» или Blizzard."
 K.locales.ruRU["barsNative"]="Blizzard"
-K.locales.ruRU["barsNativeActive"]="Используются панели Blizzard. Включите панели 2 и 3 в настройках игры и расположите три горизонтальные панели друг над другом в режиме редактирования. Оформление следует за выбранными видимыми панелями."
+K.locales.ruRU["barsNativeActive"]="Используются панели Blizzard. Включите нужные панели в настройках игры. Панели 2 и 3 для трёх горизонтальных рядов — лишь пример, не требование. Оформление следует за выбранными видимыми панелями."
 K.locales.ruRU["barsNativeList"]="Выбранные панели Blizzard"
 K.locales.ruRU["barsNoEditor"]="Режим редактирования сейчас недоступен. Откройте меню игры вне боя."
 K.locales.ruRU["barsSource"]="Источник панелей команд"
@@ -938,3 +938,110 @@ K.locales.ruRU["xpTexturedBarsHelp"]="Выключено: однотонная �
 
 K.locales.ruRU["xpShowBackground"]="Показывать фон панели"
 K.locales.ruRU["xpShowBackgroundHelp"]="Показывает или скрывает фон панели. Полосы, текст и декоративная рамка остаются независимыми. Настройка прозрачности сохраняется."
+
+-- Classic home page groups.
+K.locales["ruRU"]["homeAudio"]="Звуки игры"
+K.locales["ruRU"]["homeSuspended"]="Недоступно в Classic"
+
+-- Grouped Chat settings navigation.
+K.locales["ruRU"]["csAppearance"]="Оформление"
+K.locales["ruRU"]["csLayout"]="Размещение"
+K.locales["ruRU"]["csVisibility"]="Видимость"
+K.locales["ruRU"]["csMicro"]="Микроменю"
+K.locales["ruRU"]["csReset"]="Сброс"
+K.locales["ruRU"]["csAlwaysHelp"]="Текст, фон и элементы управления остаются видимыми, когда указатель находится вдали."
+K.locales["ruRU"]["csMessagesHelp"]="Текст остаётся видимым; фон и элементы управления скрываются, когда указатель находится вдали."
+K.locales["ruRU"]["csHideHelp"]="Текст, фон и элементы управления скрываются, когда указатель находится вдали."
+
+-- Grouped action-button backdrop settings.
+K.locales["ruRU"]["bdAppearance"]="Оформление"
+K.locales["ruRU"]["bdLabels"]="Текст и дальность"
+K.locales["ruRU"]["bdBars"]="Выбор панелей"
+K.locales["ruRU"]["bdStyledBars"]="Панели со стилем кнопок"
+K.locales["ruRU"]["bdScopeHelp"]="Этот выбор не показывает и не скрывает игровые панели. Он задаёт только кнопки, получающие фон и границы. Выбор декоративного оформления класса задаётся отдельно. Источник панелей общий для обоих разделов."
+K.locales["ruRU"]["bdSharedColorHelp"]="Этот цвет фона общий с оформлением класса. Он меняет декоративную панель за кнопками, а не границы отдельных кнопок."
+K.locales["ruRU"]["bdNativeLabelsHelp"]="Эти подписи клавиш и макросов относятся к панелям Blizzard. Подписи Bartender настраиваются в Bartender."
+
+-- Shared action bar source status, without a duplicate source editor.
+K.locales["ruRU"]["bdActiveSource"]="Текущий источник панелей"
+K.locales["ruRU"]["bdSourceHint"]="Источник общий с оформлением класса. Его смена меняет панели для декора и стиля кнопок. Источник можно изменить в разделе оформления класса."
+K.locales["ruRU"]["bdEditSource"]="Изменить источник в оформлении класса"
+
+-- Grouped class-art settings.
+K.locales["ruRU"]["artPageDesign"]="Дизайн"
+K.locales["ruRU"]["artPageLayout"]="Размещение"
+K.locales["ruRU"]["artPageBars"]="Источник и панели"
+K.locales["ruRU"]["artSelectedDetails"]="Детали выбранного дизайна"
+K.locales["ruRU"]["artPetGroup"]="Панель питомца"
+K.locales["ruRU"]["artPetHelp"]="Применяется, когда доступна панель способностей питомца. Не призывает питомца и не заставляет панель отображаться."
+K.locales["ruRU"]["artSourceHelp"]="Рекомендуется: Автоматически. Определяет активный источник Blizzard или Bartender. Фиксированный источник выбирайте только при необходимости. Это влияет и на фон кнопок."
+K.locales["ruRU"]["artScopeHelp"]="Выбирает панели, за которыми следует декор класса. Не показывает и не скрывает игровые панели. Стиль кнопок имеет отдельный выбор."
+K.locales["ruRU"]["artDecoratedBars"]="Панели для декоративного оформления"
+K.locales["ruRU"]["artResetHelp"]="Сбрасывает оформление класса существующей функцией, не затрагивая чат, профили и клавиши. Второй щелчок подтверждает."
+
+-- Grouped minimap settings.
+K.locales["ruRU"]["mmPageAppearance"]="Внешний вид"
+K.locales["ruRU"]["mmPageDetails"]="Часы и координаты"
+K.locales["ruRU"]["mmSunGroup"]="Значок дня и ночи"
+K.locales["ruRU"]["mmClockX"]="Часы: по горизонтали"
+K.locales["ruRU"]["mmClockY"]="Часы: по вертикали"
+K.locales["ruRU"]["mmPanelLayout"]="Размещение значков"
+K.locales["ruRU"]["mmPanelPosition"]="Положение кнопки"
+K.locales["ruRU"]["mmPanelButtonHelp"]="Эта кнопка открывает собранные значки аддонов. Левая кнопка: панель значков. Правая: настройки мини-карты. Разблокируйте для перемещения вокруг мини-карты."
+
+-- Grouped bag settings and economy navigation.
+K.locales["ruRU"]["bgAppearance"]="Внешний вид"
+K.locales["ruRU"]["bgSorting"]="Сортировка и продажа"
+K.locales["ruRU"]["bgShortcut"]="Кнопка и панель"
+K.locales["ruRU"]["bgStrip"]="Панель сумок"
+K.locales["ruRU"]["bgOrganized"]="Категории"
+K.locales["ruRU"]["bgOrganizedHelp"]="Показывает предметы по категориям."
+K.locales["ruRU"]["bgBankAppearance"]="Вид банка"
+K.locales["ruRU"]["bgBankHelp"]="Сумка по категориям остаётся активной. Этот выбор задаёт вид банка."
+K.locales["ruRU"]["bgItemLooks"]="Вид предметов"
+K.locales["ruRU"]["economy"]="Экономика"
+
+-- Settings text size.
+K.locales["ruRU"]["panelTextNormal"]="Обычный текст"
+K.locales["ruRU"]["panelTextLarge"]="Крупный текст"
+K.locales["ruRU"]["panelTextLargest"]="Очень крупный текст"
+K.locales["ruRU"]["panelTextHelp"]="Меняет размер текста на страницах настроек. Текст в игре и модель предпросмотра не меняются. Длинный текст подгоняется под доступное место."
+
+-- Classic Details-only settings.
+K.locales["ruRU"]["dtNote"]="Настраивает оформление окон Details. Измерения, содержимое и управление окнами остаются в Details."
+K.locales["ruRU"]["dmClassicDetailsRequired"]="Для этой функции аддон Details должен быть установлен и включён."
+
+-- Grouped Experience settings.
+K.locales["ruRU"]["xpPageGeneral"]="Общее"
+K.locales["ruRU"]["xpPageContent"]="Содержимое"
+K.locales["ruRU"]["xpPageAppearance"]="Внешний вид"
+K.locales["ruRU"]["xpPageText"]="Текст"
+
+-- Grouped Threat settings.
+K.locales["ruRU"]["ftGroupGeneral"]="Индикатор"
+K.locales["ruRU"]["ftGroupAppearance"]="Текст и цвет"
+K.locales["ruRU"]["ftGroupPosition"]="Положение"
+
+-- Complete Aspect settings; retain existing translations and custom runtime text.
+K.locales["ruRU"]["aaCheetah"]=K.locales["ruRU"]["aaCheetah"] or "Текст предупреждения о гепарде"
+K.locales["ruRU"]["aaEnabled"]=K.locales["ruRU"]["aaEnabled"] or "Включить предупреждения об аспектах"
+K.locales["ruRU"]["aaGlow"]=K.locales["ruRU"]["aaGlow"] or "Свечение гепарда в бою"
+K.locales["ruRU"]["aaHelp"]=K.locales["ruRU"]["aaHelp"] or "Управляет предупреждением независимо от загрузки аддона. Для неизученных аспектов и перемещений сохраняются прежние правила скрытия. Снимите блокировку для примера размещения, затем снова заблокируйте."
+K.locales["ruRU"]["aaLive"]=K.locales["ruRU"]["aaLive"] or "Вернуться к реальным предупреждениям"
+K.locales["ruRU"]["aaLock"]=K.locales["ruRU"]["aaLock"] or "Закрепить положение"
+K.locales["ruRU"]["aaMissing"]=K.locales["ruRU"]["aaMissing"] or "Текст при отсутствии аспекта"
+K.locales["ruRU"]["aaNote"]=K.locales["ruRU"]["aaNote"] or "Настройки относятся к этому персонажу. Старые общие настройки копируются при первом использовании. Снимите блокировку и перетащите предупреждение в нужное место."
+K.locales["ruRU"]["aaOriginal"]=K.locales["ruRU"]["aaOriginal"] or "Открыть исходные настройки аспектов"
+K.locales["ruRU"]["aaPreview"]=K.locales["ruRU"]["aaPreview"] or "Пример гепарда"
+K.locales["ruRU"]["aaPreviewHelp"]=K.locales["ruRU"]["aaPreviewHelp"] or "Показывает временный пример на настоящем предупреждении. Сначала включите предупреждения. Переход на другую страницу или закрытие панели завершает просмотр. При снятой блокировке пример размещения может остаться. Скрытие во время перемещений сохраняется."
+K.locales["ruRU"]["aaPreviewMissing"]=K.locales["ruRU"]["aaPreviewMissing"] or "Пример без аспекта"
+K.locales["ruRU"]["aaRefresh"]=K.locales["ruRU"]["aaRefresh"] or "Обновить значения"
+K.locales["ruRU"]["aaResetPosition"]=K.locales["ruRU"]["aaResetPosition"] or "Сбросить положение"
+K.locales["ruRU"]["aaResetTexts"]=K.locales["ruRU"]["aaResetTexts"] or "Восстановить стандартные тексты"
+K.locales["ruRU"]["aaText"]=K.locales["ruRU"]["aaText"] or "Показывать текст предупреждения"
+K.locales["ruRU"]["aaTextHelp"]=K.locales["ruRU"]["aaTextHelp"] or "Ваш текст длиной до 100 символов сохраняется при вводе для этого персонажа. Смена языка панели не переводит пользовательский текст."
+K.locales["ruRU"]["aaUpdate"]=K.locales["ruRU"]["aaUpdate"] or "Установите прилагаемое обновление HunterAspectAlert для использования этих настроек."
+K.locales["ruRU"]["hunterAspect_cheetahText"]=K.locales["ruRU"]["hunterAspect_cheetahText"] or "Включён дух гепарда: смените аспект!"
+K.locales["ruRU"]["hunterAspect_missingText"]=K.locales["ruRU"]["hunterAspect_missingText"] or "Выберите аспект!"
+K.locales["ruRU"]["aaCombatNoticeTitle"]=K.locales["ruRU"]["aaCombatNoticeTitle"] or "Бета: отслеживание аспектов в бою"
+K.locales["ruRU"]["aaCombatNotice"]=K.locales["ruRU"]["aaCombatNotice"] or "Отслеживание работает вне боя. В бою игра ограничивает информацию об эффектах: начальное состояние или изменение может определяться, но последующие изменения могут не отслеживаться, а предупреждение может исчезнуть. Отсутствие предупреждения не означает, что аспект неактивен. Проверяйте значки эффектов самой игры. Функция разработана во время бета-тестирования; ограничения и поведение игры могут измениться."

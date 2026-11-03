@@ -138,7 +138,7 @@ K.locales.de = {
  ["barsLocked"]="Im festen Modus werden Leisten nicht verfolgt. Oben Wieder an Leisten anpassen wählen, um die Auswahl zu ändern.",
  ["barsMissingBT"]="Bartender ist ausgewählt, aber seine Leisten sind nicht aktiv. Aktivieren und neu laden oder Automatisch / Blizzard wählen.",
  ["barsNative"]="Blizzard",
- ["barsNativeActive"]="Blizzard-Leisten aktiv. Leisten 2 und 3 in den Spieleinstellungen einschalten und drei horizontale Leisten im Bearbeitungsmodus übereinander platzieren. Das Design folgt sichtbaren ausgewählten Leisten.",
+ ["barsNativeActive"]="Blizzard-Leisten werden verwendet. Aktiviere die benötigten Leisten in den Spieleinstellungen. Leisten 2 und 3 mit drei horizontalen Reihen sind nur ein Beispiel, keine Pflicht. Das Design folgt den ausgewählten sichtbaren Leisten.",
  ["barsNativeList"]="Betroffene Blizzard-Leisten",
  ["barsNoEditor"]="Der Blizzard-Bearbeitungsmodus ist gerade nicht verfügbar. Außerhalb des Kampfes das Spielmenü nutzen.",
  ["barsSource"]="Aktionsleisten-Quelle",
@@ -191,7 +191,7 @@ K.locales.de = {
  ["enableHelp"]="Ändert die Addonliste dieses Charakters. Neuladen erforderlich; geladene Addons laufen bis dahin weiter. Abhängigkeiten werden nicht automatisch geändert.",
  ["errorCustom"]="Eigene Filter",
  ["errorCustomHelp"]="AN blendet die Fehlergruppe aus; AUS zeigt sie. Wichtige und unbekannte Fehler bleiben sichtbar. Für alle anderen Fehler den Modus Nur wichtige anzeigen verwenden.",
- ["errorImportantHelp"]="Blendet alle roten Fehler außer vollen Taschen/Bank, vollem Questlog, fehlendem Geld und Gegenstandslimits aus. Wichtige Warnungen beibehalten auf AUS blendet auch diese aus. Questfortschritt bleibt unverändert.",
+ ["errorImportantHelp"]="Zeigt volle Taschen/Bank und Questlog, fehlendes Geld, Gegenstandslimits und Kampfbeschränkungen. Andere rote Fehler werden verborgen. Questfortschritt bleibt unverändert.",
  ["errorImportantOnly"]="Nur wichtige anzeigen",
  ["errorShowAll"]="Alle anzeigen",
  ["errorShowHelp"]="Normale Blizzard-Fehleranzeige ohne zusätzliche Textfilter.",
@@ -306,7 +306,7 @@ K.locales.de = {
  ["invalidIds"]="Nur positive Datei-IDs eingeben (höchstens 30 eigene Einträge).",
  ["inventory"]="Taschen",
  ["keepImportantErrors"]="Wichtige Warnungen beibehalten",
- ["keepImportantErrorsHelp"]="Im Modus Nur wichtige anzeigen bleiben volle Taschen/Bank, volles Questlog, fehlendes Geld und Gegenstandslimits sichtbar. AUS unterdrückt alle roten Fehler.",
+ ["keepImportantErrorsHelp"]="Im Modus Nur wichtige anzeigen bleiben Lager-, Questlog-, Geld-, Gegenstandslimit- und Kampfbeschränkungen sichtbar, etwa im Kampf nicht erlaubtes Essen oder Ausrüstungswechsel. AUS blendet alle roten Fehler aus.",
  ["language"]="Sprache",
  ["languageHelp"]="Sprache des Fensters wählen. Nicht übersetzte Texte erscheinen auf Englisch.",
  ["launcher"]="Minikartensymbol anzeigen",
@@ -1114,3 +1114,86 @@ K.locales.de["xpTexturedBarsHelp"]="Aus: flache Füllung in der gewählten Farbe
 
 K.locales.de["xpShowBackground"]="Panelhintergrund anzeigen"
 K.locales.de["xpShowBackgroundHelp"]="Blendet den Panelhintergrund ein oder aus. Balken, Texte und Zierrahmen bleiben getrennt. Die eingestellte Deckkraft bleibt erhalten."
+
+-- Classic home page groups.
+K.locales["de"]["homeAudio"]="Spielklänge"
+K.locales["de"]["homeSuspended"]="In Classic nicht verfügbar"
+
+-- Grouped Chat settings navigation.
+K.locales["de"]["csAppearance"]="Aussehen"
+K.locales["de"]["csLayout"]="Anordnung"
+K.locales["de"]["csVisibility"]="Sichtbarkeit"
+K.locales["de"]["csMicro"]="Mikromenü"
+K.locales["de"]["csReset"]="Zurücksetzen"
+K.locales["de"]["csAlwaysHelp"]="Chattext, Hintergrund und Bedienelemente bleiben sichtbar, wenn der Mauszeiger entfernt ist."
+K.locales["de"]["csMessagesHelp"]="Der Chattext bleibt sichtbar; Hintergrund und Bedienelemente werden ohne Mauszeiger ausgeblendet."
+K.locales["de"]["csHideHelp"]="Chattext, Hintergrund und Bedienelemente werden ohne Mauszeiger ausgeblendet."
+
+-- Grouped action-button backdrop settings.
+K.locales["de"]["bdAppearance"]="Aussehen"
+K.locales["de"]["bdLabels"]="Text und Reichweite"
+K.locales["de"]["bdBars"]="Leistenauswahl"
+K.locales["de"]["bdStyledBars"]="Leisten mit Schaltflächenstil"
+K.locales["de"]["bdScopeHelp"]="Diese Auswahl blendet keine Aktionsleisten ein oder aus. Sie bestimmt nur die Leisten, deren Schaltflächen Hintergründe und Ränder erhalten. Die dekorative Auswahl im Klassen-Design ist getrennt. Die Leistenquelle gilt für beide Bereiche."
+K.locales["de"]["bdSharedColorHelp"]="Diese Panelfarbe wird mit dem Klassen-Design geteilt. Sie ändert das dekorative Panel hinter den Aktionsschaltflächen, nicht deren einzelne Ränder."
+K.locales["de"]["bdNativeLabelsHelp"]="Tasten- und Makrobeschriftungen gelten hier für Blizzard-Leisten. Bartender-Beschriftungen werden in Bartender eingestellt."
+
+-- Shared action bar source status, without a duplicate source editor.
+K.locales["de"]["bdActiveSource"]="Verwendete Leistenquelle"
+K.locales["de"]["bdSourceHint"]="Diese Quelle wird mit dem Klassen-Design geteilt. Ein Wechsel ändert die Leisten für dekorative Grafiken und Schaltflächenstil. Die Quelle wird im Klassen-Design geändert."
+K.locales["de"]["bdEditSource"]="Quelle im Klassen-Design ändern"
+
+-- Grouped class-art settings.
+K.locales["de"]["artPageDesign"]="Design"
+K.locales["de"]["artPageLayout"]="Anordnung"
+K.locales["de"]["artPageBars"]="Quelle und Leisten"
+K.locales["de"]["artSelectedDetails"]="Details des gewählten Designs"
+K.locales["de"]["artPetGroup"]="Begleiter-Aktionsleiste"
+K.locales["de"]["artPetHelp"]="Gilt, wenn eine nutzbare Begleiterleiste verfügbar ist. Beschwört keinen Begleiter und erzwingt keine Leistenanzeige."
+K.locales["de"]["artSourceHelp"]="Empfohlen: Automatisch. Erkennt aktive Blizzard- oder Bartender-Leisten. Eine feste Quelle nur bei Bedarf wählen. Dies betrifft auch den Leistenhintergrund."
+K.locales["de"]["artScopeHelp"]="Wählt die Leisten für die dekorative Klassengrafik. Zeigt keine Spielleisten an und blendet keine aus. Die Schaltflächenstile haben eine eigene Auswahl."
+K.locales["de"]["artDecoratedBars"]="Leisten für die dekorative Grafik"
+K.locales["de"]["artResetHelp"]="Setzt das Klassen-Design mit der bisherigen Funktion zurück, nicht Chat, Profile oder Tastenbelegung. Ein zweiter Klick bestätigt."
+
+-- Grouped minimap settings.
+K.locales["de"]["mmPageAppearance"]="Aussehen"
+K.locales["de"]["mmPageDetails"]="Uhr und Koordinaten"
+K.locales["de"]["mmSunGroup"]="Tag-/Nachtsymbol"
+K.locales["de"]["mmClockX"]="Uhr: horizontale Position"
+K.locales["de"]["mmClockY"]="Uhr: vertikale Position"
+K.locales["de"]["mmPanelLayout"]="Panelanordnung"
+K.locales["de"]["mmPanelPosition"]="Position der Paneltaste"
+K.locales["de"]["mmPanelButtonHelp"]="Diese Taste öffnet die gesammelten Addon-Symbole. Linksklick: Symbolpanel. Rechtsklick: Minikarteneinstellungen. Zum Verschieben um die Minikarte entsperren."
+
+-- Grouped bag settings and economy navigation.
+K.locales["de"]["bgAppearance"]="Aussehen"
+K.locales["de"]["bgSorting"]="Sortieren und Verkauf"
+K.locales["de"]["bgShortcut"]="Taste und Leiste"
+K.locales["de"]["bgStrip"]="Taschenleiste"
+K.locales["de"]["bgOrganized"]="Kategorisiert"
+K.locales["de"]["bgOrganizedHelp"]="Zeigt Gegenstände nach Kategorien."
+K.locales["de"]["bgBankAppearance"]="Bankdarstellung"
+K.locales["de"]["bgBankHelp"]="Die kategorisierte Tasche bleibt aktiv. Diese Auswahl bestimmt die Bankdarstellung."
+K.locales["de"]["bgItemLooks"]="Gegenstandsdarstellung"
+K.locales["de"]["economy"]="Wirtschaft"
+
+-- Settings text size.
+K.locales["de"]["panelTextNormal"]="Normaler Text"
+K.locales["de"]["panelTextLarge"]="Großer Text"
+K.locales["de"]["panelTextLargest"]="Sehr großer Text"
+K.locales["de"]["panelTextHelp"]="Ändert die Schriftgröße aller Einstellungsseiten. Spieltexte und das Vorschaumodell bleiben unverändert. Lange Texte werden an den verfügbaren Platz angepasst."
+
+-- Classic Details-only settings.
+K.locales["de"]["dtNote"]="Passt das Aussehen der Details-Fenster an. Messung, Inhalte und Fensterverwaltung übernimmt Details."
+K.locales["de"]["dmClassicDetailsRequired"]="Für diese Funktion muss das Addon Details installiert und aktiviert sein."
+
+-- Grouped Experience settings.
+K.locales["de"]["xpPageGeneral"]="Allgemein"
+K.locales["de"]["xpPageContent"]="Inhalte"
+K.locales["de"]["xpPageAppearance"]="Aussehen"
+K.locales["de"]["xpPageText"]="Texte"
+
+-- Grouped Threat settings.
+K.locales["de"]["ftGroupGeneral"]="Anzeige"
+K.locales["de"]["ftGroupAppearance"]="Schrift und Farbe"
+K.locales["de"]["ftGroupPosition"]="Position"

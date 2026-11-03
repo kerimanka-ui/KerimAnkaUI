@@ -138,7 +138,7 @@ K.locales.tr = {
  ["barsLocked"]="Sabit modda bar takibi kapalıdır. Bu seçimi değiştirmek için yukarıdan Yeniden Barlara Uydur'u seç.",
  ["barsMissingBT"]="Bartender seçili ama barları aktif değil. Açıp yeniden yükle veya Otomatik / Blizzard seç.",
  ["barsNative"]="Blizzard",
- ["barsNativeActive"]="Blizzard barları kullanılıyor. Oyun ayarlarından 2. ve 3. barı açıp Düzenleme Modu’nda üç yatay barı üst üste yerleştir. Tasarım, seçtiğin görünür barları takip eder.",
+ ["barsNativeActive"]="Blizzard barları kullanılıyor. Oyun ayarlarından ihtiyacın olan barları açabilirsin. Örneğin 2. ve 3. barı açıp üç yatay barı birlikte düzenleyebilirsin; bu zorunlu değildir. Tasarım, seçtiğin görünür barları takip eder.",
  ["barsNativeList"]="Kapsanan Blizzard Barları",
  ["barsNoEditor"]="Blizzard Düzenleme Modu şu anda kullanılamıyor. Savaş dışında oyunun menüsünden açmayı dene.",
  ["barsSource"]="Action Bar Kaynağı",
@@ -191,7 +191,7 @@ K.locales.tr = {
  ["enableHelp"]="Bu karakterin addon listesini değiştirir. Yeniden yükleme gerekir; yüklü addon o zamana kadar çalışmaya devam eder. Gereken diğer addonlar otomatik açılmaz veya kapanmaz.",
  ["errorCustom"]="Özel Filtreler",
  ["errorCustomHelp"]="AÇIK o hata grubunu gizler; KAPALI gösterir. Önemli ve tanınmayan hatalar görünür kalır. Bu mod yalnızca bilinen hataları filtreler; diğer bütün hataları susturmak için Yalnızca Önemli Uyarılar modunu seç.",
- ["errorImportantHelp"]="Çanta/banka dolu, görev günlüğü dolu, yetersiz para ve eşya taşıma sınırı dışındaki tüm kırmızı hataları gizler. Önemli Uyarıları Koru kapatılırsa bunlar da gizlenir. Görev ilerleme bildirimleri etkilenmez.",
+ ["errorImportantHelp"]="Çanta/banka ve görev günlüğü dolu, yetersiz para, eşya sınırı ve combat kısıtlaması uyarıları korunur. Diğer kırmızı hatalar gizlenir; görev ilerlemesi etkilenmez.",
  ["errorImportantOnly"]="Yalnızca Önemli Uyarılar",
  ["errorShowAll"]="Hepsini Göster",
  ["errorShowHelp"]="Normal Blizzard hata gösterimi. Ek yazı filtresi uygulanmaz.",
@@ -306,7 +306,7 @@ K.locales.tr = {
  ["invalidIds"]="Yalnızca pozitif dosya numarası gir (en fazla 30 özel kayıt).",
  ["inventory"]="Çanta",
  ["keepImportantErrors"]="Önemli Uyarıları Koru",
- ["keepImportantErrorsHelp"]="Yalnızca Önemli Uyarılar modunda çanta/banka dolu, görev günlüğü dolu, yetersiz para ve eşya taşıma sınırı görünür kalır. KAPALI olduğunda bütün kırmızı hata yazıları gizlenir.",
+ ["keepImportantErrorsHelp"]="Yalnızca Önemli Uyarılar modunda dolu depolama, görev günlüğü, para, eşya sınırı ve combat kısıtlaması uyarılarını korur. Örneğin combat sırasında izin verilmeyen yemek yeme veya ekipman değiştirme işlemi. KAPALI olduğunda bütün kırmızı hatalar gizlenir.",
  ["language"]="Dil",
  ["languageHelp"]="Panel dilini seç. Henüz çevrilmemiş metinler İngilizce gösterilir.",
  ["launcher"]="Minimap İkonunu Göster",
@@ -1114,3 +1114,86 @@ K.locales.tr["xpTexturedBarsHelp"]="Kapalıyken seçili renkte düz dolgu kullan
 
 K.locales.tr["xpShowBackground"]="Panel Arka Planını Göster"
 K.locales.tr["xpShowBackgroundHelp"]="Panelin arka planını gizler veya gösterir. Barlar, yazılar ve dekoratif çerçeve ayrı kalır. Arka plan görünürlüğü ayarın korunur."
+
+-- Classic home page groups.
+K.locales["tr"]["homeAudio"]="Oyun sesleri"
+K.locales["tr"]["homeSuspended"]="Classic’te kullanılamıyor"
+
+-- Grouped Chat settings navigation.
+K.locales["tr"]["csAppearance"]="Görünüm"
+K.locales["tr"]["csLayout"]="Yerleşim"
+K.locales["tr"]["csVisibility"]="Görünürlük"
+K.locales["tr"]["csMicro"]="Mikro Menü"
+K.locales["tr"]["csReset"]="Sıfırlama"
+K.locales["tr"]["csAlwaysHelp"]="Mouse uzaktayken sohbet yazıları, arka plan ve kontroller görünür kalır."
+K.locales["tr"]["csMessagesHelp"]="Mouse uzaktayken sohbet yazıları kalır; arka plan ve kontroller gizlenir."
+K.locales["tr"]["csHideHelp"]="Mouse uzaktayken sohbet yazıları, arka plan ve kontroller gizlenir."
+
+-- Grouped action-button backdrop settings.
+K.locales["tr"]["bdAppearance"]="Görünüm"
+K.locales["tr"]["bdLabels"]="Yazı ve Menzil"
+K.locales["tr"]["bdBars"]="Bar Seçimi"
+K.locales["tr"]["bdStyledBars"]="Düğme stili uygulanacak barlar"
+K.locales["tr"]["bdScopeHelp"]="Bu seçim oyun barlarını açıp kapatmaz. Yalnızca hangi barların düğmelerine arka plan ve kenarlık uygulanacağını belirler. Sınıf Tasarımı’nın dekoratif çerçeve seçimi ayrıdır. Bar kaynağı tercihi ise iki bölümde ortaktır."
+K.locales["tr"]["bdSharedColorHelp"]="Bu panel rengi Sınıf Tasarımı ile ortaktır. Aksiyon düğmelerinin arkasındaki dekoratif paneli değiştirir; yukarıdaki düğme kenarlığı ayarlarından ayrıdır."
+K.locales["tr"]["bdNativeLabelsHelp"]="Buradaki tuş ve makro yazısı ayarları Blizzard barları içindir. Bartender barlarının yazılarını Bartender üzerinden düzenle."
+
+-- Shared action bar source status, without a duplicate source editor.
+K.locales["tr"]["bdActiveSource"]="Kullanılan bar kaynağı"
+K.locales["tr"]["bdSourceHint"]="Bu kaynak Sınıf Tasarımı ile ortaktır. Kaynağı değiştirmek hem dekoratif görsellerin hem düğme stilinin izleyeceği barları değiştirir. Kaynak seçimini Sınıf Tasarımı bölümünden yapabilirsin."
+K.locales["tr"]["bdEditSource"]="Kaynağı Sınıf Tasarımı’nda düzenle"
+
+-- Grouped class-art settings.
+K.locales["tr"]["artPageDesign"]="Tasarım"
+K.locales["tr"]["artPageLayout"]="Yerleşim"
+K.locales["tr"]["artPageBars"]="Bar Kaynağı ve Seçimi"
+K.locales["tr"]["artSelectedDetails"]="Seçili tasarımın ayrıntıları"
+K.locales["tr"]["artPetGroup"]="Pet Yetenek Barı"
+K.locales["tr"]["artPetHelp"]="Kullanılabilir bir pet yetenek barı olduğunda uygulanır. Pet çağırmaz veya pet barını zorla göstermez."
+K.locales["tr"]["artSourceHelp"]="Önerilen: Otomatik. Etkin Blizzard veya Bartender kaynağını algılar. Diğer seçenekleri yalnız özellikle kaynak belirtmek istediğinde kullan. Bu tercih Bar Arka Planı’nı da etkiler."
+K.locales["tr"]["artScopeHelp"]="Dekoratif sınıf tasarımının hangi barları izleyeceğini seçer. Oyun barlarını açıp kapatmaz. Bar Arka Planı’nın düğme stili seçimi ayrıdır."
+K.locales["tr"]["artDecoratedBars"]="Dekoratif tasarımın izleyeceği barlar"
+K.locales["tr"]["artResetHelp"]="Mevcut sıfırlama işlemiyle Sınıf Tasarımı ayarlarını varsayılanlara döndürür. Sohbeti, profilleri veya oyun kısayollarını sıfırlamaz. İkinci tıklama işlemi onaylar."
+
+-- Grouped minimap settings.
+K.locales["tr"]["mmPageAppearance"]="Görünüm"
+K.locales["tr"]["mmPageDetails"]="Saat ve Koordinatlar"
+K.locales["tr"]["mmSunGroup"]="Gün / Gece Simgesi"
+K.locales["tr"]["mmClockX"]="Saat: Yatay konum"
+K.locales["tr"]["mmClockY"]="Saat: Dikey konum"
+K.locales["tr"]["mmPanelLayout"]="Panel Düzeni"
+K.locales["tr"]["mmPanelPosition"]="Panel Düğmesinin Konumu"
+K.locales["tr"]["mmPanelButtonHelp"]="Bu düğme, toplanan eklenti ikonlarını açar. Sol tık: ikon paneli. Sağ tık: minimap ayarları. Kilidi kaldırarak düğmeyi minimap çevresinde sürükleyebilirsin."
+
+-- Grouped bag settings and economy navigation.
+K.locales["tr"]["bgAppearance"]="Görünüm"
+K.locales["tr"]["bgSorting"]="Sıralama ve Satış"
+K.locales["tr"]["bgShortcut"]="Kısayol ve Şerit"
+K.locales["tr"]["bgStrip"]="Çanta Şeridi"
+K.locales["tr"]["bgOrganized"]="Düzenli"
+K.locales["tr"]["bgOrganizedHelp"]="Eşyaları kategoriler halinde gösterir."
+K.locales["tr"]["bgBankAppearance"]="Banka görünümü"
+K.locales["tr"]["bgBankHelp"]="Düzenli çanta açık kalır; bu seçim bankanın kullanacağı görünümü belirler."
+K.locales["tr"]["bgItemLooks"]="Eşya Görünümü"
+K.locales["tr"]["economy"]="Ekonomi"
+
+-- Settings text size.
+K.locales["tr"]["panelTextNormal"]="Normal yazı"
+K.locales["tr"]["panelTextLarge"]="Büyük yazı"
+K.locales["tr"]["panelTextLargest"]="Çok büyük yazı"
+K.locales["tr"]["panelTextHelp"]="Bütün ayar sayfalarının yazı boyutunu değiştirir. Oyun içi yazılar ve ön izleme modeli etkilenmez. Uzun metinler, taşmayı önlemek için ayrılan alana sığdırılır."
+
+-- Classic Details-only settings.
+K.locales["tr"]["dtNote"]="Details pencerelerinin görünümünü düzenler. Ölçüm, içerik ve pencere yönetimi Details’e aittir."
+K.locales["tr"]["dmClassicDetailsRequired"]="Bu özellik için Details eklentisinin yüklü ve etkin olması gerekir."
+
+-- Grouped Experience settings.
+K.locales["tr"]["xpPageGeneral"]="Genel"
+K.locales["tr"]["xpPageContent"]="İçerik"
+K.locales["tr"]["xpPageAppearance"]="Görünüm"
+K.locales["tr"]["xpPageText"]="Yazılar"
+
+-- Grouped Threat settings.
+K.locales["tr"]["ftGroupGeneral"]="Gösterge"
+K.locales["tr"]["ftGroupAppearance"]="Yazı ve Renk"
+K.locales["tr"]["ftGroupPosition"]="Konum"

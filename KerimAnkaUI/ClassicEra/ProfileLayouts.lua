@@ -212,8 +212,11 @@ local events=CreateFrame('Frame')
 for _,event in ipairs({'PLAYER_LOGIN','PLAYER_ENTERING_WORLD','EDIT_MODE_LAYOUTS_UPDATED','ADDON_LOADED','PLAYER_REGEN_ENABLED'}) do events:RegisterEvent(event) end
 events:SetScript('OnEvent',function(_,event,addon)
  if event=='ADDON_LOADED' and addon~='Bartender4' then return end
+ local pending=K.db and K.db.savedProfileBartender and K.db.savedProfileBartender.status=='pending'
  if C_Timer and C_Timer.After then C_Timer.After(0,L.TryDeferred) else L.TryDeferred() end
- if event~='ADDON_LOADED' then L.ScheduleStable() end
+ -- Combat ending alone does not change saved settings. Capture login/world/native
+ -- layout events, or a pending Bartender handoff; explicit saves/logout remain.
+ if event~='ADDON_LOADED'and(event~='PLAYER_REGEN_ENABLED'or pending)then L.ScheduleStable()end
 end)
 if EventRegistry and EventRegistry.RegisterCallback then
  EventRegistry:RegisterCallback('EditMode.Exit',L.ScheduleStable,L)

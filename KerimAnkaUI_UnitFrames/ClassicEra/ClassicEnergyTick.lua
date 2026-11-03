@@ -1,6 +1,10 @@
--- Classic Era Rogue energy regeneration phase. Own implementation; no external addon dependency.
+-- Classic Era Rogue / cat-form Druid energy regeneration phase. Own implementation; no external addon dependency.
 if not WOW_PROJECT_CLASSIC or WOW_PROJECT_ID~=WOW_PROJECT_CLASSIC then return end
-if select(2,UnitClass('player'))~='ROGUE' then return end
+local playerClass=select(2,UnitClass('player'))
+if playerClass~='ROGUE'and playerClass~='DRUID'then return end
+local function EnergyActive()
+ local id,token=UnitPowerType('player');return id==3 or token=='ENERGY'
+end
 local M={};KerimAnkaUIClassicEnergyTick=M
 local state={anchor=GetTime(),previous=nil,synced=false,ignoreUntil=0}
 local overlay,spark,glow,bar,countdown,textStyle,lastText
@@ -73,20 +77,25 @@ function M.Refresh()
  glow:ClearAllPoints();glow:SetPoint('CENTER',spark,'CENTER');glow:SetSize(10,height)
 end
 local events=CreateFrame('Frame')
-for _,event in ipairs({'PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_DEAD','PLAYER_ALIVE','PLAYER_REGEN_DISABLED','PLAYER_REGEN_ENABLED','UNIT_POWER_UPDATE','UNIT_POWER_FREQUENT','UNIT_MAXPOWER','UNIT_DISPLAYPOWER','COMBAT_LOG_EVENT_UNFILTERED'})do events:RegisterEvent(event)end
+for _,event in ipairs({'PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_DEAD','PLAYER_ALIVE','PLAYER_REGEN_DISABLED','PLAYER_REGEN_ENABLED','UNIT_POWER_UPDATE','UNIT_POWER_FREQUENT','UNIT_MAXPOWER','UNIT_DISPLAYPOWER','UPDATE_SHAPESHIFT_FORM','COMBAT_LOG_EVENT_UNFILTERED'})do events:RegisterEvent(event)end
 local function ReadEnergy()
+ if playerClass=='DRUID'and not EnergyActive()then return end
  M.Observe(GetTime(),UnitPower('player',3),UnitPowerMax('player',3))
 end
 events:SetScript('OnEvent',function(_,event,unit,token)
  if event=='PLAYER_LOGIN'or event=='PLAYER_ENTERING_WORLD'or event=='PLAYER_DEAD'then
   M.Reset(GetTime(),UnitPower('player',3))
+ elseif playerClass=='DRUID'and(event=='UPDATE_SHAPESHIFT_FORM'or event=='UNIT_DISPLAYPOWER'and unit=='player')then
+  M.Reset(GetTime(),EnergyActive()and UnitPower('player',3)or nil)
  elseif event=='COMBAT_LOG_EVENT_UNFILTERED'then
   local _,sub,_,_,_,_,_,dest=CombatLogGetCurrentEventInfo()
   if (sub=='SPELL_ENERGIZE'or sub=='SPELL_PERIODIC_ENERGIZE')and dest==UnitGUID('player')then M.ExcludeGain(GetTime())end
- elseif unit=='player'and(token==nil or token=='ENERGY')then ReadEnergy()end
+ elseif unit=='player'and(token==nil or token=='ENERGY')then ReadEnergy()
+ elseif unit~=nil then return end
  M.Refresh()
 end)
 local elapsed=0;events:SetScript('OnUpdate',function(_,dt)
  elapsed=elapsed+dt;if elapsed<.03 then return end;elapsed=0
+ if playerClass=='DRUID'and not EnergyActive()then return end
  ReadEnergy();M.Refresh()
 end)

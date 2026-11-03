@@ -35,7 +35,7 @@ function K.DrawAspectPage(page)
  local api=HunterAspectAlertAPI
  local db=api and api.GetSettings()
  if not db then return false end
- local w=K.UnitWidgets
+ local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
  w.Text(page,K.L("aaNote"),8,0,690,13,{.65,.70,.62})
  local y=-64
  for i,item in ipairs({{"cheetah","aaPreview"},{"missing","aaPreviewMissing"},{false,"aaLive"}}) do
@@ -57,7 +57,7 @@ function K.DrawAspectPage(page)
   w.Switch(c,value,255,-48,function(enabled)
    if K.InCombat() then return end
    if key=="locked" then api.SetLocked(enabled) else api.Set(key,enabled) end
-  end,true)
+  end,not K.InCombat())
  end
  y=y-212
  for _,field in ipairs({{"cheetahText","aaCheetah"},{"missingText","aaMissing"}}) do

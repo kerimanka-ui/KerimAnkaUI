@@ -5,17 +5,19 @@ local PATH="Interface\\AddOns\\KerimAnkaUI_UnitFrames\\"
 local font="Interface\\AddOns\\KerimAnkaUI\\Fonts\\Ubuntu-R.ttf"
 local unitFont=STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
 local state={unit="player",kind="Buffs",examples=true,icons={}}
-local panel,stage,model,drag
-local unitLabels={player="upPlayer",target="upTarget",pet="upPet"}
+local panel,stage,model,drag,compact,focusRing,focusTimer;local focusSerial=0
+local unitLabels={player="upPlayer",target="upTarget",pet="upPet",targettarget="usToT"}
 local function Settings() return ForeverLeatherUnitsAPI and ForeverLeatherUnitsAPI.GetSettings() end
 local function FinishDrag()
  if not drag then return end
  local button=drag.button
+ if drag.flush then drag.flush()end
  button:SetScript("OnUpdate",nil); drag=nil
  C_Timer.After(0,function() button.previewDragged=nil end)
  local api=ForeverLeatherUnitsAPI
  if api then api.Apply() end
- C_Timer.After(0,function() if K.window:IsShown() and panel:IsShown() then K.Render() end end)
+ if K.RefreshUnitOptionValues then K.RefreshUnitOptionValues(button.xKey,button.yKey,button.sizeKey)end
+ K.UpdateUnitPreview()
 end
 local paintingLayout=false
 local function Editable(button,xKey,yKey,sizeKey,low,high,invertX,coordinateFactor,step)
@@ -37,15 +39,24 @@ local function Editable(button,xKey,yKey,sizeKey,low,high,invertX,coordinateFact
   self.previewDragged=true
   drag={button=self,x=x,y=y,baseX=db[self.xKey],baseY=db[self.yKey],scale=model:GetEffectiveScale()*self.coordinateFactor,modelScale=model:GetScale()}
   K.HideTooltip()
-  self:SetScript("OnUpdate",function()
-   if not IsMouseButtonDown("LeftButton") or InCombatLockdown() then FinishDrag(); return end
+  local function UpdateDrag(force)
+   if not drag or InCombatLockdown()then return end
+   if not force and(not IsMouseButtonDown("LeftButton"))then FinishDrag(); return end
+   local now=GetTime();if not force and now<(drag.nextPaint or 0)then return end
    local cx,cy=GetCursorPosition()
    local bounds=self.sizeKey=="raidMarkerSize" and {-100,100,0,50} or self.sizeKey=="pvpSize" and {-30,45,-45,45}
        or self.sizeKey=="questieIconSize" and {-80,80,-80,80} or self.sizeKey=="hunterSummonSize" and {-300,500,-250,250}
        or self.sizeKey=="happinessSize" and {-100,100,-60,60} or self.sizeKey=="castHeight" and {-400,400,-250,250} or {-300,300,-250,250}
-   db[self.xKey]=math.max(bounds[1],math.min(bounds[2],math.floor(drag.baseX+(cx-drag.x)/drag.scale*(self.invertX and -1 or 1)+.5)))
-   db[self.yKey]=math.max(bounds[3],math.min(bounds[4],math.floor(drag.baseY+(cy-drag.y)/drag.scale+.5)))
+   local nx=math.max(bounds[1],math.min(bounds[2],math.floor(drag.baseX+(cx-drag.x)/drag.scale*(self.invertX and -1 or 1)+.5)))
+   local ny=math.max(bounds[3],math.min(bounds[4],math.floor(drag.baseY+(cy-drag.y)/drag.scale+.5)))
+   if nx==db[self.xKey]and ny==db[self.yKey]then return end
+   db[self.xKey],db[self.yKey]=nx,ny;drag.nextPaint=now+1/30
    K.UpdateUnitPreview()
+  end
+  drag.flush=function()UpdateDrag(true)end
+  self:SetScript("OnUpdate",function()
+   if not IsMouseButtonDown("LeftButton")or InCombatLockdown()then FinishDrag();return end
+   UpdateDrag(false)
   end)
  end)
  button:SetScript("OnDragStop",FinishDrag)
@@ -53,13 +64,15 @@ local function Editable(button,xKey,yKey,sizeKey,low,high,invertX,coordinateFact
   if K.InCombat() then return end
   local db=Settings(); if not db or not self.sizeKey then return end
   db[self.sizeKey]=math.max(self.low,math.min(self.high,math.floor(((tonumber(db[self.sizeKey]) or self.low)+delta*(step or 1))*100+.5)/100))
-  ForeverLeatherUnitsAPI.Apply(); K.Render()
+  ForeverLeatherUnitsAPI.Apply();K.UpdateUnitPreview(self.sizeKey)
+  if K.RefreshUnitOptionValues then K.RefreshUnitOptionValues(self.xKey,self.yKey,self.sizeKey)end
  end)
  button:SetScript("OnHide",function(self) if drag and drag.button==self then FinishDrag() end end)
 end
 local function Label(parent,size,unitName)
  local t=parent:CreateFontString(nil,"OVERLAY")
  if unitName then K.ApplyUnitNameFont(t,size,false,"Interface\\AddOns\\KerimAnkaUI\\Fonts\\Ubuntu-R.ttf") else K.ApplyTextFont(t,size,false,"OUTLINE") end
+ t:SetTextColor(.90,.92,.86,1)
  t:SetWordWrap(false)
  return t
 end
@@ -73,7 +86,7 @@ local function SampleIcon(parent,texture)
  return b
 end
 local function CreatePreviewModel(parent)
- local model=CreateFrame("Frame",nil,parent); model:SetSize(360,110)
+ local model=CreateFrame("Frame",nil,parent);model.panelTextExclude=true; model:SetSize(360,110)
  model.portrait=CreateFrame("Frame",nil,model)
  model.portrait.backing=model.portrait:CreateTexture(nil,"BACKGROUND")
  model.portrait.backing:SetPoint("TOPLEFT",model.portrait,"TOPLEFT",-2,2)
@@ -135,7 +148,32 @@ local function CreatePreviewModel(parent)
  -- Keep bar hit targets above the decorative artwork and numeric labels.
  model.healthHit=CreateFrame("Button",nil,model.decoration); model.healthHit:SetAllPoints(model.health)
  model.powerHit=CreateFrame("Button",nil,model.decoration); model.powerHit:SetAllPoints(model.power)
+ model.feedbackHit=CreateFrame('Button',nil,model.decoration);model.feedbackHit:SetAllPoints(model.portrait)
+ for _,hit in ipairs({model.nameHit,model.levelHit,model.healthHit,model.powerHit})do hit:SetFrameLevel(model.decoration:GetFrameLevel()+3)end
  return model
+end
+local function CreateCompact(parent)
+ local f=CreateFrame('Button',nil,parent,'BackdropTemplate');f.panelTextExclude=true;f:SetSize(230,44)
+ f:SetBackdrop({bgFile=PATH..'BarFill.tga',edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=1})
+ f:SetBackdropColor(.075,.055,.035,.97);f:SetBackdropBorderColor(.48,.34,.19,1)
+ f.health=CreateFrame('StatusBar',nil,f);f.health:SetPoint('BOTTOMLEFT',7,6);f.health:SetPoint('BOTTOMRIGHT',-7,6);f.health:SetHeight(12)
+ f.health:SetStatusBarTexture(PATH..'BarFill.tga');f.health:SetStatusBarColor(.1,.85,.05,1);f.health:SetMinMaxValues(0,1);f.health:SetValue(.72)
+ local text=CreateFrame('Frame',nil,f);text:SetAllPoints();text:SetFrameLevel(f:GetFrameLevel()+3)
+ f.name=Label(text,13,true);f.name:SetPoint('TOP',2,-4);f.name:SetWidth(210)
+ f.hp=Label(text,10);f.hp:SetPoint('CENTER',f.health,'CENTER');f.hp:SetWidth(214);f.hp:SetJustifyH('CENTER')
+ f:SetScript('OnClick',function()K.JumpToUnitOption('totScale')end)
+ f.nameHit=CreateFrame('Button',nil,text);f.nameHit:SetAllPoints(f.name);f.nameHit:SetScript('OnClick',function()K.JumpToUnitOption('totNameScale')end)
+ return f
+end
+local function PaintCompact()
+ local db=Settings();compact:SetScale(db.scale*(db.totScale or 1));compact:ClearAllPoints();compact:SetPoint('CENTER',stage,'CENTER')
+ compact:SetAlpha(db.showToT and 1 or .45);compact:Show();model:Hide()
+ K.ApplyUnitNameFont(compact.name,13*(db.totNameScale or db.textScale or 1),false,font);compact.name:SetText(K.L('usToT'))
+ K.ApplyTextFont(compact.hp,10*(db.healthTextScale or 1),false,'OUTLINE');compact.hp:SetText('720 / 1000')
+ panel.title:SetText(K.L('upTitle'));panel.note:SetText(K.L('upNote'));panel.note:SetTextColor(.63,.69,.61,1);panel.examples.text:SetText(K.L('upExamples'))
+ for _,b in ipairs(panel.buttons)do b.label:SetText(K.L(unitLabels[b.unit]));b.label:SetTextColor(b.unit=='targettarget'and .88 or .90,b.unit=='targettarget'and .77 or .92,b.unit=='targettarget'and .44 or .86,1);b:SetBackdropColor(b.unit=='targettarget'and .22 or .10,b.unit=='targettarget'and .29 or .12,.12,1)end
+ panel.examples:SetChecked(state.examples)
+ for _,b in ipairs(panel.kinds)do b.label:SetText(K.L(b.kind=='Buffs'and'upBuffs'or'upDebuffs'));b.label:SetTextColor(.50,.55,.49,1);b:Disable()end
 end
 local function Build()
  panel=CreateFrame("Frame",nil,K.window,"BackdropTemplate"); K.previewPanel=panel
@@ -144,36 +182,36 @@ local function Build()
  panel:SetBackdropColor(.09,.105,.095,1); panel:SetBackdropBorderColor(.30,.34,.28,1)
  panel.title=Label(panel,13); panel.title:SetPoint("TOPLEFT",10,-10)
  local visible=CreateFrame("CheckButton",nil,K.window,"UICheckButtonTemplate")
- visible:SetPoint("TOPLEFT",752,-126); K.ApplyTextFont(visible.text,11,false,""); K.previewToggle=visible
+ visible:SetPoint("TOPLEFT",563,-126);visible.text:SetWidth(245);visible.text:SetWordWrap(true); K.ApplyTextFont(visible.text,13,false,"");visible.text:SetTextColor(.90,.92,.86,1); K.previewToggle=visible
  visible:SetScript("OnClick",function(self)
   KAClassic_KerimAnkaUIDB.unitPreview=self:GetChecked() and true or false
   FinishDrag(); K.Render()
  end)
  panel.buttons={}
- for i,unit in ipairs({"player","target","pet"}) do
-  local b=CreateFrame("Button",nil,panel,"BackdropTemplate"); b:SetPoint("TOPLEFT",124+(i-1)*92,-5); b:SetSize(86,26)
+ for i,unit in ipairs({"player","target","pet","targettarget"}) do
+  local b=CreateFrame("Button",nil,panel,"BackdropTemplate"); b:SetPoint("TOPLEFT",120+(i-1)*74,-5); b:SetSize(unit=="targettarget"and 92 or 70,26)
   b:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
-  b.label=Label(b,11); b.label:SetPoint("CENTER")
+  b.label=Label(b,11); b.label:SetPoint("CENTER");b.label:SetWidth(unit=="targettarget"and 84 or 62);b.label:SetHeight(24);b.label:SetWordWrap(true)
   b:SetScript("OnClick",function()
    FinishDrag(); state.unit=unit; state.kind=unit=="target" and "Debuffs" or "Buffs"; K.UpdateUnitPreview()
-   if K.JumpToUnitOption then K.JumpToUnitOption(unit..state.kind) end
+   if K.SetUnitSettingsContext then K.SetUnitSettingsContext(unit)elseif K.JumpToUnitOption then K.JumpToUnitOption(unit..state.kind)end
   end)
   b.unit=unit; panel.buttons[i]=b
  end
  panel.kinds={}
  for i,kind in ipairs({"Buffs","Debuffs"}) do
-  local b=CreateFrame("Button",nil,panel,"BackdropTemplate"); b:SetPoint("TOPLEFT",406+(i-1)*85,-5); b:SetSize(81,26)
+  local b=CreateFrame("Button",nil,panel,"BackdropTemplate"); b:SetPoint("TOPLEFT",440+(i-1)*64,-5); b:SetSize(60,26)
   b:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
   b.label=Label(b,11); b.label:SetPoint("CENTER"); b.kind=kind
   b:SetScript("OnClick",function() state.kind=kind; K.UpdateUnitPreview(); if K.JumpToUnitOption then K.JumpToUnitOption(state.unit..kind) end end)
   panel.kinds[i]=b
  end
  local examples=CreateFrame("CheckButton",nil,panel,"UICheckButtonTemplate"); examples:SetPoint("TOPLEFT",577,-3)
- K.ApplyTextFont(examples.text,11,false,""); examples:SetScript("OnClick",function(self) state.examples=self:GetChecked() and true or false; K.UpdateUnitPreview() end)
+ K.ApplyTextFont(examples.text,11,false,"");examples.text:SetTextColor(.90,.92,.86,1); examples:SetScript("OnClick",function(self) state.examples=self:GetChecked() and true or false; K.UpdateUnitPreview() end)
  panel.examples=examples
  panel.note=Label(panel,10); panel.note:SetPoint("BOTTOMLEFT",9,5); panel.note:SetWidth(714); panel.note:SetJustifyH("LEFT")
  stage=CreateFrame("Frame",nil,panel); stage:SetPoint("TOPLEFT",8,-36); stage:SetSize(718,143); stage:SetClipsChildren(true)
- model=CreatePreviewModel(stage)
+ model=CreatePreviewModel(stage);compact=CreateCompact(stage);model.panelTextExclude=true;compact.panelTextExclude=true;compact:Hide()
  panel:SetScript("OnHide",FinishDrag)
 end
 function K.ConfigureUnitPreview(available)
@@ -217,8 +255,9 @@ local function PaintModel(model,stage,state,changedKey,screen)
  if not screen and state.unit=="pet" and not petSupported then state.unit="player" end
  local unit=state.unit; local mirrored=unit=="target"
  if not screen then
- panel.title:SetText(K.L("upTitle")); panel.note:SetText(K.L("upNote")); panel.examples.text:SetText(K.L("upExamples")); panel.examples:SetChecked(state.examples)
+ panel.title:SetText(K.L("upTitle")); panel.note:SetText(K.L("upNote"));panel.note:SetTextColor(.63,.69,.61,1); panel.examples.text:SetText(K.L("upExamples")); panel.examples:SetChecked(state.examples)
  local function SelectStyle(b,selected)
+  b.label:SetTextColor(selected and .88 or .90,selected and .77 or .92,selected and .44 or .86,1)
   b:SetBackdropColor(selected and .22 or .10,selected and .29 or .12,selected and .18 or .10,1)
   b:SetBackdropBorderColor(selected and .60 or .3,selected and .73 or .34,selected and .45 or .28,1)
  end
@@ -355,6 +394,7 @@ local function PaintModel(model,stage,state,changedKey,screen)
  PlaceIcon(model.combat,db.combatIconSize or 18,'CENTER',model.portrait,mirrored and 'TOPLEFT'or'TOPRIGHT',0,-3)
  model.combat:SetShown(state.examples and unit~="pet" and (unit~='player'or state.focus=='combatIconSize'))
  Editable(model.combat,nil,nil,'combatIconSize',10,44)
+ model.feedbackHit:SetShown(unit=='player'or unit=='pet');Editable(model.feedbackHit,nil,nil,'portraitCombatSize',12,40)
  model.feedback:SetFont(unitFont,db.portraitCombatSize or 24,'OUTLINE');model.feedback:SetText('-245')
  model.feedback:SetShown(state.examples and (unit=='player'or unit=='pet')and((unit=='player'and db.portraitCombatPlayer or unit=='pet'and db.portraitCombatPet)or state.focus=='portraitCombatSize'))
  model.raid:SetShown(state.examples); model.pvp:SetShown(state.examples and unit~="pet"); model.leader:SetShown(state.examples and unit~="pet")
@@ -399,6 +439,8 @@ local function PaintModel(model,stage,state,changedKey,screen)
    minX=math.min(minX,x);maxX=math.max(maxX,x+size);minY=math.min(minY,-H+y-size-18);maxY=math.max(maxY,-H+y)
   end
  end
+ local viewMinX,viewMaxX,viewMinY,viewMaxY=0,W,-H,0
+ local auraMinX,auraMaxX,auraMinY,auraMaxY
  local size,gap=db[unit.."AuraSize"],db[unit.."AuraGap"]
  local count=math.min(4,db[unit.."AuraColumns"],db[unit.."AuraMax"])
  local kind=state.kind=="Buffs" and "Buff" or "Debuff"
@@ -423,6 +465,10 @@ local function PaintModel(model,stage,state,changedKey,screen)
    local bottom=below and (-H+y-size) or y
    minX=math.min(minX,x); maxX=math.max(maxX,x+size)
    minY=math.min(minY,bottom-18); maxY=math.max(maxY,bottom+size+18)
+   viewMinX=math.min(viewMinX,x-4);viewMaxX=math.max(viewMaxX,x+size+4)
+   viewMinY=math.min(viewMinY,bottom-18);viewMaxY=math.max(viewMaxY,bottom+size+18)
+   auraMinX=math.min(auraMinX or x,x-4);auraMaxX=math.max(auraMaxX or x,x+size+4)
+   auraMinY=math.min(auraMinY or bottom,bottom-18);auraMaxY=math.max(auraMaxY or bottom,bottom+size+18)
   end
  end
  model.auraLabel:SetShown(shown)
@@ -444,17 +490,70 @@ local function PaintModel(model,stage,state,changedKey,screen)
  end
  if screen then return end
  local unitScale=db.scale*(unit=="pet" and db.petScale or 1)
- local fit=math.min(1,(stage:GetWidth()-20)/((maxX-minX)*unitScale),(stage:GetHeight()-10)/((maxY-minY)*unitScale))
- local scale=unitScale*fit; if drag then scale=drag.modelScale end
+ -- Fit the body plus the selected aura row; never write preview coordinates to settings.
+ local fit=math.min(1,(stage:GetWidth()-20)/((viewMaxX-viewMinX+24)*unitScale),(stage:GetHeight()-10)/((viewMaxY-viewMinY+24)*unitScale))
+ local scale=unitScale*fit
+ if drag then scale=drag.modelScale end
  model:SetScale(scale)
- if not drag then
-  model:ClearAllPoints()
-  model:SetPoint("TOPLEFT",stage,"CENTER",-(minX+maxX)/2,-(minY+maxY)/2)
+ local cx,cy=(viewMinX+viewMaxX)/2,(viewMinY+viewMaxY)/2
+ if drag then
+  -- Keep zoom steady during drag. Pan only enough to retain the selected row.
+  cx,cy=model.previewCenterX or W/2,model.previewCenterY or -H/2
+  if auraMinX then
+   local hw=(stage:GetWidth()-20)/(2*scale);local hh=(stage:GetHeight()-10)/(2*scale)
+   cx=math.max(auraMaxX-hw,math.min(auraMinX+hw,cx))
+   cy=math.max(auraMaxY-hh,math.min(auraMinY+hh,cy))
+  end
  end
+ model.previewCenterX,model.previewCenterY=cx,cy
+ model:ClearAllPoints();model:SetPoint('TOPLEFT',stage,'CENTER',-cx,-cy)
+
 end
 
+function K.FocusUnitPreview(key)
+ if not panel or not panel:IsShown()then return end
+ state.focus=key;K.UpdateUnitPreview(key)
+ local owner,last
+ if state.unit=='targettarget'then owner=key=='totNameScale'and compact.name or compact
+ elseif key:find('Buff',1,true)or key:find('Debuff',1,true)or key:find('Aura',1,true)or key=='auraStacks'or key=='auraCooldown'then
+  for _,b in ipairs(model.auras)do if b:IsShown()then owner=owner or b;last=b end end
+ elseif key=='healthTextScale'then owner=model.health
+ elseif key=='powerTextScale'or key=='classicEnergyTickMode'or key=='classicManaTickMode'then owner=model.power
+ elseif key:match('^portraitCombat')then owner=model.portrait
+ elseif key:match('^questie')then owner=model.questie
+ elseif key:match('^cast')or key=='targetCastEnabled'then owner=model.cast
+ elseif key:match('^raidMarker')then owner=model.raid
+ elseif key:match('^pvp')then owner=model.pvp
+ elseif key=='leaderSize'then owner=model.leader
+ elseif key=='restIconSize'then owner=model.rest
+ elseif key=='combatIconSize'then owner=model.combat
+ elseif key:match('^happiness')or key=='showPetHappiness'then owner=model.happiness
+ elseif key=='levelTextScale'or key=='levelOffsetY'then owner=model.level
+ elseif key:find('Name',1,true)or key=='textScale'or key=='nameOffsetY'then owner=model.name
+ else owner=model end
+ if not owner or not owner:IsShown()then return end
+ if not focusRing then focusRing=CreateFrame('Frame',nil,stage,'BackdropTemplate');focusRing:EnableMouse(false);focusRing:SetFrameLevel(model.decoration:GetFrameLevel()+10);focusRing:SetBackdrop({edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=1.5});focusRing:SetBackdropBorderColor(1,.86,.36,1)end
+ focusRing:ClearAllPoints();focusRing:SetPoint('TOPLEFT',owner,'TOPLEFT',-3,3);focusRing:SetPoint('BOTTOMRIGHT',last or owner,'BOTTOMRIGHT',3,-3);focusRing:Show()
+ focusSerial=focusSerial+1;local serial=focusSerial
+ if focusTimer then focusTimer:Cancel();focusTimer=nil end
+ local function HideFocus()if serial==focusSerial then focusRing:Hide()end end
+ if C_Timer.NewTimer then focusTimer=C_Timer.NewTimer(2,HideFocus)else C_Timer.After(2,HideFocus)end
+end
 function K.UpdateUnitPreview(changedKey)
- if panel and panel:IsShown()then PaintModel(model,stage,state,changedKey)end
+ if panel and panel:IsShown()then
+  local diag=_G.KerimAnkaDiagnostics;local started=diag and diag.captureScopes and debugprofilestop and debugprofilestop()
+  if changedKey and(changedKey:match('^tot')or changedKey:match('^targettarget')or changedKey=='showToT')then state.unit='targettarget' end
+  if state.unit=='targettarget'and(not changedKey or changedKey:match('^tot')or changedKey=='showToT'or changedKey:match('^targettarget')or changedKey=='healthTextScale'or changedKey=='scale'or changedKey=='textScale')then PaintCompact()
+  else
+   if state.unit=='targettarget'then state.unit='target'end
+   compact:Hide();model:Show();for _,b in ipairs(panel.kinds)do b:Enable()end
+   PaintModel(model,stage,state,changedKey)
+  end
+  if started then diag.RecordScope('UnitPreview.Paint',debugprofilestop()-started)end
+ end
+end
+function K.SetUnitPreviewContext(selected)
+ state.unit=selected;K.UpdateUnitPreview()
 end
 K.UnitLayoutPreview={Create=CreatePreviewModel}
 function K.UnitLayoutPreview.Paint(model,unit,source,focus)

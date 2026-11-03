@@ -125,7 +125,7 @@ function M.Capture(kind)
  if UnitClass then local _,class=UnitClass('player');record.class=class end
  if UnitRace then local _,race=UnitRace('player');record.race=race end
  if UnitSex then record.sex=UnitSex('player') end
- record.lastSeen=Timestamp();record[kind]=snapshot
+ record.lastSeen=Timestamp();record[kind]=snapshot;M.InvalidateItemCounts(key)
  if panel and panel:IsShown() then M.Refresh() end
  return true
 end
@@ -142,7 +142,7 @@ end
 function M.Remove(key)
  if not Record(key) then return false end
  local db=Store(true);if not db then return false end
- db.characters[key]=nil;db.removed[key]=true;db.favorites[key]=nil
+ db.characters[key]=nil;db.removed[key]=true;db.favorites[key]=nil;M.InvalidateItemCounts(key)
  if selected==key then selected=nil;offset=0 end
  if panel and panel:IsShown() then M.Refresh() end
  return true
@@ -173,7 +173,7 @@ local function Text(parent,size)
  return parent:CreateFontString(nil,'OVERLAY',size or 'GameFontHighlightSmall')
 end
 local function Button(parent,name,text,x,y,width,fn)
- local b=CreateFrame('Button',name,parent,'UIPanelButtonTemplate');b:SetPoint('TOPLEFT',x,y);b:SetSize(width,24);K.InventoryLabel(b,text);b:SetScript('OnClick',fn);return b
+ local b=K.ClassicBagDesigns.NewButton(name,parent,'records');b:SetPoint('TOPLEFT',x,y);b:SetSize(width,24);K.InventoryLabel(b,text);b:SetScript('OnClick',fn);return b
 end
 local function ItemTooltip(self)
  local entry=self.entry;if not entry then return end
@@ -186,6 +186,7 @@ local function ItemTooltip(self)
  else GameTooltip:SetText(T('Empty recorded slot')) end
  GameTooltip:AddLine(' ');GameTooltip:AddLine(T('Saved view only - items cannot be moved or used.'),.9,.9,.86,true)
  GameTooltip:AddLine(string.format(T('Bag %d / slot %d'),entry.bag,entry.slot),.65,.7,.62)
+ if item then M.AppendItemCounts(GameTooltip,item.itemID)end
  K.InventoryTooltip(GameTooltip);GameTooltip:Show()
 end
 -- Draw the small star with native UI lines: no font glyph or client atlas dependency.
@@ -211,6 +212,7 @@ local function Star(parent)
 end
 local function RefreshMenu()
  if not menu or not menu:IsShown() then return end
+ K.ClassicInventoryStyle.PaintBackgroundPanel(menu,true)
  local list=M.Characters();menuOffset=math.max(0,math.min(menuOffset or 0,math.max(0,#list-characterRows)))
  for i,b in ipairs(menu.buttons) do
   local entry=list[menuOffset+i];b:SetShown(entry~=nil);b.recordKey=entry and entry.key;b.record=entry and entry.record
@@ -250,30 +252,69 @@ local function ToggleMenu()
  -- Always start at the top so favorites are immediately visible.
  menu:Show();RefreshMenu()
 end
+local function RecordConfig()
+ if not K.db then return {}end
+ K.db.classicBags=K.db.classicBags or{};return K.db.classicBags
+end
+local function Bound(value,minimum,maximum,fallback)
+ value=tonumber(value);if not value or value~=value or value==math.huge or value==-math.huge then return fallback end
+ return math.max(minimum,math.min(maximum,math.floor(value+.5)))
+end
+function M.SetSize(newColumns,newRows)
+ if not K.db or(InCombatLockdown and InCombatLockdown())then return false end
+ local d=RecordConfig();d.recordColumns=Bound(newColumns,8,14,10);d.recordRows=Bound(newRows,3,10,6)
+ offset=0;M.Refresh();return true
+end
+function M.StopResize()
+ if panel and panel.kaGrip then panel.kaGrip:SetScript('OnUpdate',nil);panel.kaSizing=nil end
+end
+function M.StartResize()
+ if not panel or not GetCursorPosition or(InCombatLockdown and InCombatLockdown())then return false end
+ local x,y=GetCursorPosition();local scale=panel:GetEffectiveScale();if not x or not y or not scale or scale<=0 then return false end
+ local originX,originY=x/scale,y/scale;local originW,originH=panel:GetWidth(),panel:GetHeight()
+ panel.kaSizing=true
+ panel.kaGrip:SetScript('OnUpdate',function()
+  if(InCombatLockdown and InCombatLockdown())or(IsMouseButtonDown and not IsMouseButtonDown('LeftButton'))then M.StopResize();return end
+  local px,py=GetCursorPosition();if not px or not py then M.StopResize();return end
+  local cols=Bound((originW+px/scale-originX-24)/cell,8,14,10)
+  local count=Bound((originH+originY-py/scale-192)/cell,3,10,6)
+  local d=RecordConfig();if d.recordColumns~=cols or d.recordRows~=count then M.SetSize(cols,count)end
+ end)
+ return true
+end
+local function CreateRow(i)
+ local b=CreateFrame('Button',nil,panel,'BackdropTemplate');b:SetSize(34,34);b.kaRecordSnapshotButton=true
+ b.icon=b:CreateTexture(nil,'ARTWORK');b.icon:SetAllPoints(b)
+ b.count=Text(b,'NumberFontNormalSmall');b.count:SetPoint('BOTTOMRIGHT',-1,1)
+ b:SetScript('OnEnter',ItemTooltip);b:SetScript('OnLeave',function()GameTooltip:Hide()end)
+ rows[i]=b;return b
+end
 local function Ensure()
  if panel then return end
- panel=CreateFrame('Frame','KerimAnkaUIClassicItemRecords',UIParent,'BackdropTemplate');panel:Hide();panel:SetSize(430,410)
+ panel=CreateFrame('Frame','KerimAnkaUIClassicItemRecords',UIParent,'BackdropTemplate');panel:Hide();panel:SetSize(430,430);panel.kaClassicInventory=true;panel.kaRecordWindow=true
  panel:SetFrameStrata('DIALOG');panel:SetClampedToScreen(true);panel:EnableMouse(true);panel:EnableMouseWheel(true);panel:SetMovable(true);panel:RegisterForDrag('LeftButton');Backdrop(panel)
  panel:SetScript('OnDragStart',function(self) self:StartMoving() end);panel:SetScript('OnDragStop',function(self) self:StopMovingOrSizing() end)
- panel:SetScript('OnHide',function() if menu then menu:Hide() end;GameTooltip:Hide() end)
- local heading=Text(panel,'GameFontNormal');heading:SetPoint('TOPLEFT',12,-13);K.InventoryLabel(heading,'KerimAnka UI - Recorded items')
- local close=CreateFrame('Button',nil,panel,'UIPanelCloseButton');close:SetPoint('TOPRIGHT',1,1);close:SetScript('OnClick',function() panel:Hide() end)
- selector=Button(panel,'KerimAnkaUIClassicRecordCharacter','Select character',12,-38,300,ToggleMenu)
- inventoryTab=Button(panel,'KerimAnkaUIClassicRecordInventory','Inventory',12,-70,110,function() mode='bags';offset=0;M.Refresh() end)
- bankTab=Button(panel,'KerimAnkaUIClassicRecordBank','Bank',128,-70,110,function() mode='bank';offset=0;M.Refresh() end)
- local readOnly=Text(panel);readOnly:SetPoint('TOPRIGHT',-12,-77);K.InventoryLabel(readOnly,'Read-only')
- status=Text(panel);status:SetPoint('TOPLEFT',12,-103);status:SetWidth(406);status:SetJustifyH('LEFT')
+ panel:SetScript('OnHide',function()M.StopResize();if menu then menu:Hide()end;GameTooltip:Hide()end)
+ local heading=Text(panel,'GameFontNormal');heading:SetPoint('TOPLEFT',12,-13);panel.kaHeading=heading
+ local subtitle=Text(panel);subtitle:SetPoint('TOPLEFT',12,-35);panel.kaSubtitle=subtitle
+ local close=K.ClassicBagDesigns.NewButton(nil,panel,'close');close:SetSize(22,22);close:SetPoint('TOPRIGHT',-6,-6);close:SetScript('OnClick',function() panel:Hide() end);panel.kaClose=close
+ selector=Button(panel,'KerimAnkaUIClassicRecordCharacter','Select character',12,-54,300,ToggleMenu)
+ local label=selector:GetFontString();label:ClearAllPoints();label:SetPoint('LEFT',8,0);label:SetWidth(266);label:SetJustifyH('LEFT')
+ selector.kaArrow={}
+ for i=1,2 do local line=selector:CreateTexture(nil,'OVERLAY');line:SetSize(7,1.5);line:SetPoint('RIGHT',i==1 and -13 or -8,0);line:SetColorTexture(.86,.82,.67,1);line:SetRotation(i==1 and -math.pi/4 or math.pi/4);selector.kaArrow[i]=line end
+ inventoryTab=Button(panel,'KerimAnkaUIClassicRecordInventory','Inventory',12,-86,110,function() mode='bags';offset=0;M.Refresh() end)
+ bankTab=Button(panel,'KerimAnkaUIClassicRecordBank','Bank',128,-86,110,function() mode='bank';offset=0;M.Refresh() end)
+ local readOnly=Text(panel);readOnly:SetPoint('TOPRIGHT',-12,-93);K.InventoryLabel(readOnly,'Read-only')
+ status=Text(panel);status:SetPoint('TOPLEFT',12,-119);status:SetWidth(406);status:SetJustifyH('LEFT')
  rows={}
- for i=1,columns*visibleRows do
-  -- Display-only buttons intentionally do NOT inherit any inventory template.
-  local b=CreateFrame('Button',nil,panel,'BackdropTemplate');b:SetSize(34,34)
-  b:SetPoint('TOPLEFT',12+((i-1)%columns)*cell,-132-math.floor((i-1)/columns)*cell)
-  b:SetBackdrop({bgFile='Interface\\Buttons\\WHITE8X8',edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=1});b:SetBackdropColor(.06,.065,.055,.8)
-  b.icon=b:CreateTexture(nil,'ARTWORK');b.icon:SetPoint('TOPLEFT',2,-2);b.icon:SetPoint('BOTTOMRIGHT',-2,2)
-  b.count=Text(b,'NumberFontNormalSmall');b.count:SetPoint('BOTTOMRIGHT',-1,1)
-  b:SetScript('OnEnter',ItemTooltip);b:SetScript('OnLeave',function() GameTooltip:Hide() end)
-  rows[i]=b
- end
+ local smaller=K.ClassicBagDesigns.NewButton(nil,panel,'minus');smaller:SetSize(22,22);smaller:SetPoint('TOPRIGHT',-62,-6);panel.kaSmaller=smaller
+ smaller:SetScript('OnClick',function()M.SetSize(columns-1,visibleRows)end)
+ local larger=K.ClassicBagDesigns.NewButton(nil,panel,'plus');larger:SetSize(22,22);larger:SetPoint('TOPRIGHT',-34,-6);panel.kaLarger=larger
+ larger:SetScript('OnClick',function()M.SetSize(columns+1,visibleRows)end)
+ local grip=CreateFrame('Button',nil,panel);grip:SetSize(18,18);grip:SetPoint('BOTTOMRIGHT',-5,5);grip:EnableMouse(true);panel.kaGrip=grip
+ for i=1,3 do local line=grip:CreateTexture(nil,'OVERLAY');line:SetColorTexture(.73,.67,.48,1);line:SetSize(4+i*3,1.5);line:SetPoint('BOTTOMRIGHT',-i*3,i*3);line:SetRotation(math.pi/4)end
+ grip:SetScript('OnMouseDown',function(_,button)if button=='LeftButton'then M.StartResize()end end)
+ grip:SetScript('OnMouseUp',M.StopResize)
  summary=Text(panel);summary:SetPoint('BOTTOMLEFT',12,12);summary:SetWidth(406);summary:SetJustifyH('LEFT')
  panel:SetScript('OnMouseWheel',function(_,delta) offset=offset-delta;M.Refresh() end)
  UISpecialFrames=UISpecialFrames or {};table.insert(UISpecialFrames,'KerimAnkaUIClassicItemRecords')
@@ -287,21 +328,26 @@ function M.Refresh()
  end
  local record=selected and Record(selected)
  local snapshot=record and record[mode]
- selector:SetText(record and (CharacterLabel(record)..'  v') or T('No recorded characters'))
+ selector:SetText(record and CharacterLabel(record)or T('No recorded characters'))
+ panel.kaHeading:SetText(K.ClassicInventoryStyle.PriorityText(15));K.InventoryFont(panel.kaHeading,14);panel.kaHeading:SetTextColor(.95,.88,.65)
+ panel.kaSubtitle:SetText(K.ClassicInventoryStyle.PriorityText(16));K.InventoryFont(panel.kaSubtitle,11);panel.kaSubtitle:SetTextColor(.65,.70,.62)
+ local design=K.ClassicBagDesigns.ID()
+ for _,button in ipairs({selector,inventoryTab,bankTab,panel.kaClose,panel.kaSmaller,panel.kaLarger})do K.ClassicBagDesigns.PaintButton(button,design)end
  inventoryTab:SetAlpha(mode=='bags' and 1 or .55);bankTab:SetAlpha(mode=='bank' and 1 or .55)
- cell=34+K.ClassicInventoryStyle.ItemGap();panel:SetWidth(math.max(430,columns*cell+24))
- status:SetWidth(panel:GetWidth()-24);summary:SetWidth(panel:GetWidth()-24)
+ local d=RecordConfig();columns=Bound(d.recordColumns,8,14,10);visibleRows=Bound(d.recordRows,3,10,6)
+ cell=34+K.ClassicInventoryStyle.ItemGap();panel:SetWidth(math.max(360,columns*cell+24))
+ panel.kaHeading:SetWidth(panel:GetWidth()-110)
+ for i=#rows+1,columns*visibleRows do CreateRow(i)end
+ status:SetWidth(panel:GetWidth()-24);summary:SetWidth(panel:GetWidth()-44)
  local slots=Flat(snapshot);local rowCount=math.max(1,math.ceil(#slots/columns))
  offset=math.max(0,math.min(offset,math.max(0,rowCount-visibleRows)))
  for i,b in ipairs(rows) do
-  local entry=slots[offset*columns+i];b.entry=entry;b:SetShown(entry~=nil)
-  b:ClearAllPoints();b:SetPoint('TOPLEFT',12+((i-1)%columns)*cell,-132-math.floor((i-1)/columns)*cell)
+  local entry=i<=columns*visibleRows and slots[offset*columns+i]or nil;b.entry=entry;b:SetShown(entry~=nil)
+  b:ClearAllPoints();b:SetPoint('TOPLEFT',12+((i-1)%columns)*cell,-150-math.floor((i-1)/columns)*cell)
   if entry then
    local item=entry.item;K.ClassicInventoryStyle.EmptySlot(b,item~=nil);b.icon:SetTexture(item and item.icon or nil);b.icon:SetShown(item~=nil)
    b.count:SetText(item and item.count>1 and tostring(item.count) or '')
-   local c=ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[item and item.quality or 1] or {r=.4,g=.4,b=.4}
-   local coloured=item and type(item.quality)=='number' and item.quality>=2
-   b:SetBackdropBorderColor(coloured and c.r or .25,coloured and c.g or .25,coloured and c.b or .25,1)
+   K.ClassicInventoryStyle.PaintItemBorder(b,item and item.quality,item~=nil,false)
   end
  end
  if snapshot then
@@ -311,7 +357,7 @@ function M.Refresh()
   status:SetText(mode=='bank' and T('Bank not recorded. Visit the bank on this character.') or T('Inventory not recorded yet. Log in on this character.'))
   K.InventoryLabel(summary,'No snapshot - this does not mean the container is empty.')
  end
- panel:SetHeight(174+cell*math.min(visibleRows,rowCount));RefreshMenu()
+ panel:SetHeight(192+cell*math.min(visibleRows,rowCount));RefreshMenu()
 end
 function M.Open(kind)
  Ensure();if kind=='bags' or kind=='bank' then mode=kind end
@@ -359,3 +405,101 @@ SlashCmdList.KERIMANKAUICLASSICRECORDS=function(text)
  text=(text or ''):lower():match('^%s*(.-)%s*$')
  if text=='bank' then M.Open('bank') elseif text=='bags' then M.Open('bags') else M.Toggle() end
 end
+
+
+-- Recorded inventories only. No live scans, item actions or foreign account access.
+local ownerSummaries,ownerQueries,ownerStore={},{},nil
+local ownerPlayer
+function M.InvalidateItemCounts(key)
+ if key then ownerSummaries[key]=nil else ownerSummaries={}end
+ ownerQueries={}
+end
+local function Summary(snapshot)
+ local result={}
+ for _,container in ipairs(snapshot and snapshot.containers or{})do
+  for _,item in pairs(container.items or{})do
+   local id,count=tonumber(item.itemID)or(item.link and tonumber(item.link:match('item:(%d+)'))),tonumber(item.count)
+   if id and id>0 and count and count>0 and count<1000000 then result[id]=(result[id]or 0)+math.floor(count)end
+  end
+ end
+ return result
+end
+function M.ItemOwners(itemID)
+ itemID=tonumber(itemID);if not itemID or itemID<=0 then return {},0 end
+ local db=Store(false)
+ if ownerStore~=db then ownerStore=db;M.InvalidateItemCounts()end
+ local playerKey,playerName,playerRealm=Identity()
+ local signature=tostring(playerKey)..':'..tostring(playerName)..':'..tostring(playerRealm)
+ if ownerPlayer~=signature then ownerPlayer=signature;ownerQueries={}end
+ if ownerQueries[itemID]then return ownerQueries[itemID].rows,ownerQueries[itemID].total end
+ local rows,total={},0
+ for _,entry in ipairs(M.Characters())do
+  local record=entry.record;local cached=ownerSummaries[entry.key]
+  if not cached or cached.bags~=record.bags or cached.bank~=record.bank then
+   cached={bags=record.bags,bank=record.bank,bagCounts=Summary(record.bags),bankCounts=Summary(record.bank)};ownerSummaries[entry.key]=cached
+  end
+  local bags,bank=cached.bagCounts[itemID]or 0,cached.bankCounts[itemID]or 0
+  local isPlayer=entry.key==playerKey or(playerName and record.name==playerName and record.realm==playerRealm)
+  if not isPlayer and bags+bank>0 then
+   total=total+bags+bank;rows[#rows+1]={key=entry.key,record=record,bags=bags,bank=bank,hasBags=record.bags~=nil,hasBank=record.bank~=nil}
+  end
+ end
+ ownerQueries[itemID]={rows=rows,total=total};return rows,total
+end
+local ownerText={
+ en={'Other characters','Total','Bags','Bank','Recorded snapshots. ? = not recorded.','Other characters'},
+ tr={'Diğer karakterlerde','Toplam','Çanta','Banka','Son kayıtlara göre. ? = kayıt yok.','Diğer karakterler'},
+ de={'Andere Charaktere','Gesamt','Taschen','Bank','Gespeicherte Daten. ? = nicht erfasst.','Weitere Charaktere'},
+ frFR={'Autres personnages','Total','Sacs','Banque','Données enregistrées. ? = non enregistré.','Autres personnages'},
+ itIT={'Altri personaggi','Totale','Borse','Banca','Dati salvati. ? = non registrato.','Altri personaggi'},
+ esES={'Otros personajes','Total','Bolsas','Banco','Datos guardados. ? = sin registrar.','Otros personajes'},
+ ptBR={'Outros personagens','Total','Bolsas','Banco','Dados salvos. ? = não registrado.','Outros personagens'},
+ ruRU={'Другие персонажи','Всего','Сумки','Банк','Последние записи. ? = нет данных.','Другие персонажи'},
+ zhCN={'其他角色','总计','背包','银行','根据最近记录。? = 尚未记录。','其他角色'},
+}
+local function OwnerText()
+ local lang=KAClassic_KerimAnkaUIDB and KAClassic_KerimAnkaUIDB.language or'en';return ownerText[lang]or ownerText.en
+end
+local function OwnerLabel(record)
+ local label=CharacterLabel(record)
+ if GetRealmName and record.realm==GetRealmName()then label=label:match('^(.-) |cff999999')or label end
+ return label
+end
+function M.AppendItemCounts(tip,itemID)
+ itemID=tonumber(itemID)
+ if not tip or not itemID or tip.kaRecordedCountItem==itemID or not tip.AddDoubleLine then return false end
+ local rows,total=M.ItemOwners(itemID);if #rows==0 then return false end
+ tip.kaRecordedCountItem=itemID
+ local text=OwnerText();tip:AddLine(' ')
+ tip:AddDoubleLine(text[1],text[2]..': '..total,.83,.77,.58,.60,.76,.87)
+ for i=1,math.min(6,#rows)do
+  local row=rows[i]
+  local right=text[3]..': '..(row.hasBags and tostring(row.bags)or'?')..'  '..text[4]..': '..(row.hasBank and tostring(row.bank)or'?')
+  tip:AddDoubleLine(OwnerLabel(row.record),right,.87,.87,.82,.72,.79,.83)
+ end
+ if #rows>6 then
+  local remaining=0;for i=7,#rows do remaining=remaining+rows[i].bags+rows[i].bank end
+  tip:AddDoubleLine(text[6]..' ('..(#rows-6)..')',tostring(remaining),.60,.62,.59,.72,.79,.83)
+ end
+ tip:AddLine(text[5],.55,.59,.57,true);K.InventoryTooltip(tip);tip:Show();return true
+end
+function M.InstallItemTooltip()
+ local tip=GameTooltip;if not tip or not tip.HookScript or tip.kaRecordedCountHook then return false end
+ tip.kaRecordedCountHook=true
+ if tip.HasScript and tip:HasScript('OnTooltipCleared')then
+  tip:HookScript('OnTooltipCleared',function(self)self.kaRecordedCountItem=nil end)
+ end
+ tip:HookScript('OnHide',function(self)self.kaRecordedCountItem=nil end)
+ local function Append(self,data)
+  if self~=tip then return end
+  local owner=self.GetOwner and self:GetOwner();if owner and owner.kaRecordSnapshotButton then return end
+  local id=data and data.id
+  if not id and self.GetItem then local _,link=self:GetItem();id=link and tonumber(link:match('item:(%d+)'))end
+  M.AppendItemCounts(self,id)
+ end
+ if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum and Enum.TooltipDataType and Enum.TooltipDataType.Item then
+  TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item,Append)
+ elseif tip.HasScript and tip:HasScript('OnTooltipSetItem')then tip:HookScript('OnTooltipSetItem',Append)end
+ return true
+end
+M.InstallItemTooltip()

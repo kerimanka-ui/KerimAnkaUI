@@ -92,6 +92,16 @@ local function MaskNativeBag(f)
  f:SetAlpha(0)
  if QueueNativeHandoff then QueueNativeHandoff() end
 end
+local function WithBagLock(action)
+ local previous=busy;busy=true
+ local ok,err=pcall(action)
+ busy=previous
+ if not ok then
+  -- A failed handoff must not leave invisible native inventory windows.
+  M.RestoreNativeBagAlpha()
+  error(err,0)
+ end
+end
 function M.InstallNativeBagHooks()
  for i=1,(NUM_CONTAINER_FRAMES or 13) do
   local f=_G['ContainerFrame'..i]
@@ -129,22 +139,7 @@ local function Position()
  if d and type(d.x)=='number' and type(d.y)=='number' then frame:SetPoint('CENTER',UIParent,'CENTER',d.x,d.y)
  else frame:SetPoint('BOTTOMRIGHT',UIParent,'BOTTOMRIGHT',-35,100) end
 end
-local function Border(button,quality,hasItem,quest)
- if not button.kaEdges then
-  button.kaEdges={}
-  for i=1,4 do
-   local t=button:CreateTexture(nil,'OVERLAY');t:SetColorTexture(1,1,1,1)
-   if i==1 then t:SetPoint('TOPLEFT');t:SetPoint('TOPRIGHT');t:SetHeight(2)
-   elseif i==2 then t:SetPoint('BOTTOMLEFT');t:SetPoint('BOTTOMRIGHT');t:SetHeight(2)
-   elseif i==3 then t:SetPoint('TOPLEFT');t:SetPoint('BOTTOMLEFT');t:SetWidth(2)
-   else t:SetPoint('TOPRIGHT');t:SetPoint('BOTTOMRIGHT');t:SetWidth(2) end
-   button.kaEdges[i]=t
-  end
- end
- local questBorder=quest and Option('bagQuest',true)
- local color=questBorder and {r=1,g=.82,b=0}or ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality or 1]or {r=1,g=1,b=1}
- for _,t in ipairs(button.kaEdges) do t:SetVertexColor(color.r,color.g,color.b);t:SetShown(hasItem and (questBorder or type(quality)=='number'and quality>=2 and Option('bagQuality',true))) end
-end
+local function Border(button,quality,hasItem,quest)K.ClassicInventoryStyle.PaintItemBorder(button,quality,hasItem,quest)end
 local function QuietTemplate(button)
  -- The standalone template's extended-slot overlays are blue by default.
  -- They describe native layouts, not these bags. Keep only our own borders.
@@ -175,8 +170,15 @@ function M.HoverBag(id)
   if b.kaBagGlow then b.kaBagGlow:SetShown(id~=nil and bag==id)end
  end end
 end
+function M.GetSpendableMoney()
+ -- Match Blizzard's PLAYER money display, not the cash ledger's confirmed wallet.
+ local wallet=GetMoney and GetMoney()or 0
+ local cursor=GetCursorMoney and GetCursorMoney()or 0
+ local offered=GetPlayerTradeMoney and GetPlayerTradeMoney()or 0
+ return math.max(0,wallet-cursor-offered)
+end
 local function Money()
- local value=GetMoney and GetMoney() or 0
+ local value=M.GetSpendableMoney()
  if GetCoinTextureString then return GetCoinTextureString(value) end
  return string.format('%dg %ds %dc',math.floor(value/10000),math.floor(value/100)%100,value%100)
 end
@@ -359,14 +361,92 @@ local function PaintCooldown(button,bag,slot,hasItem)
   CooldownText(counter)
  end
 end
+-- ItemButtonTemplate has a 64px Quickslot2 normal texture around a 37px button,
+-- centred at y=-1. It is a second bevel, not the item icon itself. Suppress it
+-- on our occupied buttons; keep empty-slot styling and native item handlers.
+local function FitItemSurface(button,occupied)
+ local normal=button.GetNormalTexture and button:GetNormalTexture()
+ if normal then
+  if button.kaOriginalItemNormalAlpha==nil then button.kaOriginalItemNormalAlpha=normal:GetAlpha()end
+  normal:SetAlpha(occupied and 0 or button.kaOriginalItemNormalAlpha)
+ end
+ if not button.kaItemSurfaceFitted then
+  local icon=button.icon or button.Icon or(button:GetName()and _G[button:GetName()..'IconTexture'])
+  if icon then icon:ClearAllPoints();icon:SetAllPoints(button)end
+  for _,get in ipairs({'GetPushedTexture','GetHighlightTexture'})do
+   local t=button[get]and button[get](button)
+   if t then t:ClearAllPoints();t:SetAllPoints(button)end
+  end
+  button.kaItemSurfaceFitted=true
+ end
+end
 local EMPTY_ITEM={}
+-- Opt-in developer trace. Observe real hardware clicks; never wrap/call the
+-- native click handler, suppress a Blizzard warning, or retry protected actions.
+local actionTrace={enabled=false,rows={}}
+local function TraceRow(text)
+ local rows=actionTrace.rows;rows[#rows+1]=text;if #rows>24 then table.remove(rows,1)end
+end
+local function SecureState(owner,key)
+ if not issecurevariable then return'unknown'end
+ local ok,taint
+ if type(owner)=='string'then ok,taint=issecurevariable(owner)else ok,taint=issecurevariable(owner,key)end
+ return ok and'clean'or('tainted:'..tostring(taint))
+end
+local function ObserveItemAction(button)
+ if not actionTrace.enabled or button.kaActionTraceHook then return end
+ button.kaActionTraceHook=true
+ button:HookScript('OnMouseDown',function(self,mouse)
+  if not actionTrace.enabled then return end
+  local parent=self:GetParent();local bag=parent and parent:GetID();local slot=self:GetID()
+  local info=bag and slot and C_Container.GetContainerItemInfo(bag,slot)
+  local native=_G.ContainerFrame1Item1
+  local same=native and native:GetScript('OnClick')==self:GetScript('OnClick')
+  local context=string.format('%s combat=%s bag=%s slot=%s item=%s cursor=%s sameNativeScript=%s',tostring(mouse),tostring(not not Combat()),tostring(bag),tostring(slot),tostring(info and info.itemID),tostring(GetCursorInfo and GetCursorInfo()),tostring(same))
+  actionTrace.last={time=GetTime(),context=context};TraceRow('CLICK '..context)
+ end)
+end
+local actionEvents=CreateFrame('Frame')
+actionEvents:SetScript('OnEvent',function(_,event,addon,api)
+ if not actionTrace.enabled then return end
+ local last=actionTrace.last
+ if addon~='KerimAnkaUI'and not(last and GetTime()-last.time<1)then return end
+ local text=event..' addon='..tostring(addon)..' api='..tostring(api)
+ TraceRow(text);Message('ACTION '..text)
+ if last and GetTime()-last.time<1 then TraceRow('CONTEXT '..last.context);Message(last.context)end
+ local globals='nativeClick='..SecureState('ContainerFrameItemButton_OnClick')..' UseContainerItem='..SecureState(C_Container,'UseContainerItem')
+ TraceRow(globals);Message(globals)
+end)
+function M.ActionLog(command)
+ if command=='on'then
+  actionTrace.enabled=true;actionTrace.rows={};actionTrace.last=nil
+  actionEvents:RegisterEvent('ADDON_ACTION_BLOCKED');actionEvents:RegisterEvent('ADDON_ACTION_FORBIDDEN')
+  M.Refresh();Message('Action trace ON. Reproduce one click, then /kauibags actionlog.');return
+ elseif command=='off'then
+  actionTrace.enabled=false;actionEvents:UnregisterEvent('ADDON_ACTION_BLOCKED');actionEvents:UnregisterEvent('ADDON_ACTION_FORBIDDEN')
+  Message('Action trace OFF.');return
+ end
+ Message('Action trace: '..(actionTrace.enabled and'ON'or'OFF')..'; '..#actionTrace.rows..' rows')
+ for _,row in ipairs(actionTrace.rows)do Message(row)end
+end
+
 local function Paint(button,bag,slot,info,provided)
+ ObserveItemAction(button)
  if not provided then info=C_Container.GetContainerItemInfo(bag,slot)end
- button.kaHasItem=info~=nil
+ button.kaHasItem=info~=nil;button.kaRecordedItemID=info and info.itemID
+ if not button.kaRecordedItemHook then
+  button.kaRecordedItemHook=true
+  button:HookScript('OnEnter',function(self)
+   local tip=GameTooltip
+   if self.kaRecordedItemID and K.ClassicItemRecords and tip and(not tip.GetOwner or tip:GetOwner()==self)and(not tip.IsShown or tip:IsShown())then K.ClassicItemRecords.AppendItemCounts(tip,self.kaRecordedItemID)end
+  end)
+ end
  local v=info or EMPTY_ITEM
  local junkOption,qualityOption,questOption,emptyOption,design=Option('bagJunk',true),Option('bagQuality',true),Option('bagQuest',true),Option('bagEmptySlots',false),Option('bagDesign',1)
+ local effectiveScale=button.GetEffectiveScale and button:GetEffectiveScale()or button:GetScale()
+ FitItemSurface(button,info and info.iconFileID~=nil)
  local c=button.kaPaintSnapshot
- if c and c.epoch==paintEpoch and c.present==(info~=nil)and c.itemID==v.itemID and c.link==v.hyperlink and c.icon==v.iconFileID and c.count==v.stackCount and c.quality==v.quality and c.lock==v.isLocked and c.value==v.hasNoValue and c.junkOption==junkOption and c.qualityOption==qualityOption and c.questOption==questOption and c.emptyOption==emptyOption and c.design==design then
+ if c and c.epoch==paintEpoch and c.present==(info~=nil)and c.itemID==v.itemID and c.link==v.hyperlink and c.icon==v.iconFileID and c.count==v.stackCount and c.quality==v.quality and c.lock==v.isLocked and c.value==v.hasNoValue and c.junkOption==junkOption and c.qualityOption==qualityOption and c.questOption==questOption and c.emptyOption==emptyOption and c.design==design and c.effectiveScale==effectiveScale then
   Count('cached');if button.kaBagGlow then button.kaBagGlow:SetShown(hoverBag==bag)end;PaintCooldown(button,bag,slot,info~=nil);return
  end
  Count('paint');QuietTemplate(button)
@@ -394,6 +474,7 @@ local function Paint(button,bag,slot,info,provided)
  c=c or{};button.kaPaintSnapshot=c
  c.epoch,c.present,c.itemID,c.link,c.icon,c.count,c.quality,c.lock,c.value=paintEpoch,info~=nil,v.itemID,v.hyperlink,v.iconFileID,v.stackCount,v.quality,v.isLocked,v.hasNoValue
  c.junkOption,c.qualityOption,c.questOption,c.emptyOption,c.design=junkOption,qualityOption,questOption,emptyOption,design
+ c.effectiveScale=effectiveScale
 end
 -- Keep Blizzard split/purchase dialogs above our inventory windows, without
 -- changing their owners, values, scripts or the actual item operation.
@@ -496,60 +577,99 @@ local function PickupEquippedBag(bag)
  local inventory=InventoryID(bag)
  if inventory and PickupBagFromSlot then PickupBagFromSlot(inventory);M.Refresh() end
 end
--- Independent Classic sorter. All inventory moves use native container APIs;
--- Bag and live-bank scopes are separate; specialty bag families stay separate.
+-- Classic sorter: live inventory validation, bounded disjoint batches, no cursor clearing.
+-- Metadata is cached only for this sort session; quantities and locks always stay live.
 local sorting,sortGeneration=false,0
-local sortContext
-local sortMoves,sortWaits=0,0
-local lastSortMove,sortStalls
+local sortContext,sortCache,sortInFlight,sortStats
+local sortRanks,sortHearthFirst
+local sortTicket,sortDue,sortNextAt=0,nil,0
+local SortTick
+local function SortMark(text)
+ local d=_G.KerimAnkaDiagnostics
+ if type(d)=='table'and type(d.Mark)=='function'then pcall(d.Mark,text)end
+end
 local function SortLabel()
- if sortButton then sortButton:SetText(sorting and not sortContext and T('Stop') or T('Sort'));sortButton:SetAlpha(Combat() and .45 or 1) end
- if sortContext and sortContext.Label then sortContext.Label(sorting) end
+ if sortButton then sortButton:SetText(sorting and not sortContext and T('Stop')or T('Sort'));sortButton:SetAlpha(Combat()and .45 or 1)end
+ if sortContext and sortContext.Label then sortContext.Label(sorting)end
 end
 function M.StopSort(reason)
- sorting=false;sortGeneration=sortGeneration+1;SortLabel();sortContext=nil
- if reason then Message(reason) end
+ local wasSorting=sorting
+ sorting=false;sortGeneration=sortGeneration+1;sortTicket=sortTicket+1;sortDue=nil
+ if wasSorting and sortStats then
+  sortStats.seconds=GetTime()-sortStats.started
+  SortMark(string.format('Sort STOP %.2fs moves=%d',sortStats.seconds,sortStats.moves))
+ end
+ SortLabel();sortContext=nil;sortCache=nil;sortInFlight=nil
+ if reason then Message(reason)end
 end
-local function ItemData(info)
- local getter=C_Item and C_Item.GetItemInfo or GetItemInfo
- local name,link,quality,level,_,_,_,maxStack,equip,_,_,class,subclass=getter(info.hyperlink or info.itemID)
- if not name or not maxStack or not class then return end
- return {key=info.hyperlink or link,name=name,quality=quality or info.quality or 1,level=level or 0,
-  maxStack=maxStack,equip=equip or '',class=class,subclass=subclass or 0,
-  itemID=info.itemID or 0,count=info.stackCount or 1}
+local function QueueSort(delay)
+ if not sorting then return end
+ local now=GetTime();local due=math.max(now+(delay or 0),sortNextAt)
+ if sortDue and sortDue<=due then return end
+ sortTicket=sortTicket+1;local ticket,token=sortTicket,sortGeneration;sortDue=due
+ C_Timer.After(math.max(0,due-now),function()
+  if ticket~=sortTicket or token~=sortGeneration or not sorting then return end
+  sortDue=nil;SortTick(token)
+ end)
+end
+function M.WakeSort()QueueSort(0)end
+local function ItemData(info,bag,slot)
+ local key=info.hyperlink
+ local data=key and sortCache[key]
+ if not data then
+  local getter=C_Item and C_Item.GetItemInfo or GetItemInfo
+  local name,link,quality,level,_,_,_,maxStack,equip,_,_,class,subclass=getter(key or info.itemID)
+  sortStats.metadata=sortStats.metadata+1
+  if not name or not maxStack or not class then return end
+  data={key=key or link,name=name,quality=quality or info.quality or 1,level=level or 0,maxStack=maxStack,equip=equip or '',class=class,subclass=subclass or 0,itemID=info.itemID or 0}
+  data.group=K.ClassicInventoryStyle.ItemCategory(bag,slot,info)
+  if key then sortCache[key]=data end
+ end
+ return {key=data.key,name=data.name,quality=data.quality,level=data.level,maxStack=data.maxStack,equip=data.equip,class=data.class,subclass=data.subclass,itemID=data.itemID,count=info.stackCount or 1,priority=(sortHearthFirst and data.itemID==6948)and 0 or(sortRanks[data.group]or 50)}
 end
 local function ReadSortSlots()
  local groups,order={},{}
- local ids=sortContext and sortContext.ids or {0,1,2,3,4}
- for _,bag in ipairs(ids) do
+ local reserved={}
+ if sortInFlight then
+  for _,move in ipairs(sortInFlight.moves)do
+   reserved[move.from.bag..':'..move.from.slot]=true
+   reserved[move.to.bag..':'..move.to.slot]=true
+  end
+ end
+ local ids=sortContext and sortContext.ids or{0,1,2,3,4}
+ for _,bag in ipairs(ids)do
   local count=Slots(bag)
   if count>0 then
    local family=0
    if bag~=0 and bag~=-1 then
-    if not C_Container.GetContainerNumFreeSlots then return nil,'Bag-family information is unavailable.' end
+    if not C_Container.GetContainerNumFreeSlots then return nil,'Bag-family information is unavailable.'end
     family=select(2,C_Container.GetContainerNumFreeSlots(bag))
-    if type(family)~='number' then return nil,'Bag-family information is loading. Try again.' end
+    if type(family)~='number'then return nil,'Bag-family information is loading. Try again.'end
    end
-   if not groups[family] then groups[family]={};order[#order+1]=family end
+   if not groups[family]then groups[family]={};order[#order+1]=family end
+   local group=groups[family]
    for slot=1,count do
-    local info=C_Container.GetContainerItemInfo(bag,slot)
-    if info and info.isLocked then return nil,'locked' end
-    local data=info and ItemData(info)
+    local info=C_Container.GetContainerItemInfo(bag,slot);sortStats.reads=sortStats.reads+1
+    local data=info and ItemData(info,bag,slot)
     if info and not data then
-     if C_Item and C_Item.RequestLoadItemDataByID and info.itemID then C_Item.RequestLoadItemDataByID(info.itemID) end
+     if C_Item and C_Item.RequestLoadItemDataByID and info.itemID then C_Item.RequestLoadItemDataByID(info.itemID)end
      return nil,T('Item information is loading. Press Sort again shortly.')
     end
-    local group=groups[family];group[#group+1]={bag=bag,slot=slot,item=data,index=#group+1}
+    group[#group+1]={bag=bag,slot=slot,item=data,index=#group+1,locked=(info and info.isLocked)or reserved[bag..':'..slot],rawLink=info and info.hyperlink,rawID=info and info.itemID}
    end
   end
  end
  return groups,order
 end
 local function Before(a,b)
+ sortStats.comparisons=sortStats.comparisons+1
  if not a then return false end;if not b then return true end
+ if a.priority~=b.priority then return a.priority<b.priority end
  local aj,bj=a.quality==0,b.quality==0
  if aj~=bj then return not aj end
- for _,key in ipairs({'class','subclass','equip'}) do if a[key]~=b[key] then return a[key]<b[key] end end
+ if a.class~=b.class then return a.class<b.class end
+ if a.subclass~=b.subclass then return a.subclass<b.subclass end
+ if a.equip~=b.equip then return a.equip<b.equip end
  if a.quality~=b.quality then return a.quality>b.quality end
  if a.level~=b.level then return a.level>b.level end
  if a.name~=b.name then return a.name<b.name end
@@ -557,85 +677,172 @@ local function Before(a,b)
  if a.key~=b.key then return a.key<b.key end
  return a.count>b.count
 end
-local function MoveSlots(from,to)
- if CursorItem() then return false,T('Finish moving the item on your cursor first.') end
- C_Container.PickupContainerItem(from.bag,from.slot)
- if not CursorItem() then return false,'The item could not be picked up. Try again.' end
- C_Container.PickupContainerItem(to.bag,to.slot)
- -- A swap or partial stack leaves an item on the cursor. Put it in the
- -- vacated source slot immediately; never delete or blindly clear the cursor.
- if CursorItem() then C_Container.PickupContainerItem(from.bag,from.slot) end
- if CursorItem() then return false,T('Sorting stopped: place the item on your cursor into a free slot.') end
- return true
+local function Same(a,b)
+ if not a or not b then return a==b end
+ return a.key==b.key and a.itemID==b.itemID and a.count==b.count
 end
-local function NextSortMove(groups,order)
- -- Merge only identical full hyperlinks, preserving random properties/enchantments.
- for _,family in ipairs(order) do
-  local slots=groups[family]
-  for i=1,#slots do
-   local dest=slots[i];local item=dest.item
+local function PlanSort(groups,order)
+ local moves,remaining={},false
+ -- Merge equal full hyperlinks first. No pair reuses a slot within this batch.
+ for _,family in ipairs(order)do
+  local partials={}
+  for _,slot in ipairs(groups[family])do
+   local item=slot.item
    if item and item.maxStack>1 and item.count<item.maxStack then
-    for j=i+1,#slots do
-     local from=slots[j];local other=from.item
-     if other and other.key==item.key and other.count<other.maxStack then return from,dest end
+    local list=partials[item.key]or{};partials[item.key]=list;list[#list+1]=slot
+   end
+  end
+  for _,list in pairs(partials)do
+   if #list>1 then
+    remaining=true;local target
+    for _,slot in ipairs(list)do
+     if not slot.locked then
+      if not target then target=slot
+      elseif #moves<2 then moves[#moves+1]={from=slot,to=target};target=nil end
+     end
     end
    end
   end
  end
- -- Selection by the desired tuple, with empty slots last. Each move is a swap
- -- within one compatible family; the next pass reads fresh native inventory data.
- for _,family in ipairs(order) do
-  local slots=groups[family]
-  for i=1,#slots do
-   local best=i
-   for j=i+1,#slots do if Before(slots[j].item,slots[best].item) then best=j end end
-   if best~=i then return slots[best],slots[i] end
+ if remaining then return moves,true end
+ local used={}
+ for _,family in ipairs(order)do
+  local slots=groups[family];local desired={}
+  for i,slot in ipairs(slots)do desired[i]=slot end
+  table.sort(desired,function(a,b)
+   if Before(a.item,b.item)then return true end
+   if Before(b.item,a.item)then return false end
+   return a.index<b.index
+  end)
+  for i,source in ipairs(desired)do
+   local target=slots[i]
+   if not Same(source.item,target.item)then
+    remaining=true
+    -- Never pick an empty source: the reciprocal occupied move resolves it.
+    -- A partial stack placed onto a full identical stack does not swap in WoW.
+    -- Leave that position for the full-stack move to its earlier destination.
+    local fullTarget=source.item and target.item and source.item.key==target.item.key and target.item.count>=target.item.maxStack
+    if source.item and not fullTarget and not used[source]and not used[target]and not source.locked and not target.locked and #moves<2 then
+     moves[#moves+1]={from=source,to=target};used[source]=true;used[target]=true
+    end
+   end
   end
  end
+ return moves,remaining
+end
+local function LiveSlot(slot)
+ local info=C_Container.GetContainerItemInfo(slot.bag,slot.slot)
+ if not slot.item then return info==nil,false end
+ return info and info.itemID==slot.rawID and info.hyperlink==slot.rawLink and(info.stackCount or 1)==slot.item.count,info and info.isLocked
+end
+local function MoveSlots(from,to)
+ if CursorItem()then return false,T('Finish moving the item on your cursor first.')end
+ C_Container.PickupContainerItem(from.bag,from.slot)
+ if not CursorItem()then return false,'The item could not be picked up. Try again.'end
+ C_Container.PickupContainerItem(to.bag,to.slot)
+ if CursorItem()then C_Container.PickupContainerItem(from.bag,from.slot)end
+ if CursorItem()then return false,T('Sorting stopped: place the item on your cursor into a free slot.')end
+ return true
 end
 local function SortVisible()
- if sortContext then return sortContext.Valid() end
+ if sortContext then return sortContext.Valid()end
  return frame and frame:IsShown()
 end
 local function SortRefresh()
- if sortContext then sortContext.Refresh() else M.Refresh() end
+ local began=Clock()
+ if sortContext then sortContext.Refresh()else M.Refresh()end
+ local cost=math.max(0,Clock()-began)
+ sortStats.refreshMS=sortStats.refreshMS+cost;sortStats.refreshPeak=math.max(sortStats.refreshPeak,cost)
 end
-local function SortTick(token)
+SortTick=function(token)
  if not sorting or token~=sortGeneration then return end
- if Combat() or not M.Enabled() or not SortVisible() or (UnitIsDead and UnitIsDead('player')) then M.StopSort();return end
- if CursorItem() then M.StopSort(T('Finish moving the item on your cursor first.'));return end
- local groups,order=ReadSortSlots()
- if not groups then
-  if order=='locked' and sortWaits<120 then sortWaits=sortWaits+1;C_Timer.After(.1,function() SortTick(token) end);return end
-  M.StopSort(order=='locked' and T('Items are still locked. Try again shortly.') or order);return
+ if Combat()or not M.Enabled()or not SortVisible()or(UnitIsDead and UnitIsDead('player'))then M.StopSort();return end
+ if CursorItem()then M.StopSort(T('Finish moving the item on your cursor first.'));return end
+ local now=GetTime();sortNextAt=now+.03
+ -- Keep at most four acknowledged-or-pending operations in flight. A pending
+ -- pair reserves only its own slots, so an unrelated pair can use a later frame.
+ local pending={}
+ if sortInFlight then
+  for _,move in ipairs(sortInFlight.moves)do
+   local sameFrom,lockedFrom=LiveSlot(move.from);local sameTo,lockedTo=LiveSlot(move.to)
+   if lockedFrom or lockedTo or(sameFrom and sameTo)then
+    if now-move.at>=12 then M.StopSort(T('An item could not be moved. Check bag space or item restrictions and try again.'));return end
+    pending[#pending+1]=move
+   end
+  end
  end
- sortWaits=0
- local from,to=NextSortMove(groups,order)
- if not from then SortRefresh();M.StopSort();return end
- if sortMoves>=1024 then M.StopSort(T('Sorting paused. Press Sort again to continue.'));return end
- local function Signature(slot)
-  local item=slot.item;return slot.bag..':'..slot.slot..':'..(item and (item.key..':'..item.count) or 'empty')
+ sortInFlight=#pending>0 and{moves=pending}or nil
+ if #pending>0 then sortStats.waits=sortStats.waits+1 end
+ if #pending>=4 then QueueSort(.15);return end
+ local began=Clock();local groups,order=ReadSortSlots()
+ if not groups then M.StopSort(order);return end
+ local moves,remaining=PlanSort(groups,order)
+ local planCost=math.max(0,Clock()-began)
+ local diag=_G.KerimAnkaDiagnostics;if diag and diag.captureScopes then diag.RecordScope('Bags.SortPlan',planCost)end
+ sortStats.planMS=sortStats.planMS+planCost;sortStats.planPeak=math.max(sortStats.planPeak,planCost)
+ if not remaining then
+  if #pending>0 then QueueSort(.15);return end
+  SortRefresh();M.StopSort();return
  end
- local signature=Signature(from)..'>'..Signature(to)
- sortStalls=signature==lastSortMove and (sortStalls or 0)+1 or 0;lastSortMove=signature
- if sortStalls>=3 then M.StopSort(T('An item could not be moved. Check bag space or item restrictions and try again.'));return end
- local ok,reason=MoveSlots(from,to)
- if not ok then M.StopSort(reason);return end
- sortMoves=sortMoves+1;SortRefresh()
- C_Timer.After(.08,function() SortTick(token) end)
+ if #moves==0 then
+  sortStats.waits=sortStats.waits+1;sortStats.blockedAt=sortStats.blockedAt or now
+  if now-sortStats.blockedAt>=12 then M.StopSort(T('Items are still locked. Try again shortly.'));return end
+  QueueSort(.15);return
+ end
+ sortStats.blockedAt=nil
+ local sent={};local moveBegan=Clock()
+ for _,move in ipairs(moves)do
+  if #pending+#sent>=4 then break end
+  if not sorting or token~=sortGeneration then return end
+  if Combat()or not SortVisible()then M.StopSort();return end
+  if sortStats.moves>=1024 then M.StopSort(T('Sorting paused. Press Sort again to continue.'));return end
+  local fromOK,fromLock=LiveSlot(move.from);local toOK,toLock=LiveSlot(move.to)
+  if not fromOK or not toOK or fromLock or toLock then break end
+  local singleBegan=Clock()
+  local ok,reason=MoveSlots(move.from,move.to)
+  sortStats.singlePeak=math.max(sortStats.singlePeak,math.max(0,Clock()-singleBegan))
+  if not ok then M.StopSort(reason);return end
+  sent[#sent+1]=move;sortStats.moves=sortStats.moves+1
+  if not sorting or token~=sortGeneration then return end
+  -- Yield only after the cursor-safe native operation has completed.
+  if Clock()-moveBegan>=2 then break end
+ end
+ local moveCost=math.max(0,Clock()-moveBegan)
+ if diag and diag.captureScopes then diag.RecordScope('Bags.SortNative',moveCost)end
+ sortStats.moveMS=sortStats.moveMS+moveCost;sortStats.batchPeak=math.max(sortStats.batchPeak,moveCost)
+ if moveCost>=8 then SortMark(string.format('Sort native batch %.2fms (%d moves)',moveCost,#sent))end
+ if #sent>0 then
+  sortStats.batches=sortStats.batches+1
+  for _,move in ipairs(sent)do move.at=now;pending[#pending+1]=move end
+  sortInFlight={moves=pending}
+  sortStats.inFlightPeak=math.max(sortStats.inFlightPeak,#pending)
+  SortRefresh()
+ end
+ -- Fill the small pipeline on a later frame; do not wait for every previous
+ -- move when other source/target pairs remain independent.
+ QueueSort(#pending<4 and .03 or .15)
 end
 function M.Sort(context)
  if sorting then local same=sortContext==context;M.StopSort();if same then return false end end
- if Combat() then Message(T('Sort outside combat.'));return false end
- if not M.Enabled() then return false end
- if context then if not context.Valid() then return false end
- elseif not frame or not frame:IsShown() then return false end
- if CursorItem() then Message(T('Finish moving the item on your cursor first.'));return false end
- if not C_Container.PickupContainerItem or not (C_Item and C_Item.GetItemInfo or GetItemInfo) then Message(T('Native item sorting APIs are unavailable.'));return false end
- sortContext=context;sorting=true;sortGeneration=sortGeneration+1;sortMoves=0;sortWaits=0;lastSortMove=nil;sortStalls=0;SortLabel()
- SortTick(sortGeneration);return true
+ if Combat()then Message(T('Sort outside combat.'));return false end
+ if not M.Enabled()then return false end
+ if context then if not context.Valid()then return false end
+ elseif not frame or not frame:IsShown()then return false end
+ if CursorItem()then Message(T('Finish moving the item on your cursor first.'));return false end
+ if not C_Container.PickupContainerItem or not(C_Item and C_Item.GetItemInfo or GetItemInfo)then Message(T('Native item sorting APIs are unavailable.'));return false end
+ sortRanks,sortHearthFirst=K.ClassicInventoryStyle.SortPriorities()
+ sortContext=context;sortCache={};sortInFlight=nil;sortDue=nil;sortNextAt=0
+ sortStats={started=GetTime(),moves=0,batches=0,reads=0,metadata=0,comparisons=0,waits=0,planMS=0,moveMS=0,refreshMS=0,planPeak=0,refreshPeak=0,singlePeak=0,batchPeak=0,inFlightPeak=0}
+ sorting=true;sortGeneration=sortGeneration+1;SortLabel();SortMark('Sort START fast3');SortTick(sortGeneration);return true
 end
-function M.IsSorting(context) return sorting and (context==nil or sortContext==context) end
+function M.IsSorting(context)return sorting and(context==nil or sortContext==context)end
+function M.SortStatistics()
+ if not sortStats then Message('No Sort sample yet.');return end
+ local s=sortStats
+ Message(string.format('Sort peaks: native-batch=%.2fms native-move=%.2fms plan=%.2fms redraw=%.2fms inflight=%d',s.batchPeak,s.singlePeak,s.planPeak,s.refreshPeak,s.inFlightPeak))
+ Message(string.format('Sort: %.2fs moves=%d batches=%d waits=%d reads=%d metadata=%d compare=%d plan=%.2fms native=%.2fms redraw=%.2fms',s.seconds or(GetTime()-s.started),s.moves,s.batches,s.waits,s.reads,s.metadata,s.comparisons,s.planMS,s.moveMS,s.refreshMS))
+end
+
 local function Ensure()
  if frame then return true end
  if not (C_Container and ContainerFrameItemButton_OnLoad and SetItemButtonTexture and SetItemButtonCount) then
@@ -709,9 +916,7 @@ local function Ensure()
   if not sortContext then M.StopSort() end
   if moneyPanel then moneyPanel:Hide() end
   hoverBag=nil;if search then search:ClearFocus() end
-  local wasBusy=busy;busy=true
-  M.ReleaseKeyring(true);if CloseNative then CloseNative() end
-  busy=wasBusy
+  WithBagLock(function()M.ReleaseKeyring(true);if CloseNative then CloseNative()end end)
  end)
  shelfToggle=K.ClassicBagDesigns.NewButton('KerimAnkaUIClassicBagShelfToggle',frame,'shelf')
  shelfToggle:SetSize(22,22);shelfToggle:SetPoint('TOPRIGHT',-58,-8)
@@ -774,6 +979,16 @@ end
 local function SetText(region,value)
  if region.kaTextValue~=value then region:SetText(value);region.kaTextValue=value end
 end
+-- One writer for both inventory layouts; never leave another layout's labels cached.
+function M.ShortcutCounts(shortcuts,free)
+ for bag=0,4 do
+  local label=shortcuts[bag]and shortcuts[bag].free
+  if label then local value=bag==0 and tostring(math.max(0,free))or''
+   if label:GetText()~=value then label:SetText(value)end
+   label.kaTextValue=value
+  end
+ end
+end
 local function CapacityText(free,total,l)
  local compact=string.format('%d / %d',free,total)
  if not l.wideFooter then return compact end
@@ -790,6 +1005,7 @@ end
 function M.RefreshMoney()
  if not frame or not frame:IsShown()then return end
  SetText(moneyText,Money())
+ if K.ClassicBagsOrganized then K.ClassicBagsOrganized.MoneyChanged()end
  local width=math.min(96,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth()or 80)+12))
  if moneyText.kaWidth~=width then moneyText:SetWidth(width);moneyHit:SetWidth(width+8);moneyText.kaWidth=width end
 end
@@ -799,6 +1015,24 @@ function M.RefreshCooldowns()
 end
 local function RefreshVisible()
  if not frame or not K.db or not frame:IsShown() then return end
+ -- Optional presentation only: all native bag/slot item operations stay here.
+ if K.ClassicBagsOrganized then
+  if K.ClassicBagsOrganized.Active() then
+   local c=frame.kaOrganizedContext
+   if not c then
+    c={frame=frame,body=body,footer=footer,search=search,searchHint=searchHint,clear=searchClear,
+     shelfToggle=shelfToggle,sort=sortButton,settings=frame.kaBagSettings,records=frame.kaRecordsButton,
+     moneyText=moneyText,moneyHit=moneyHit,keyButton=keyButton,holders=holders,buttons=buttons,bagButtons=bagButtons,
+     slots=Slots,option=Option,matches=M.Matches,paint=Paint,money=Money,sortLabel=SortLabel,dockKeyring=M.DockKeyring,
+     getFilter=function()return filterBag end,setFilter=function(id)filterBag=id end,
+     searchLevel=search:GetFrameLevel(),sortLevel=sortButton:GetFrameLevel(),recordsLevel=frame.kaRecordsButton:GetFrameLevel()}
+    frame.kaOrganizedContext=c
+   end
+   pendingRefresh=false
+   return K.ClassicBagsOrganized.Render(c)
+  end
+  K.ClassicBagsOrganized.Release()
+ end
  K.ClassicInventoryStyle.Apply(frame,2)
  local size=math.max(18,math.min(48,tonumber(Option('bagSize',30)) or 30))
  local cell=size+K.ClassicInventoryStyle.ItemGap();local columns=Columns();local n,total,free=0,0,0
@@ -837,11 +1071,11 @@ local function RefreshVisible()
  end
  local l=K.ClassicBagDesigns.Layout(K.ClassicBagDesigns.ID(),size,columns,n,K.ClassicInventoryStyle.ItemGap(),shortcutGap,shelfHidden,hasKey)
  SetText(footer,CapacityText(free,total,l))
- SetText(bagButtons[0].free,tostring(free));for bag=1,4 do SetText(bagButtons[bag].free,'')end
+ M.ShortcutCounts(bagButtons,free)
  SetText(moneyText,Money())
  local moneyWidth=math.min(96,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth()or 80)+12))
  moneyText:SetWidth(moneyWidth);moneyHit:SetWidth(moneyWidth+8)
- local key=table.concat({l.id,size,columns,l.rows,tostring(shelfHidden),tostring(hasKey),K.ClassicInventoryStyle.ItemGap(),shortcutGap,tostring(Option('bagBackground',true)),tostring(Option('bagFrame',true)),KAClassic_KerimAnkaUIDB and KAClassic_KerimAnkaUIDB.language or'en'},':')
+ local key=table.concat({l.id,size,columns,l.rows,tostring(shelfHidden),tostring(hasKey),K.ClassicInventoryStyle.ItemGap(),shortcutGap,K.ClassicInventoryStyle.BackgroundStyle(),tostring(Option('bagBackground',true)),tostring(Option('bagFrame',true)),KAClassic_KerimAnkaUIDB and KAClassic_KerimAnkaUIDB.language or'en'},':')
  if frame.kaGeometryKey~=key then
   Count('layout')
  frame:SetSize(l.width,l.height);frame.kaBagLayout=l
@@ -884,7 +1118,9 @@ end
 function M.Refresh()
  if refreshing or not frame or not frame:IsShown()then return end
  refreshing=true;Count('refresh');local began=perf and Clock()
+ local diag=_G.KerimAnkaDiagnostics;local sample=diag and diag.captureScopes and Clock()
  local ok,err=pcall(RefreshVisible);refreshing=false
+ if sample then diag.RecordScope('Bags.Refresh',Clock()-sample)end
  if perf and began then perf.ms=perf.ms+math.max(0,Clock()-began)end
  if not ok then error(err,0)end
 end
@@ -894,7 +1130,7 @@ CloseNative=function()
 end
 local function Show()
  if not M.Enabled() or not Ensure() then M.RestoreNativeBagAlpha();return false end
- busy=true;CloseNative();if not frame:IsShown()then paintEpoch=paintEpoch+1;frame:Show();M.Refresh()end;busy=false;return true
+ WithBagLock(function()CloseNative();if not frame:IsShown()then paintEpoch=paintEpoch+1;frame:Show();M.Refresh()end end);return true
 end
 -- A bank visit is an explicit open, even when native OpenAllBags calls
 -- ToggleBag internally. Discard those pending toggles before the UI handoff.
@@ -994,10 +1230,11 @@ events:SetScript('OnUpdate',function(_,elapsed)
  hookElapsed=hookElapsed+elapsed;if hookElapsed<1 then return end;hookElapsed=0
  if M.Enabled() then M.InstallBagCallHooks();M.InstallNativeBagHooks() end
 end)
-for _,event in ipairs({'QUEST_LOG_UPDATE','BAG_UPDATE_DELAYED','PLAYER_EQUIPMENT_CHANGED','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','PLAYER_MONEY','GET_ITEM_INFO_RECEIVED','PLAYER_REGEN_ENABLED','PLAYER_REGEN_DISABLED','PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_LOGOUT','ADDON_LOADED'}) do events:RegisterEvent(event) end
+for _,event in ipairs({'QUEST_LOG_UPDATE','BAG_UPDATE_DELAYED','PLAYER_EQUIPMENT_CHANGED','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','PLAYER_MONEY','PLAYER_TRADE_MONEY','TRADE_SHOW','TRADE_CLOSED','SEND_MAIL_MONEY_CHANGED','CURSOR_CHANGED','GET_ITEM_INFO_RECEIVED','PLAYER_REGEN_ENABLED','PLAYER_REGEN_DISABLED','PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_LOGOUT','ADDON_LOADED'}) do events:RegisterEvent(event) end
 events:SetScript('OnEvent',function(_,event,initialLogin,isReloadingUi)
  if perf then perf.events[event]=(perf.events[event]or 0)+1 end
  if event=='BAG_UPDATE_COOLDOWN'then M.RefreshCooldowns();return end
+ if sorting and(event=='BAG_UPDATE_DELAYED'or event=='ITEM_LOCK_CHANGED')then M.WakeSort()end
  if event=='GET_ITEM_INFO_RECEIVED'and not waitingForItemInfo then return end
  if event=='QUEST_LOG_UPDATE'or event=='GET_ITEM_INFO_RECEIVED'then paintEpoch=paintEpoch+1 end
  if event=='PLAYER_ENTERING_WORLD' then
@@ -1006,6 +1243,8 @@ events:SetScript('OnEvent',function(_,event,initialLogin,isReloadingUi)
   -- Core settings and other addons may finish initializing later in this event.
   C_Timer.After(0,function() M.PrepareBags() end)
  elseif event=='PLAYER_MONEY'then M.RecordMoney();M.RefreshMoneyList();M.RefreshMoney();return
+ elseif event=='PLAYER_TRADE_MONEY'or event=='TRADE_SHOW'or event=='TRADE_CLOSED'or event=='SEND_MAIL_MONEY_CHANGED'or event=='CURSOR_CHANGED'then
+  if frame and frame:IsShown()then M.RefreshMoney()end;return
  elseif event=='PLAYER_LOGOUT' then
   -- Keep the latest valid snapshot; teardown APIs may already report zero.
   startupGeneration=startupGeneration+1
@@ -1021,6 +1260,17 @@ end)
 SLASH_KERIMANKAUICLASSICBAGS1='/kauibags'
 SlashCmdList.KERIMANKAUICLASSICBAGS=function(input)
  input=(input or ''):lower():match('^%s*(.-)%s*$')
+ if input=='organized' or input=='duzenli' or input=='classic' then
+  if Combat()then Message(T('Sort outside combat.'));return end
+  if not K.ClassicBagsOrganized then Message('Organized test file is not loaded.');return end
+  local d=Config();if not d then return end
+  d.organized=type(d.organized)=='table'and d.organized or{}
+  d.organized.enabled=input~='classic';filterBag=nil;hoverBag=nil
+  if frame and frame:IsShown()then M.Refresh()else Show()end
+  return
+ end
+ if input=='actionlog'or input=='actionlog on'or input=='actionlog off'then M.ActionLog(input:match('actionlog%s+(%S+)'));return end
+ if input=='sortstats'then M.SortStatistics();return end
  if input=='perf'then M.StartPerf();return end
  if input=='status' then M.Status();return end
  if input=='repair' then M.PrepareBags();M.Status();return end

@@ -136,13 +136,16 @@ end
 function M.Apply(panel,edge)
  if not panel then return end;local state=panels[panel]or{};panels[panel]=state;state.edge=edge or 1
  local design=K.ClassicBagDesigns and K.ClassicBagDesigns.ID()or 1;local background=Get('bagBackground',true);local border=Get('bagFrame',true)
- local key=design..':'..state.edge..':'..tostring(background)..':'..tostring(border)
+ local key=design..':'..state.edge..':'..tostring(background)..':'..tostring(border)..':'..M.BackgroundStyle()
+ -- A material refresh must not repaint retired native chrome over the optional view.
+ if panel==_G.KerimAnkaUIClassicBagFrame and K.ClassicBagsOrganized and K.ClassicBagsOrganized.Active()then state.key=nil;return end
  if state.key==key then return end;state.key=key
  panel:SetBackdrop({bgFile='Interface\\Buttons\\WHITE8X8',edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=edge or 1})
  if design==2 then panel:SetBackdropColor(.025,.03,.035,background and .98 or 0);panel:SetBackdropBorderColor(.3,.33,.36,border and 1 or 0)
  elseif design==3 then panel:SetBackdropColor(.05,.035,.025,background and .98 or 0);panel:SetBackdropBorderColor(.4,.28,.13,border and 1 or 0)
  else panel:SetBackdropColor(.035,.035,.03,background and .98 or 0);panel:SetBackdropBorderColor(.58,.43,.2,border and 1 or 0)end
  if K.ClassicBagDesigns then K.ClassicBagDesigns.PaintFrame(panel,design,background,border)end
+ if panel.kaClassicInventory then M.PaintBackgroundPanel(panel,background)end
 end
 function M.IsQuestItem(bag,slot,info)
  if not info then return false end
@@ -297,3 +300,253 @@ K.locales.zhCN["imBagDesignHelp1"]="背包图标在顶部。"
 K.locales.zhCN["imBagDesignHelp2"]="背包图标在左侧。"
 K.locales.zhCN["imBagDesignHelp3"]="背包图标在底部。"
 K.locales.zhCN["imBagShortcutGapHelp"]="调整所选设计的背包图标间距。标准背包栏由暴雪编辑模式管理。"
+
+-- The optional black icon overlay was retired; old profile keys have no effect.
+do
+ local help={
+  en='The bag background and decorative frame can be hidden independently. Quest and item-quality highlights are controlled separately.',
+  tr='Çanta arka planı ve dekoratif çerçeve ayrı ayrı kapatılabilir. Görev ve eşya kalitesi vurguları ayrı ayarlanır.',
+  de='Taschenhintergrund und dekorativer Rahmen können unabhängig ausgeblendet werden. Quest- und Qualitätsmarkierungen werden separat eingestellt.',
+  frFR='Le fond et le cadre décoratif des sacs peuvent être masqués séparément. Les indications de quête et de qualité se règlent séparément.',
+  itIT='Sfondo e cornice decorativa delle borse possono essere nascosti separatamente. Gli indicatori di missione e qualità hanno impostazioni separate.',
+  esES='El fondo y el marco decorativo de las bolsas se pueden ocultar por separado. Los indicadores de misión y calidad se ajustan aparte.',
+  ptBR='O fundo e a moldura decorativa das bolsas podem ser ocultados separadamente. Os destaques de missão e qualidade têm ajustes próprios.',
+  ruRU='Фон сумки и декоративную рамку можно скрыть отдельно. Подсветка заданий и качества предметов настраивается отдельно.',
+  zhCN='背包背景和装饰边框可分别隐藏。任务和物品品质高亮可单独设置。',
+ }
+ for language,text in pairs(help)do if K.locales[language]then K.locales[language].imBagAppearanceHelp=text end end
+end
+
+-- Optional inventory body material. Mode 1 delegates completely to the existing skin.
+local BACKGROUND_ROCK='Interface\\FrameGeneral\\UI-Background-Rock'
+function M.BackgroundStyle()
+ local d=K.db and K.db.classicBags
+ local value=d and tonumber(d.backgroundStyle)
+ if value==nil then return 3 end
+ if value~=2 and value~=3 then return 1 end
+ return value
+end
+function M.PaintBackgroundTexture(texture,width,height,shown)
+ local mode=M.BackgroundStyle();if mode==1 then return false end
+ if mode==2 then texture:SetVertexColor(1,1,1,1);texture:SetColorTexture(.16,.17,.16,.98)
+ else
+  texture:SetTexture(BACKGROUND_ROCK,'REPEAT','REPEAT')
+  texture:SetTexCoord(0,math.max(.1,width/256),0,math.max(.1,height/256));texture:SetVertexColor(1,1,1,1)
+ end
+ texture:SetShown(shown);return true
+end
+function M.PaintBackgroundPanel(panel,shown)
+ local mode=M.BackgroundStyle();if mode==1 then return false end
+ local bg=panel.GetBackdrop and panel:GetBackdrop()or{}
+ bg.bgFile=mode==3 and BACKGROUND_ROCK or'Interface\\Buttons\\WHITE8X8';bg.tile=mode==3;bg.tileSize=256
+ panel:SetBackdrop(bg)
+ if mode==3 then panel:SetBackdropColor(1,1,1,shown and .98 or 0)
+ else panel:SetBackdropColor(.16,.17,.16,shown and .98 or 0)end
+ return true
+end
+function M.SetBackgroundStyle(value)
+ if not K.db or InCombatLockdown()or type(value)~='number'or value%1~=0 or value<1 or value>3 then return false end
+ K.db.classicBags=K.db.classicBags or{};K.db.classicBags.backgroundStyle=value
+ M.Refresh();return true
+end
+local backgroundLabels={
+ en={'Bag background','Current','Plain grey','Blizzard stone','Changes the inventory surface only. Enable the bag background to see it; frames and item highlights keep their settings.'},
+ tr={'Çanta zemini','Mevcut','Düz gri','Blizzard taş dokusu','Yalnızca envanter zeminini değiştirir. Görmek için çanta arka planı açık olmalı; çerçeve ve eşya vurguları kendi ayarlarında kalır.'},
+ de={'Taschenhintergrund','Bisherig','Einfarbig grau','Blizzard-Stein','Ändert nur den Inventarhintergrund. Hintergrund muss aktiviert sein; Rahmen und Gegenstandsmarkierungen bleiben separat.'},
+ frFR={'Fond des sacs','Actuel','Gris uni','Pierre Blizzard','Modifie seulement le fond de l’inventaire. Activez le fond pour le voir ; cadres et indications des objets restent séparés.'},
+ itIT={'Sfondo delle borse','Attuale','Grigio uniforme','Pietra Blizzard','Modifica solo lo sfondo dell’inventario. Attiva lo sfondo per vederlo; cornici e indicatori restano separati.'},
+ esES={'Fondo de las bolsas','Actual','Gris liso','Piedra Blizzard','Solo cambia el fondo del inventario. Activa el fondo para verlo; marcos e indicadores mantienen sus ajustes.'},
+ ptBR={'Fundo das bolsas','Atual','Cinza liso','Pedra Blizzard','Muda apenas o fundo do inventário. Ative o fundo para vê-lo; molduras e destaques mantêm seus ajustes.'},
+ ruRU={'Фон сумки','Текущий','Серый','Камень Blizzard','Меняет только фон инвентаря. Фон должен быть включён; рамки и подсветка предметов настраиваются отдельно.'},
+ zhCN={'背包背景','当前','纯灰色','暴雪石纹','仅更改背包背景。需启用背景才能显示；边框和物品高亮保持原有设置。'},
+}
+function M.DrawBackgroundSettings(page,w,y)
+ local language=KAClassic_KerimAnkaUIDB and KAClassic_KerimAnkaUIDB.language or'en'
+ local text=backgroundLabels[language]or backgroundLabels.en
+ w.Text(page,text[1],8,y,690,14,{.73,.62,.41})
+ for value=1,3 do
+  local mode=value
+  local b=w.Button(page,text[value+1],(value-1)*240,y-27,234,32,function()if M.SetBackgroundStyle(mode)then K.Render()end end)
+  w.Selected(b,M.BackgroundStyle()==value);if InCombatLockdown()then b:Disable()end
+ end
+ w.Text(page,text[5],8,y-73,690,11,{.65,.70,.62})
+ return y-121
+end
+
+local metadata={}
+-- Classic consumable subclasses are not a reliable food classifier by themselves.
+-- Compare API-returned use effects to canonical localized Food / Drink effects;
+-- never compare item names or scan tooltip prose.
+local foodNames,foodSubclass
+local function FoodReferences()
+ if foodNames then return foodNames end
+ local names={};local ready=0
+ for _,id in ipairs({433,430})do
+  local name
+  if C_Spell and C_Spell.GetSpellName then name=C_Spell.GetSpellName(id)
+  elseif GetSpellInfo then name=GetSpellInfo(id)end
+  if type(name)=='string'and name~=''then names[name]=true;ready=ready+1 end
+ end
+ local use=C_Item and C_Item.GetItemSpell or GetItemSpell
+ if use then for _,id in ipairs({117,159})do local name=use(id);if type(name)=='string'and name~=''then names[name]=true end end end
+ local get=C_Item and C_Item.GetItemInfoInstant or GetItemInfoInstant
+ if get then
+  local _,_,_,_,_,fc,fs=get(117)
+  local _,_,_,_,_,wc,ws=get(159)
+  local _,_,_,_,_,pc,ps=get(118)
+  if fc==0 and wc==0 and pc==0 and type(fs)=='number'and fs==ws and fs~=ps then foodSubclass=fs end
+ end
+ if ready==2 then foodNames=names end
+ return names
+end
+local function IsFood(info,m)
+ if m.food~=nil then return m.food end
+ local names=FoodReferences()
+ local use=C_Item and C_Item.GetItemSpell or GetItemSpell
+ local name,spell
+ if use then name,spell=use(info.itemID)end
+ if spell==433 or spell==430 or name and names[name]then m.food=true;return true end
+ if foodSubclass~=nil and m.sub==foodSubclass then m.food=true;return true end
+ -- Missing use data is not a permanent negative cache entry.
+ if name and foodNames then m.food=false end
+ return false
+end
+local infoEvents=CreateFrame('Frame')
+infoEvents:RegisterEvent('GET_ITEM_INFO_RECEIVED')
+infoEvents:SetScript('OnEvent',function(_,_,id,success)
+ if success~=false then if type(id)=='number'then metadata[id]=nil end;foodNames=nil;foodSubclass=nil end
+end)
+function M.ItemCategory(bag,slot,info)
+ if not info then return 'empty' end
+ if K.ClassicInventoryStyle.IsQuestItem(bag,slot,info)then return 'quest'end
+ if info.quality==0 then return 'junk'end
+ local id=info.itemID;local m=id and metadata[id]
+ if not m then
+  local get=C_Item and C_Item.GetItemInfoInstant or GetItemInfoInstant
+  if get and id then
+   local _,_,_,equip,_,class,sub=get(id)
+   if type(class)=='number'then m={class=class,sub=sub,equip=equip};metadata[id]=m end
+  end
+ end
+ if not m then return 'misc'end
+ if m.class==12 then return 'quest'end
+ if m.class==0 then return IsFood(info,m)and'food'or'consumable'end
+ if m.class==2 or m.class==4 then return 'gear'end
+ if m.class==7 or m.class==9 or m.class==5 or m.class==3 then return 'trade'end
+ return 'misc'
+end
+
+-- Classic inventory priorities: shared by the sorter and optional category view.
+local priorityGroups={'quest','consumable','food','gear','trade','misc'}
+local priorityKeys={'first','second','third','fourth','fifth','sixth'}
+local priorityLabels={
+ en={'Sorting order','Daily use','Previous order','Custom','Hearthstone first','Quest items','Potions / Bandages','Food / Drink','Equipment','Crafting','Other','Earlier','Later','Junk and empty slots stay last. Special bags keep their item restrictions.','Character Inventory','Saved bags and bank · Read-only','ON','OFF'},
+ tr={'Sıralama düzeni','Günlük kullanım','Önceki sıra','Özel','Ev taşını en öne al','Görev eşyaları','İksir / Bandaj','Yiyecek / İçecek','Ekipman','Meslek','Diğer','Öne','Arkaya','Gri eşyalar ve boş yuvalar sonda kalır. Özel çantaların eşya kısıtlamaları korunur.','Karakter Envanteri','Kayıtlı çanta ve banka · Salt okunur','AÇIK','KAPALI'},
+ de={'Sortierreihenfolge','Alltag','Bisherige Reihenfolge','Eigene','Ruhestein zuerst','Questgegenstände','Tränke / Verbände','Essen / Trinken','Ausrüstung','Handwerk','Sonstiges','Früher','Später','Plunder und leere Plätze bleiben zuletzt. Spezialtaschen behalten ihre Einschränkungen.','Charakterinventar','Gespeicherte Taschen und Bank · Nur lesen','AN','AUS'},
+ frFR={'Ordre de tri','Usage quotidien','Ordre précédent','Personnalisé','Pierre de foyer en premier','Objets de quête','Potions / Bandages','Nourriture / Boisson','Équipement','Artisanat','Autres','Avant','Après','Camelote et emplacements vides en dernier. Les sacs spéciaux gardent leurs restrictions.','Inventaire des personnages','Sacs et banque enregistrés · Lecture seule','ACTIVÉ','DÉSACTIVÉ'},
+ itIT={'Ordine di riordino','Uso quotidiano','Ordine precedente','Personalizzato','Pietra del ritorno prima','Oggetti missione','Pozioni / Bende','Cibo / Bevande','Equipaggiamento','Professioni','Altro','Prima','Dopo','Cianfrusaglie e spazi vuoti in fondo. Restano i limiti delle borse speciali.','Inventario personaggi','Borse e banca salvate · Sola lettura','SÌ','NO'},
+ esES={'Orden de clasificación','Uso diario','Orden anterior','Personalizado','Piedra de hogar primero','Objetos de misión','Pociones / Vendas','Comida / Bebida','Equipo','Profesiones','Otros','Antes','Después','Chatarra y huecos vacíos al final. Las bolsas especiales mantienen sus restricciones.','Inventario de personajes','Bolsas y banco guardados · Solo lectura','SÍ','NO'},
+ ptBR={'Ordem de organização','Uso diário','Ordem anterior','Personalizada','Pedra de Regresso primeiro','Itens de missão','Poções / Bandagens','Comida / Bebida','Equipamento','Profissões','Outros','Antes','Depois','Sucata e espaços vazios no fim. Bolsas especiais mantêm suas restrições.','Inventário dos personagens','Bolsas e banco salvos · Somente leitura','SIM','NÃO'},
+ ruRU={'Порядок сортировки','Повседневный','Прежний порядок','Свой','Камень возвращения первым','Предметы заданий','Зелья / Бинты','Еда / Напитки','Экипировка','Ремёсла','Прочее','Раньше','Позже','Хлам и пустые ячейки в конце. Ограничения специальных сумок сохраняются.','Инвентарь персонажей','Записанные сумки и банк · Только чтение','ВКЛ','ВЫКЛ'},
+ zhCN={'排序方式','日常使用','原有顺序','自定义','炉石优先','任务物品','药水 / 绷带','食物 / 饮料','装备','专业','其他','提前','延后','杂物和空格放在最后。专用背包仍遵守物品限制。','角色物品栏','已记录的背包和银行 · 只读','开启','关闭'},
+}
+function M.PriorityText(index)
+ local lang=KAClassic_KerimAnkaUIDB and KAClassic_KerimAnkaUIDB.language or'en'
+ return(priorityLabels[lang]or priorityLabels.en)[index]
+end
+local function PriorityConfig()
+ return K.db and K.db.classicBags or{}
+end
+function M.SortMode()
+ local mode=PriorityConfig().sortMode
+ return(mode=='legacy'or mode=='custom')and mode or'daily'
+end
+function M.SortOrder()
+ local saved=PriorityConfig().sortOrder;local order,seen={},{}
+ local allowed={};for _,id in ipairs(priorityGroups)do allowed[id]=true end
+ for _,key in ipairs(priorityKeys)do
+  local id=type(saved)=='table'and saved[key]
+  if allowed[id]and not seen[id]then order[#order+1]=id;seen[id]=true end
+ end
+ for _,id in ipairs(priorityGroups)do if not seen[id]then order[#order+1]=id end end
+ return order
+end
+function M.SortPriorities()
+ local mode=M.SortMode();local ranks={}
+ if mode~='legacy'then
+  for i,id in ipairs(mode=='custom'and M.SortOrder()or priorityGroups)do ranks[id]=i end
+  ranks.junk=99
+ end
+ return ranks,mode~='legacy'and PriorityConfig().sortHearthFirst~=false
+end
+local function CanChangePriorities()
+ return K.db and not(InCombatLockdown and InCombatLockdown())and not(K.ClassicBags and K.ClassicBags.IsSorting())
+end
+function M.SetSortMode(mode)
+ if not CanChangePriorities()or(mode~='daily'and mode~='legacy'and mode~='custom')then return false end
+ K.db.classicBags=K.db.classicBags or{};K.db.classicBags.sortMode=mode;return true
+end
+function M.SetHearthFirst(value)
+ if not CanChangePriorities()or type(value)~='boolean'then return false end
+ K.db.classicBags=K.db.classicBags or{};K.db.classicBags.sortHearthFirst=value;return true
+end
+function M.MoveSortGroup(index,delta)
+ if not CanChangePriorities()or M.SortMode()~='custom'or type(index)~='number'or index%1~=0 or(delta~=-1 and delta~=1)then return false end
+ local other=index+delta;if index<1 or index>6 or other<1 or other>6 then return false end
+ local order=M.SortOrder();order[index],order[other]=order[other],order[index]
+ local saved={};for i,key in ipairs(priorityKeys)do saved[key]=order[i]end
+ K.db.classicBags.sortOrder=saved;return true
+end
+function M.DrawSortSettings(page,w,y)
+ local text=M.PriorityText;local mode=M.SortMode();local enabled=CanChangePriorities()
+ w.Text(page,text(1),8,y,690,14,{.73,.62,.41});y=y-27
+ for i,id in ipairs({'daily','legacy','custom'})do
+  local value=id;local b=w.Button(page,text(i+1),(i-1)*240,y,234,32,function()if M.SetSortMode(value)then K.Render()end end)
+  w.Selected(b,id==mode);if not enabled then b:Disable()end
+ end
+ y=y-43
+ local first=mode~='legacy'and PriorityConfig().sortHearthFirst~=false
+ local b=w.Button(page,text(5)..': '..text(first and 17 or 18),0,y,714,30,function()if M.SetHearthFirst(not first)then K.Render()end end)
+ w.Selected(b,first and mode~='legacy');if not enabled or mode=='legacy'then b:Disable()end;y=y-40
+ local order=mode=='custom'and M.SortOrder()or priorityGroups
+ for i,id in ipairs(mode~='legacy'and order or{})do
+  local number=i;local label=6;for j,group in ipairs(priorityGroups)do if id==group then label=j+5;break end end
+  w.Text(page,i..'. '..text(label),16,y-7,400,12,{.86,.87,.82})
+  if mode=='custom'then
+   for j,delta in ipairs({-1,1})do
+    local direction=delta;local button=w.Button(page,text(j+11),418+(j-1)*148,y,140,27,function()if M.MoveSortGroup(number,direction)then K.Render()end end)
+    if not enabled or i+delta<1 or i+delta>6 then button:Disable()end
+   end
+  end
+  y=y-32
+ end
+ w.Text(page,text(14),8,y-3,690,12,{.65,.70,.62});return y-62
+end
+
+function M.PaintItemBorder(button,quality,hasItem,quest)
+ if not button.kaEdges then
+  button.kaEdges={}
+  for i=1,4 do
+   local t=button:CreateTexture(nil,'OVERLAY');t:SetColorTexture(1,1,1,1)
+   if i==1 then t:SetPoint('TOPLEFT');t:SetPoint('TOPRIGHT');t:SetHeight(2)
+   elseif i==2 then t:SetPoint('BOTTOMLEFT');t:SetPoint('BOTTOMRIGHT');t:SetHeight(2)
+   elseif i==3 then t:SetPoint('TOPLEFT');t:SetPoint('BOTTOMLEFT');t:SetWidth(2)
+   else t:SetPoint('TOPRIGHT');t:SetPoint('BOTTOMRIGHT');t:SetWidth(2) end
+   button.kaEdges[i]=t
+  end
+ end
+ local questBorder=quest and Get('bagQuest',true)
+ local qualityBorder=type(quality)=='number'and quality>=2 and Get('bagQuality',true)
+ local color=questBorder and {r=1,g=.82,b=0}or qualityBorder and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality]
+ color=color or{r=1,g=1,b=1}
+ -- Draw an extra outline only for enabled quest / quality highlights.
+ -- Thickness is in physical pixels, independent of inventory/item scale.
+ local scale=button.GetEffectiveScale and button:GetEffectiveScale()or button:GetScale()
+ scale=type(scale)=='number'and scale>0 and scale or 1
+ local width=(questBorder or qualityBorder)and 2/scale or 1/scale
+ for i,t in ipairs(button.kaEdges)do
+  if i<=2 then t:SetHeight(width)else t:SetWidth(width)end
+  if t.SetSnapToPixelGrid then t:SetSnapToPixelGrid(true)end
+  t:SetVertexColor(color.r,color.g,color.b);t:SetShown(hasItem and(questBorder or qualityBorder))
+ end
+end

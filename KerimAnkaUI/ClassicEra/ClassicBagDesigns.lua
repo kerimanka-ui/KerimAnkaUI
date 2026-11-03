@@ -109,7 +109,7 @@ function D.PaintFrame(panel,id,background,border)
  end
  c.id=id
  c.header:SetColorTexture(id==3 and .16 or .07,id==3 and .095 or .065,id==3 and .045 or .05,.8)
- c.header:SetShown(background)
+ c.header:SetShown(background and not panel.kaRecordWindow)
  c.footer:SetColorTexture(id==2 and .24 or .48,id==2 and .27 or .36,id==2 and .3 or .16,.7);c.footer:Hide()
 end
 function D.PaintShelf(panel,l,background)
@@ -374,6 +374,9 @@ function D.Interior(panel,l,background)
  c.sidebarBody:ClearAllPoints();c.sidebarBody:SetPoint('TOPLEFT',4,-headerHeight);c.sidebarBody:SetPoint('BOTTOMLEFT',4,l.footerHeight);c.sidebarBody:SetWidth(54)
  c.sidebarBody:SetColorTexture(.025,.028,.03,.85);c.sidebarBody:SetShown(showSidebar and background)
  HideSurface(panel,'Tray')
+ if K.ClassicInventoryStyle and K.ClassicInventoryStyle.PaintBackgroundTexture then
+  K.ClassicInventoryStyle.PaintBackgroundTexture(c.body,l.width-14,l.height-40,background)
+ end
  -- Bag shortcut frames already provide their own edges; no extra shelf plate.
 
 end

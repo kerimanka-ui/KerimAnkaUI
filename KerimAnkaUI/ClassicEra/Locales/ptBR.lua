@@ -41,7 +41,7 @@ K.locales.ptBR = {
  ["enableHelp"]="Altera a lista de addons deste personagem. É preciso recarregar; um addon já carregado continua ativo até lá. As dependências não são ativadas nem desativadas automaticamente.",
  ["errorCustom"]="Filtros personalizados",
  ["errorCustomHelp"]="ATIVO oculta o grupo de erros; INATIVO o mostra. Erros importantes e desconhecidos continuam visíveis. Apenas erros conhecidos são filtrados. Use o modo de alertas importantes para ocultar todos os outros tipos.",
- ["errorImportantHelp"]="Oculta todos os erros vermelhos, exceto bolsas ou banco cheios, registro de missões cheio, dinheiro insuficiente e limites de quantidade de itens. Desative « Manter alertas importantes » para ocultar esses erros também. As mensagens de progresso das missões não são afetadas.",
+ ["errorImportantHelp"]="Mantém alertas de espaço e missões cheios, dinheiro insuficiente, limites de itens e restrições em combate. Oculta outros erros vermelhos, sem alterar o progresso de missões.",
  ["errorImportantOnly"]="Apenas alertas importantes",
  ["errorShowAll"]="Mostrar todos",
  ["errorShowHelp"]="Exibição normal dos erros da Blizzard, sem filtros de texto adicionais.",
@@ -70,7 +70,7 @@ K.locales.ptBR = {
  ["invalidIds"]="Use apenas IDs numéricos positivos (máximo de 30 entradas).",
  ["inventory"]="Bolsas",
  ["keepImportantErrors"]="Manter alertas importantes",
- ["keepImportantErrorsHelp"]="Neste modo, mantém os erros de bolsas ou banco cheios, registro de missões cheio, dinheiro insuficiente e limites de quantidade de itens. Desative para ocultar todos os erros vermelhos.",
+ ["keepImportantErrorsHelp"]="Neste modo mantém alertas de espaço, missões, dinheiro, limites de itens e restrições em combate, como comer ou trocar equipamento quando proibido. Desative para ocultar todos os erros vermelhos.",
  ["language"]="Idioma",
  ["languageHelp"]="Escolha o idioma do painel. Os textos não traduzidos aparecem em inglês.",
  ["listen"]="Ouvir",
@@ -159,7 +159,7 @@ K.locales.ptBR["barsEditor"]="Abrir modo de edição da Blizzard"
 K.locales.ptBR["barsLocked"]="O acompanhamento das barras fica pausado no modo fixo. Escolha « Ajustar às barras » acima para alterar esta seleção."
 K.locales.ptBR["barsMissingBT"]="O Bartender foi selecionado, mas suas barras não estão ativas. Ative-o e recarregue a interface, ou escolha Automático / Blizzard."
 K.locales.ptBR["barsNative"]="Blizzard"
-K.locales.ptBR["barsNativeActive"]="As barras da Blizzard estão em uso. Ative as barras 2 e 3 nas opções do jogo e coloque as três barras horizontais uma acima da outra no modo de edição. O visual acompanha as barras selecionadas e visíveis."
+K.locales.ptBR["barsNativeActive"]="As barras Blizzard estão em uso. Ative as barras necessárias. As barras 2 e 3 para três linhas horizontais são apenas um exemplo, não uma obrigação. O visual segue as barras visíveis selecionadas."
 K.locales.ptBR["barsNativeList"]="Barras da Blizzard incluídas"
 K.locales.ptBR["barsNoEditor"]="O modo de edição da Blizzard não está disponível agora. Use o menu do jogo fora de combate."
 K.locales.ptBR["barsSource"]="Origem das barras de ação"
@@ -938,3 +938,110 @@ K.locales.ptBR["xpTexturedBarsHelp"]="Desativado: preenchimento uniforme na cor 
 
 K.locales.ptBR["xpShowBackground"]="Mostrar fundo do painel"
 K.locales.ptBR["xpShowBackgroundHelp"]="Mostra ou oculta o fundo do painel. Barras, textos e moldura decorativa ficam separados. A opacidade configurada é preservada."
+
+-- Classic home page groups.
+K.locales["ptBR"]["homeAudio"]="Sons do jogo"
+K.locales["ptBR"]["homeSuspended"]="Indisponível no Classic"
+
+-- Grouped Chat settings navigation.
+K.locales["ptBR"]["csAppearance"]="Aparência"
+K.locales["ptBR"]["csLayout"]="Disposição"
+K.locales["ptBR"]["csVisibility"]="Visibilidade"
+K.locales["ptBR"]["csMicro"]="Micromenu"
+K.locales["ptBR"]["csReset"]="Redefinir"
+K.locales["ptBR"]["csAlwaysHelp"]="Texto, fundo e controles permanecem visíveis quando o cursor está longe."
+K.locales["ptBR"]["csMessagesHelp"]="O texto permanece visível; fundo e controles ficam ocultos quando o cursor está longe."
+K.locales["ptBR"]["csHideHelp"]="Texto, fundo e controles ficam ocultos quando o cursor está longe."
+
+-- Grouped action-button backdrop settings.
+K.locales["ptBR"]["bdAppearance"]="Aparência"
+K.locales["ptBR"]["bdLabels"]="Texto e alcance"
+K.locales["ptBR"]["bdBars"]="Seleção de barras"
+K.locales["ptBR"]["bdStyledBars"]="Barras com estilo dos botões"
+K.locales["ptBR"]["bdScopeHelp"]="Esta seleção não mostra nem oculta barras do jogo. Ela apenas escolhe os botões que recebem fundo e borda. A seleção decorativa do tema de classe é separada. A origem das barras é compartilhada entre as duas seções."
+K.locales["ptBR"]["bdSharedColorHelp"]="Esta cor de painel é compartilhada com o tema de classe. Ela muda o painel decorativo atrás dos botões, não suas bordas individuais."
+K.locales["ptBR"]["bdNativeLabelsHelp"]="Estes textos de teclas e macros se aplicam às barras Blizzard. Para Bartender, configure os textos no Bartender."
+
+-- Shared action bar source status, without a duplicate source editor.
+K.locales["ptBR"]["bdActiveSource"]="Origem atual das barras"
+K.locales["ptBR"]["bdSourceHint"]="A origem é compartilhada com o tema de classe. Alterá-la muda as barras seguidas pela decoração e pelo estilo dos botões. Mude a origem no tema de classe."
+K.locales["ptBR"]["bdEditSource"]="Mudar origem no tema de classe"
+
+-- Grouped class-art settings.
+K.locales["ptBR"]["artPageDesign"]="Visual"
+K.locales["ptBR"]["artPageLayout"]="Disposição"
+K.locales["ptBR"]["artPageBars"]="Origem e barras"
+K.locales["ptBR"]["artSelectedDetails"]="Detalhes do visual escolhido"
+K.locales["ptBR"]["artPetGroup"]="Barra do ajudante"
+K.locales["ptBR"]["artPetHelp"]="Aplica-se quando há uma barra de ajudante utilizável. Não invoca um ajudante nem força a barra a aparecer."
+K.locales["ptBR"]["artSourceHelp"]="Recomendado: Automático. Detecta a origem Blizzard ou Bartender ativa. Escolha uma origem fixa apenas se necessário. Também afeta o fundo das barras."
+K.locales["ptBR"]["artScopeHelp"]="Escolhe as barras seguidas pela decoração de classe. Não mostra nem oculta barras do jogo. O estilo dos botões tem seleção separada."
+K.locales["ptBR"]["artDecoratedBars"]="Barras seguidas pela decoração"
+K.locales["ptBR"]["artResetHelp"]="Restaura o visual de classe com a função existente, sem restaurar chat, perfis ou teclas. Um segundo clique confirma."
+
+-- Grouped minimap settings.
+K.locales["ptBR"]["mmPageAppearance"]="Aparência"
+K.locales["ptBR"]["mmPageDetails"]="Relógio e coordenadas"
+K.locales["ptBR"]["mmSunGroup"]="Ícone dia/noite"
+K.locales["ptBR"]["mmClockX"]="Relógio: posição horizontal"
+K.locales["ptBR"]["mmClockY"]="Relógio: posição vertical"
+K.locales["ptBR"]["mmPanelLayout"]="Disposição do painel"
+K.locales["ptBR"]["mmPanelPosition"]="Posição do botão"
+K.locales["ptBR"]["mmPanelButtonHelp"]="Este botão abre os ícones agrupados. Clique esquerdo: painel. Clique direito: ajustes do minimapa. Destrave para arrastar ao redor do minimapa."
+
+-- Grouped bag settings and economy navigation.
+K.locales["ptBR"]["bgAppearance"]="Aparência"
+K.locales["ptBR"]["bgSorting"]="Ordem e vendas"
+K.locales["ptBR"]["bgShortcut"]="Botão e barra"
+K.locales["ptBR"]["bgStrip"]="Barra das bolsas"
+K.locales["ptBR"]["bgOrganized"]="Categorias"
+K.locales["ptBR"]["bgOrganizedHelp"]="Mostra os itens agrupados por categoria."
+K.locales["ptBR"]["bgBankAppearance"]="Aparência do banco"
+K.locales["ptBR"]["bgBankHelp"]="A bolsa por categorias continua ativa. Esta opção define a aparência do banco."
+K.locales["ptBR"]["bgItemLooks"]="Aparência dos itens"
+K.locales["ptBR"]["economy"]="Economia"
+
+-- Settings text size.
+K.locales["ptBR"]["panelTextNormal"]="Texto normal"
+K.locales["ptBR"]["panelTextLarge"]="Texto grande"
+K.locales["ptBR"]["panelTextLargest"]="Texto muito grande"
+K.locales["ptBR"]["panelTextHelp"]="Muda o tamanho do texto nas configurações. Textos do jogo e o modelo de prévia não mudam. Textos longos são ajustados ao espaço disponível."
+
+-- Classic Details-only settings.
+K.locales["ptBR"]["dtNote"]="Personaliza as janelas do Details. Medições, conteúdo e gerenciamento das janelas ficam no Details."
+K.locales["ptBR"]["dmClassicDetailsRequired"]="Este recurso exige que o addon Details esteja instalado e ativado."
+
+-- Grouped Experience settings.
+K.locales["ptBR"]["xpPageGeneral"]="Geral"
+K.locales["ptBR"]["xpPageContent"]="Conteúdo"
+K.locales["ptBR"]["xpPageAppearance"]="Aparência"
+K.locales["ptBR"]["xpPageText"]="Textos"
+
+-- Grouped Threat settings.
+K.locales["ptBR"]["ftGroupGeneral"]="Indicador"
+K.locales["ptBR"]["ftGroupAppearance"]="Texto e cor"
+K.locales["ptBR"]["ftGroupPosition"]="Posição"
+
+-- Complete Aspect settings; retain existing translations and custom runtime text.
+K.locales["ptBR"]["aaCheetah"]=K.locales["ptBR"]["aaCheetah"] or "Texto de aviso da chita"
+K.locales["ptBR"]["aaEnabled"]=K.locales["ptBR"]["aaEnabled"] or "Ativar avisos de aspecto"
+K.locales["ptBR"]["aaGlow"]=K.locales["ptBR"]["aaGlow"] or "Brilho da chita em combate"
+K.locales["ptBR"]["aaHelp"]=K.locales["ptBR"]["aaHelp"] or "Controla o aviso independentemente do carregamento do addon. Aspectos não aprendidos e deslocamentos mantêm as regras de ocultação existentes. Desbloqueie para mostrar um exemplo de posição e bloqueie novamente ao terminar."
+K.locales["ptBR"]["aaLive"]=K.locales["ptBR"]["aaLive"] or "Voltar aos avisos reais"
+K.locales["ptBR"]["aaLock"]=K.locales["ptBR"]["aaLock"] or "Travar posição"
+K.locales["ptBR"]["aaMissing"]=K.locales["ptBR"]["aaMissing"] or "Texto sem aspecto"
+K.locales["ptBR"]["aaNote"]=K.locales["ptBR"]["aaNote"] or "As configurações pertencem a este personagem. As configurações compartilhadas antigas são copiadas no primeiro uso. Destrave e arraste o aviso para posicioná-lo."
+K.locales["ptBR"]["aaOriginal"]=K.locales["ptBR"]["aaOriginal"] or "Abrir configurações originais de aspecto"
+K.locales["ptBR"]["aaPreview"]=K.locales["ptBR"]["aaPreview"] or "Prévia da chita"
+K.locales["ptBR"]["aaPreviewHelp"]=K.locales["ptBR"]["aaPreviewHelp"] or "Mostra um exemplo temporário no aviso real. Ative o aviso primeiro. Mudar de página ou fechar o painel encerra a prévia. Um aviso destravado ainda pode mostrar o exemplo de posição. A ocultação durante deslocamentos permanece ativa."
+K.locales["ptBR"]["aaPreviewMissing"]=K.locales["ptBR"]["aaPreviewMissing"] or "Prévia sem aspecto"
+K.locales["ptBR"]["aaRefresh"]=K.locales["ptBR"]["aaRefresh"] or "Atualizar valores"
+K.locales["ptBR"]["aaResetPosition"]=K.locales["ptBR"]["aaResetPosition"] or "Redefinir posição"
+K.locales["ptBR"]["aaResetTexts"]=K.locales["ptBR"]["aaResetTexts"] or "Restaurar textos padrão"
+K.locales["ptBR"]["aaText"]=K.locales["ptBR"]["aaText"] or "Mostrar texto do aviso"
+K.locales["ptBR"]["aaTextHelp"]=K.locales["ptBR"]["aaTextHelp"] or "Texto personalizado de até 100 caracteres, salvo ao digitar para este personagem. Alterar o idioma do painel não traduz seu texto."
+K.locales["ptBR"]["aaUpdate"]=K.locales["ptBR"]["aaUpdate"] or "Instale a atualização incluída de HunterAspectAlert para usar estes controles."
+K.locales["ptBR"]["hunterAspect_cheetahText"]=K.locales["ptBR"]["hunterAspect_cheetahText"] or "Chita ativa: troque de aspecto!"
+K.locales["ptBR"]["hunterAspect_missingText"]=K.locales["ptBR"]["hunterAspect_missingText"] or "Escolha um aspecto!"
+K.locales["ptBR"]["aaCombatNoticeTitle"]=K.locales["ptBR"]["aaCombatNoticeTitle"] or "Beta: rastreamento de aspectos em combate"
+K.locales["ptBR"]["aaCombatNotice"]=K.locales["ptBR"]["aaCombatNotice"] or "O rastreamento funciona fora de combate. Em combate, o jogo restringe as informações de benefícios: um estado inicial ou uma mudança pode ser detectado, mas mudanças posteriores podem não ser rastreadas e o aviso pode desaparecer. A ausência de aviso não significa que seu aspecto esteja inativo. Verifique os ícones de benefícios do jogo. Este recurso foi desenvolvido durante a beta; as restrições e o comportamento podem mudar."

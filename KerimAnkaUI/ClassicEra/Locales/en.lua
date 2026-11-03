@@ -138,7 +138,7 @@ K.locales.en = {
  ["barsLocked"]="Bar following is paused in fixed mode. Choose Fit to Bars Again above to edit this selection.",
  ["barsMissingBT"]="Bartender was selected but its action bars are not active. Enable it and reload, or select Automatic / Blizzard.",
  ["barsNative"]="Blizzard",
- ["barsNativeActive"]="Using Blizzard bars. Enable bars 2 and 3 in game settings and place the three horizontal bars one above another in Edit Mode. The artwork follows selected visible bars.",
+ ["barsNativeActive"]="Using Blizzard bars. Choose whichever bars you need in game settings. For example, enabling bars 2 and 3 and arranging three horizontal bars is one possible layout, not a requirement. The artwork follows the visible bars you select.",
  ["barsNativeList"]="Affected Blizzard Bars",
  ["barsNoEditor"]="Blizzard Edit Mode is not available right now. Use the game menu outside combat.",
  ["barsSource"]="Action Bar Source",
@@ -191,7 +191,7 @@ K.locales.en = {
  ["enableHelp"]="Changes the addon list for this character. A reload is required; an already loaded addon continues running until then. Required addons are not enabled or disabled automatically.",
  ["errorCustom"]="Custom Filters",
  ["errorCustomHelp"]="ON hides that error group; OFF shows it. Important and unrecognized errors remain visible. This mode filters only known errors; use Hide All Except Important to suppress all other error types.",
- ["errorImportantHelp"]="Hides every red error except inventory/bank full, quest log full, not enough money and item-count limits. Turning off Keep Important Warnings hides these too. Informational quest progress messages are unaffected.",
+ ["errorImportantHelp"]="Keeps full storage/quest log, insufficient money, item limits and combat-restricted actions visible. Other red errors are hidden. Quest progress is unaffected.",
  ["errorImportantOnly"]="Hide All Except Important",
  ["errorShowAll"]="Show All",
  ["errorShowHelp"]="Normal Blizzard error display. No additional text filtering.",
@@ -306,7 +306,7 @@ K.locales.en = {
  ["invalidIds"]="Use positive numeric file IDs only (maximum 30 custom entries).",
  ["inventory"]="Bags",
  ["keepImportantErrors"]="Keep Important Warnings",
- ["keepImportantErrorsHelp"]="In Hide All Except Important mode, keeps inventory/bank full, quest log full, insufficient money and item-count limit errors visible. Turn OFF for complete red-error silence.",
+ ["keepImportantErrorsHelp"]="In Hide All Except Important mode, keeps full-storage, quest-log, money, item-limit and combat-restriction warnings visible (for example, eating or changing equipment when combat forbids it). Turn OFF to hide all red errors.",
  ["language"]="Language",
  ["languageHelp"]="Choose the panel language. Untranslated text uses English.",
  ["launcher"]="Show Minimap Icon",
@@ -1114,3 +1114,86 @@ K.locales.en["xpTexturedBarsHelp"]="Off uses a flat fill in the selected color. 
 
 K.locales.en["xpShowBackground"]="Show Panel Background"
 K.locales.en["xpShowBackgroundHelp"]="Hides or shows the panel backdrop. Bars, text and the decorative frame stay separate. Your background opacity setting is preserved."
+
+-- Classic home page groups.
+K.locales["en"]["homeAudio"]="Game sounds"
+K.locales["en"]["homeSuspended"]="Unavailable in Classic"
+
+-- Grouped Chat settings navigation.
+K.locales["en"]["csAppearance"]="Appearance"
+K.locales["en"]["csLayout"]="Layout"
+K.locales["en"]["csVisibility"]="Visibility"
+K.locales["en"]["csMicro"]="Micro menu"
+K.locales["en"]["csReset"]="Reset"
+K.locales["en"]["csAlwaysHelp"]="Chat text, background and controls remain visible when the pointer is away."
+K.locales["en"]["csMessagesHelp"]="Chat text remains visible; background and controls hide when the pointer is away."
+K.locales["en"]["csHideHelp"]="Chat text, background and controls hide when the pointer is away."
+
+-- Grouped action-button backdrop settings.
+K.locales["en"]["bdAppearance"]="Appearance"
+K.locales["en"]["bdLabels"]="Text and range"
+K.locales["en"]["bdBars"]="Bar selection"
+K.locales["en"]["bdStyledBars"]="Bars receiving button styling"
+K.locales["en"]["bdScopeHelp"]="This selection does not show or hide game action bars. It only selects the bars whose buttons receive backdrop and border styling. Class Art has its own separate decorative-frame selection. Source preference is shared by both sections."
+K.locales["en"]["bdSharedColorHelp"]="This panel color is shared with Class Art. It changes the decorative panel behind action buttons, not the per-button border settings above."
+K.locales["en"]["bdNativeLabelsHelp"]="Hotkey and macro labels here apply to Blizzard bars. For Bartender bars, configure these labels in Bartender."
+
+-- Shared action bar source status, without a duplicate source editor.
+K.locales["en"]["bdActiveSource"]="Current bar source"
+K.locales["en"]["bdSourceHint"]="This source is shared with Class Art. Changing it switches both the decorative artwork and button styling to another set of bars. Use Class Art to change the source."
+K.locales["en"]["bdEditSource"]="Change source in Class Art"
+
+-- Grouped class-art settings.
+K.locales["en"]["artPageDesign"]="Design"
+K.locales["en"]["artPageLayout"]="Layout"
+K.locales["en"]["artPageBars"]="Bar source / selection"
+K.locales["en"]["artSelectedDetails"]="Selected design details"
+K.locales["en"]["artPetGroup"]="Pet action bar"
+K.locales["en"]["artPetHelp"]="Applies when a usable pet action bar is available. This does not summon a pet or force its bar to appear."
+K.locales["en"]["artSourceHelp"]="Recommended: Automatic. Detects the active Blizzard or Bartender source. Choose a specific source only when needed; the preference also affects Bar Backdrop."
+K.locales["en"]["artScopeHelp"]="Select which bars the decorative class artwork follows. This does not show or hide game action bars. Bar Backdrop has a separate button-styling selection."
+K.locales["en"]["artDecoratedBars"]="Bars followed by decorative artwork"
+K.locales["en"]["artResetHelp"]="Restores the Class Art settings using the existing reset action. It does not reset chat, profiles or game key bindings. A second click confirms the reset."
+
+-- Grouped minimap settings.
+K.locales["en"]["mmPageAppearance"]="Appearance"
+K.locales["en"]["mmPageDetails"]="Clock and coordinates"
+K.locales["en"]["mmSunGroup"]="Day/night icon"
+K.locales["en"]["mmClockX"]="Clock: horizontal position"
+K.locales["en"]["mmClockY"]="Clock: vertical position"
+K.locales["en"]["mmPanelLayout"]="Panel layout"
+K.locales["en"]["mmPanelPosition"]="Panel button position"
+K.locales["en"]["mmPanelButtonHelp"]="This button opens the collected addon icons. Left-click: icon panel. Right-click: minimap settings. Unlock to drag it around the minimap."
+
+-- Grouped bag settings and economy navigation.
+K.locales["en"]["bgAppearance"]="Appearance"
+K.locales["en"]["bgSorting"]="Sorting and sales"
+K.locales["en"]["bgShortcut"]="Shortcut and strip"
+K.locales["en"]["bgStrip"]="Bag strip"
+K.locales["en"]["bgOrganized"]="Organized"
+K.locales["en"]["bgOrganizedHelp"]="Shows items grouped into categories."
+K.locales["en"]["bgBankAppearance"]="Bank appearance"
+K.locales["en"]["bgBankHelp"]="The organized bag stays active; this selects the appearance used by the bank."
+K.locales["en"]["bgItemLooks"]="Item appearance"
+K.locales["en"]["economy"]="Economy"
+
+-- Settings text size.
+K.locales["en"]["panelTextNormal"]="Normal text"
+K.locales["en"]["panelTextLarge"]="Large text"
+K.locales["en"]["panelTextLargest"]="Extra-large text"
+K.locales["en"]["panelTextHelp"]="Changes text size across all settings pages. In-game text and the preview model are unaffected. Long text is fitted to its available space to prevent overflow."
+
+-- Classic Details-only settings.
+K.locales["en"]["dtNote"]="Styles the Details windows. Measurements, content and window management belong to Details."
+K.locales["en"]["dmClassicDetailsRequired"]="This feature requires the Details addon to be installed and enabled."
+
+-- Grouped Experience settings.
+K.locales["en"]["xpPageGeneral"]="General"
+K.locales["en"]["xpPageContent"]="Content"
+K.locales["en"]["xpPageAppearance"]="Appearance"
+K.locales["en"]["xpPageText"]="Text"
+
+-- Grouped Threat settings.
+K.locales["en"]["ftGroupGeneral"]="Indicator"
+K.locales["en"]["ftGroupAppearance"]="Text and color"
+K.locales["en"]["ftGroupPosition"]="Position"

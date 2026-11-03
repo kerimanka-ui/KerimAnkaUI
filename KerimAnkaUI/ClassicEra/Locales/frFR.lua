@@ -41,7 +41,7 @@ K.locales.frFR = {
  ["enableHelp"]="Modifie la liste des addons de ce personnage. Un rechargement est nécessaire ; un addon déjà chargé reste actif jusque-là. Les dépendances ne sont pas activées ou désactivées automatiquement.",
  ["errorCustom"]="Filtres personnalisés",
  ["errorCustomHelp"]="ACTIF masque ce groupe d’erreurs ; INACTIF l’affiche. Les erreurs importantes ou non reconnues restent visibles. Seules les erreurs connues sont filtrées. Choisissez le mode des alertes importantes pour masquer tous les autres types.",
- ["errorImportantHelp"]="Masque toutes les erreurs rouges sauf sacs ou banque pleins, journal de quêtes plein, argent insuffisant et limites de quantité d’objets. Désactivez « Garder les alertes importantes » pour les masquer aussi. Les messages de progression des quêtes restent affichés.",
+ ["errorImportantHelp"]="Conserve les alertes de stockage ou journal pleins, argent insuffisant, limites d’objets et restrictions de combat. Masque les autres erreurs rouges, sans modifier la progression des quêtes.",
  ["errorImportantOnly"]="Garder les alertes importantes",
  ["errorShowAll"]="Tout afficher",
  ["errorShowHelp"]="Affichage normal des erreurs Blizzard, sans filtrage de texte supplémentaire.",
@@ -70,7 +70,7 @@ K.locales.frFR = {
  ["invalidIds"]="Utilisez des identifiants numériques positifs (30 entrées au maximum).",
  ["inventory"]="Sacs",
  ["keepImportantErrors"]="Garder les alertes importantes",
- ["keepImportantErrorsHelp"]="Dans ce mode, conserve les erreurs de sacs ou banque pleins, journal de quêtes plein, argent insuffisant et limites de quantité d’objets. Désactivez pour masquer toutes les erreurs rouges.",
+ ["keepImportantErrorsHelp"]="Dans ce mode, conserve les alertes de stockage, journal de quêtes, argent, limites d’objets et restrictions de combat, par exemple manger ou changer un équipement lorsque le combat l’interdit. Désactivez pour masquer toutes les erreurs rouges.",
  ["language"]="Langue",
  ["languageHelp"]="Choisissez la langue du panneau. Les textes non traduits restent en anglais.",
  ["listen"]="Écouter",
@@ -159,7 +159,7 @@ K.locales.frFR["barsEditor"]="Ouvrir le mode Édition Blizzard"
 K.locales.frFR["barsLocked"]="Le suivi des barres est suspendu en mode fixe. Choisissez « Ajuster aux barres » plus haut pour modifier cette sélection."
 K.locales.frFR["barsMissingBT"]="Bartender est sélectionné, mais ses barres sont inactives. Activez-le et rechargez l’interface, ou choisissez Automatique / Blizzard."
 K.locales.frFR["barsNative"]="Blizzard"
-K.locales.frFR["barsNativeActive"]="Les barres Blizzard sont utilisées. Activez les barres 2 et 3 dans les options du jeu et superposez les trois barres horizontales en mode Édition. Le décor suit les barres sélectionnées et visibles."
+K.locales.frFR["barsNativeActive"]="Les barres Blizzard sont utilisées. Activez celles dont vous avez besoin. Les barres 2 et 3 pour former trois rangées horizontales sont un exemple, pas une obligation. Le décor suit les barres visibles sélectionnées."
 K.locales.frFR["barsNativeList"]="Barres Blizzard concernées"
 K.locales.frFR["barsNoEditor"]="Le mode Édition Blizzard est indisponible pour le moment. Utilisez le menu du jeu hors combat."
 K.locales.frFR["barsSource"]="Source des barres d’action"
@@ -938,3 +938,110 @@ K.locales.frFR["xpTexturedBarsHelp"]="Désactivé : remplissage uni avec la coul
 
 K.locales.frFR["xpShowBackground"]="Afficher le fond du panneau"
 K.locales.frFR["xpShowBackgroundHelp"]="Affiche ou masque le fond du panneau. Barres, textes et cadre décoratif restent indépendants. Le réglage d’opacité est conservé."
+
+-- Classic home page groups.
+K.locales["frFR"]["homeAudio"]="Sons du jeu"
+K.locales["frFR"]["homeSuspended"]="Indisponible en Classic"
+
+-- Grouped Chat settings navigation.
+K.locales["frFR"]["csAppearance"]="Apparence"
+K.locales["frFR"]["csLayout"]="Disposition"
+K.locales["frFR"]["csVisibility"]="Visibilité"
+K.locales["frFR"]["csMicro"]="Micro-menu"
+K.locales["frFR"]["csReset"]="Réinitialisation"
+K.locales["frFR"]["csAlwaysHelp"]="Le texte, le fond et les commandes restent visibles lorsque le pointeur est éloigné."
+K.locales["frFR"]["csMessagesHelp"]="Le texte reste visible ; le fond et les commandes sont masqués lorsque le pointeur est éloigné."
+K.locales["frFR"]["csHideHelp"]="Le texte, le fond et les commandes sont masqués lorsque le pointeur est éloigné."
+
+-- Grouped action-button backdrop settings.
+K.locales["frFR"]["bdAppearance"]="Apparence"
+K.locales["frFR"]["bdLabels"]="Texte et portée"
+K.locales["frFR"]["bdBars"]="Choix des barres"
+K.locales["frFR"]["bdStyledBars"]="Barres avec style de boutons"
+K.locales["frFR"]["bdScopeHelp"]="Ce choix ne masque ni affiche les barres du jeu. Il détermine seulement les boutons recevant un fond et une bordure. La sélection décorative du thème de classe est séparée. La source des barres est commune aux deux sections."
+K.locales["frFR"]["bdSharedColorHelp"]="Cette couleur de panneau est partagée avec le thème de classe. Elle modifie le panneau décoratif derrière les boutons, pas leurs bordures individuelles."
+K.locales["frFR"]["bdNativeLabelsHelp"]="Ces libellés de touches et de macros concernent les barres Blizzard. Pour Bartender, réglez les libellés dans Bartender."
+
+-- Shared action bar source status, without a duplicate source editor.
+K.locales["frFR"]["bdActiveSource"]="Source des barres utilisée"
+K.locales["frFR"]["bdSourceHint"]="Cette source est partagée avec le thème de classe. La changer modifie les barres suivies par les décors et le style des boutons. Changez la source dans le thème de classe."
+K.locales["frFR"]["bdEditSource"]="Modifier la source dans le thème de classe"
+
+-- Grouped class-art settings.
+K.locales["frFR"]["artPageDesign"]="Thème"
+K.locales["frFR"]["artPageLayout"]="Disposition"
+K.locales["frFR"]["artPageBars"]="Source et barres"
+K.locales["frFR"]["artSelectedDetails"]="Détails du thème choisi"
+K.locales["frFR"]["artPetGroup"]="Barre du familier"
+K.locales["frFR"]["artPetHelp"]="S’applique quand une barre de familier utilisable existe. Ne convoque pas de familier et ne force pas sa barre à apparaître."
+K.locales["frFR"]["artSourceHelp"]="Recommandé : Automatique. Détecte la source Blizzard ou Bartender active. Choisissez une source fixe seulement si nécessaire. Ce choix affecte aussi le fond des barres."
+K.locales["frFR"]["artScopeHelp"]="Choisit les barres suivies par le décor de classe. Ne masque ni affiche les barres du jeu. Le style des boutons a sa propre sélection."
+K.locales["frFR"]["artDecoratedBars"]="Barres suivies par le décor"
+K.locales["frFR"]["artResetHelp"]="Réinitialise le thème de classe avec la fonction existante, sans réinitialiser le chat, les profils ou les raccourcis. Un second clic confirme."
+
+-- Grouped minimap settings.
+K.locales["frFR"]["mmPageAppearance"]="Apparence"
+K.locales["frFR"]["mmPageDetails"]="Horloge et coordonnées"
+K.locales["frFR"]["mmSunGroup"]="Icône jour/nuit"
+K.locales["frFR"]["mmClockX"]="Horloge : position horizontale"
+K.locales["frFR"]["mmClockY"]="Horloge : position verticale"
+K.locales["frFR"]["mmPanelLayout"]="Disposition du panneau"
+K.locales["frFR"]["mmPanelPosition"]="Position du bouton"
+K.locales["frFR"]["mmPanelButtonHelp"]="Ce bouton ouvre les icônes regroupées. Clic gauche : panneau. Clic droit : réglages de la minicarte. Déverrouillez-le pour le déplacer autour de la minicarte."
+
+-- Grouped bag settings and economy navigation.
+K.locales["frFR"]["bgAppearance"]="Apparence"
+K.locales["frFR"]["bgSorting"]="Tri et vente"
+K.locales["frFR"]["bgShortcut"]="Bouton et barre"
+K.locales["frFR"]["bgStrip"]="Barre des sacs"
+K.locales["frFR"]["bgOrganized"]="Catégories"
+K.locales["frFR"]["bgOrganizedHelp"]="Affiche les objets par catégories."
+K.locales["frFR"]["bgBankAppearance"]="Apparence de la banque"
+K.locales["frFR"]["bgBankHelp"]="Le sac par catégories reste actif. Ce choix définit l’apparence de la banque."
+K.locales["frFR"]["bgItemLooks"]="Apparence des objets"
+K.locales["frFR"]["economy"]="Économie"
+
+-- Settings text size.
+K.locales["frFR"]["panelTextNormal"]="Texte normal"
+K.locales["frFR"]["panelTextLarge"]="Grand texte"
+K.locales["frFR"]["panelTextLargest"]="Très grand texte"
+K.locales["frFR"]["panelTextHelp"]="Modifie la taille du texte des pages de réglages. Les textes du jeu et le modèle d’aperçu restent inchangés. Les textes longs sont ajustés à l’espace disponible."
+
+-- Classic Details-only settings.
+K.locales["frFR"]["dtNote"]="Personnalise l’apparence des fenêtres Details. Les mesures, le contenu et la gestion des fenêtres restent dans Details."
+K.locales["frFR"]["dmClassicDetailsRequired"]="Cette fonction nécessite que l’addon Details soit installé et activé."
+
+-- Grouped Experience settings.
+K.locales["frFR"]["xpPageGeneral"]="Général"
+K.locales["frFR"]["xpPageContent"]="Contenu"
+K.locales["frFR"]["xpPageAppearance"]="Apparence"
+K.locales["frFR"]["xpPageText"]="Textes"
+
+-- Grouped Threat settings.
+K.locales["frFR"]["ftGroupGeneral"]="Indicateur"
+K.locales["frFR"]["ftGroupAppearance"]="Texte et couleur"
+K.locales["frFR"]["ftGroupPosition"]="Position"
+
+-- Complete Aspect settings; retain existing translations and custom runtime text.
+K.locales["frFR"]["aaCheetah"]=K.locales["frFR"]["aaCheetah"] or "Texte d’alerte du guépard"
+K.locales["frFR"]["aaEnabled"]=K.locales["frFR"]["aaEnabled"] or "Activer les alertes d’aspect"
+K.locales["frFR"]["aaGlow"]=K.locales["frFR"]["aaGlow"] or "Lueur du guépard en combat"
+K.locales["frFR"]["aaHelp"]=K.locales["frFR"]["aaHelp"] or "Active ou désactive l’alerte indépendamment du chargement de l’addon. Les aspects non appris et les déplacements conservent leurs règles de masquage. Déverrouillez pour afficher un exemple de placement, puis verrouillez."
+K.locales["frFR"]["aaLive"]=K.locales["frFR"]["aaLive"] or "Revenir aux alertes réelles"
+K.locales["frFR"]["aaLock"]=K.locales["frFR"]["aaLock"] or "Verrouiller la position"
+K.locales["frFR"]["aaMissing"]=K.locales["frFR"]["aaMissing"] or "Texte sans aspect"
+K.locales["frFR"]["aaNote"]=K.locales["frFR"]["aaNote"] or "Les réglages sont propres à ce personnage. Les anciens réglages partagés sont copiés à la première utilisation. Déverrouillez puis faites glisser l’alerte pour la placer."
+K.locales["frFR"]["aaOriginal"]=K.locales["frFR"]["aaOriginal"] or "Ouvrir les réglages d’aspect d’origine"
+K.locales["frFR"]["aaPreview"]=K.locales["frFR"]["aaPreview"] or "Aperçu du guépard"
+K.locales["frFR"]["aaPreviewHelp"]=K.locales["frFR"]["aaPreviewHelp"] or "Affiche un exemple temporaire sur l’alerte réelle. Activez d’abord l’alerte. Changer de page ou fermer le panneau termine cet aperçu. Une alerte déverrouillée peut encore afficher son exemple de placement. Le masquage pendant les déplacements reste actif."
+K.locales["frFR"]["aaPreviewMissing"]=K.locales["frFR"]["aaPreviewMissing"] or "Aperçu sans aspect"
+K.locales["frFR"]["aaRefresh"]=K.locales["frFR"]["aaRefresh"] or "Actualiser les valeurs"
+K.locales["frFR"]["aaResetPosition"]=K.locales["frFR"]["aaResetPosition"] or "Réinitialiser la position"
+K.locales["frFR"]["aaResetTexts"]=K.locales["frFR"]["aaResetTexts"] or "Rétablir les textes par défaut"
+K.locales["frFR"]["aaText"]=K.locales["frFR"]["aaText"] or "Afficher le texte d’alerte"
+K.locales["frFR"]["aaTextHelp"]=K.locales["frFR"]["aaTextHelp"] or "Texte personnalisé de 100 caractères maximum, enregistré pendant la saisie pour ce personnage. Changer la langue du panneau ne traduit pas votre texte."
+K.locales["frFR"]["aaUpdate"]=K.locales["frFR"]["aaUpdate"] or "Installez la mise à jour HunterAspectAlert fournie pour utiliser ces réglages."
+K.locales["frFR"]["hunterAspect_cheetahText"]=K.locales["frFR"]["hunterAspect_cheetahText"] or "Guépard actif : changez d’aspect !"
+K.locales["frFR"]["hunterAspect_missingText"]=K.locales["frFR"]["hunterAspect_missingText"] or "Choisissez un aspect !"
+K.locales["frFR"]["aaCombatNoticeTitle"]=K.locales["frFR"]["aaCombatNoticeTitle"] or "Bêta : suivi des aspects en combat"
+K.locales["frFR"]["aaCombatNotice"]=K.locales["frFR"]["aaCombatNotice"] or "Le suivi fonctionne hors combat. En combat, le jeu limite les informations sur les améliorations : un état initial ou un changement peut être détecté, mais les changements suivants peuvent ne pas être suivis et l’alerte peut disparaître. L’absence d’alerte ne signifie pas que votre aspect est inactif. Vérifiez les icônes d’améliorations du jeu. Cette fonction a été développée en bêta ; les restrictions et le comportement du jeu peuvent changer."

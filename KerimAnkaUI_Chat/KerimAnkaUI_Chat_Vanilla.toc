@@ -1,9 +1,10 @@
 ## Interface: 11509
 ## Title: KerimAnka UI: Chat and Micro Menu [Classic Era]
 ## Group: KerimAnkaUI
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Category: Chat
 ## Author: Kerim Anka
-## Version: 0.36.0
+## Version: 0.37.0
 ## Dependencies: KerimAnkaUI
 ## Notes: Suite chat and micro menu module. Settings are managed by KerimAnka UI.
 

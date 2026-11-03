@@ -285,58 +285,67 @@ events:SetScript("OnEvent",function(_,event)
  if event=="PLAYER_LOGIN" then C_Timer.After(1,function() M.Queue() end) end
 end)
 
-function K.DrawMinimapButtons(page,w,y)
- w.Text(page,K.L("mbTitle"),8,y,690,18,{.73,.62,.41});y=y-36
- w.Text(page,K.L(M.Status()),8,y,690,13,M.IsBlocked() and {1,.72,.30} or {.65,.70,.62});y=y-112
- w.Text(page,K.L("mbClick"),8,y,690,13,{.65,.70,.62});y=y-76
- w.Text(page,K.L("mbAppearance"),8,y,690,16,{.73,.62,.41});y=y-32
- for i,key in ipairs({"mbRound","mbSquare"}) do
+function K.DrawMinimapButtons(page,w,y,grouped)
+ local function Fold(id,label,at,draw)
+  if grouped and K.MinimapSettingsFold then return K.MinimapSettingsFold(page,w,id,label,at,draw)end
+  return draw(at)
+ end
+ w.Text(page,K.L('mbTitle'),8,y,690,18,{.73,.62,.41});y=y-34
+ w.Text(page,K.L(M.Status()),8,y,690,13,M.IsBlocked()and{1,.72,.30}or{.65,.70,.62}):SetHeight(58);y=y-72
+ local active=M.Get('enabled')and not M.IsBlocked()
+ local function Rows(fields,at)
+  for i,f in ipairs(fields)do
+   local key,label,low,high=unpack(f)
+   local card=w.Box(page,(i-1)%2*365,at-math.floor((i-1)/2)*96,349,86)
+   w.Text(card,K.L(label),14,-12,278,14)
+   local help=w.Button(card,'?',311,-10,22,22,function()end);w.Tip(help,label,'mbHelp')
+   local available=not InCombatLockdown()and(key=='enabled'and not M.IsBlocked()or key~='enabled'and active)
+   if low then
+    local text=w.Text(card,tostring(M.Get(key)),14,-54,150,15)
+    for _,delta in ipairs({-1,1})do
+     local change=delta
+     local button=w.Button(card,change<0 and'−'or'+',change<0 and 251 or 297,-47,36,32,function()
+      if M.Set(key,M.Get(key)+change)then text:SetText(tostring(M.Get(key)))end
+     end)
+     if not available then button:Disable()end
+    end
+   else
+    local checked=key=='enabled'and active or(key~='enabled'and M.Get(key))
+    w.Switch(card,checked,255,-48,function(value)
+     if M.Set(key,value)and K.Render then K.Render()end
+    end,available)
+   end
+  end
+  return at-math.ceil(#fields/2)*96-12
+ end
+ y=Rows({{'enabled','mbEnabled'},{'locked','mbLocked'}},y)
+ w.Text(page,K.L('mmPanelButtonHelp'),8,y,690,13,{.65,.70,.62}):SetHeight(58);y=y-72
+ w.Text(page,K.L('mbAppearance'),8,y,690,16,{.73,.62,.41});y=y-32
+ for i,key in ipairs({'mbRound','mbSquare'})do
   local style=i
-  local choice=w.Button(page,K.L(key),(i-1)*365,y,349,50,function()
-   if M.Set("buttonStyle",style) and K.Render then K.Render() end
-  end)
-  if not choice.mbRowIcon then choice.mbRowIcon=choice:CreateTexture(nil,"ARTWORK") end
-  choice.mbRowIcon:SetTexture(M.ArtPath(style));choice.mbRowIcon:ClearAllPoints()
-  choice.mbRowIcon:SetPoint("LEFT",14,0);choice.mbRowIcon:SetSize(36,36);choice.mbRowIcon:Show()
-  w.Selected(choice,M.Get("buttonStyle")==style)
+  local choice=w.Button(page,K.L(key),(i-1)*365,y,349,50,function()if M.Set('buttonStyle',style)and K.Render then K.Render()end end)
+  if not choice.mbRowIcon then choice.mbRowIcon=choice:CreateTexture(nil,'ARTWORK')end
+  choice.mbRowIcon:SetTexture(M.ArtPath(style));choice.mbRowIcon:ClearAllPoints();choice.mbRowIcon:SetPoint('LEFT',14,0);choice.mbRowIcon:SetSize(36,36);choice.mbRowIcon:Show()
+  w.Selected(choice,M.Get('buttonStyle')==style)
+  if not active or InCombatLockdown()then choice:Disable()end
  end
  y=y-68
- for i,f in ipairs({{"enabled","mbEnabled"},{"locked","mbLocked"},{"showTooltip","mbShowTooltip"},{"columns","mbColumns",1,12},{"iconSize","mbSize",24,40},{"buttonSize","mbButtonSize",20,64},{"angle","mbAngle",-360,360},{"radius","mbRadius",0,80}}) do
-  local key,label,low,high=unpack(f)
-  local card=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*96,349,86)
-  w.Text(card,K.L(label),14,-12,278,13)
-  local help=w.Button(card,"?",311,-10,22,22,function() end);w.Tip(help,label,"mbHelp")
-  if low then
-   local text=w.Text(card,tostring(M.Get(key)),14,-54,150,15)
-   for _,delta in ipairs({-1,1}) do
-    local d=delta
-    w.Button(card,d<0 and "−" or "+",d<0 and 251 or 297,-47,36,32,function()
-     if M.Set(key,M.Get(key)+d) then text:SetText(tostring(M.Get(key))) end
-    end)
-   end
-  else
-   local blocked=key=="enabled" and M.IsBlocked()
-   w.Switch(card,not blocked and M.Get(key),255,-48,function(value) M.Set(key,value) end,not blocked and not InCombatLockdown())
+ y=Fold('panel','mmPanelLayout',y,function(at)return Rows({{'showTooltip','mbShowTooltip'},{'columns','mbColumns',1,12},{'iconSize','mbSize',24,40}},at)end)
+ y=Fold('position','mmPanelPosition',y,function(at)return Rows({{'buttonSize','mbButtonSize',20,64},{'angle','mbAngle',-360,360},{'radius','mbRadius',0,80}},at)end)
+ y=Fold('preferences','mbPreferences',y,function(at)
+  w.Text(page,K.L('mbPreferencesHelp'),8,at,690,13,{.65,.70,.62}):SetHeight(52);at=at-66
+  if not InCombatLockdown()then M.Refresh()end
+  local icons=M.Icons()
+  if #icons==0 then w.Text(page,K.L('mbEmpty'),8,at,690,13);return at-60 end
+  for _,item in ipairs(icons)do
+   local entry=item;local card=w.Box(page,0,at,714,70)
+   if not card.mbRowIcon then card.mbRowIcon=card:CreateTexture(nil,'ARTWORK')end
+   card.mbRowIcon:SetTexture(entry.texture or 'Interface\\AddOns\\KerimAnkaUI\\Media\\Phoenix.tga');card.mbRowIcon:ClearAllPoints();card.mbRowIcon:SetPoint('LEFT',14,0);card.mbRowIcon:SetSize(30,30);card.mbRowIcon:Show()
+   w.Text(card,entry.label,58,-12,480,14);w.Text(card,K.L('mbCollect'),58,-37,480,12,{.65,.70,.62})
+   w.Switch(card,entry.included,620,-22,function(value)if M.SetIncluded(entry.id,value)and K.Render then K.Render()end end,active and not InCombatLockdown())
+   at=at-80
   end
- end
- y=y-404
- w.Text(page,K.L("mbPreferences"),8,y,690,18,{.73,.62,.41});y=y-36
- w.Text(page,K.L("mbPreferencesHelp"),8,y,690,13,{.65,.70,.62});y=y-72
- if not InCombatLockdown() then M.Refresh() end
- local icons=M.Icons()
- if #icons==0 then w.Text(page,K.L("mbEmpty"),8,y,690,13);return y-60 end
- for _,item in ipairs(icons) do
-  local entry=item
-  local card=w.Box(page,0,y,714,70)
-  if not card.mbRowIcon then card.mbRowIcon=card:CreateTexture(nil,"ARTWORK") end
-  card.mbRowIcon:SetTexture(entry.texture or "Interface\\AddOns\\KerimAnkaUI\\Media\\Phoenix.tga")
-  card.mbRowIcon:ClearAllPoints();card.mbRowIcon:SetPoint("LEFT",14,0);card.mbRowIcon:SetSize(30,30);card.mbRowIcon:Show()
-  w.Text(card,entry.label,58,-12,480,14)
-  w.Text(card,K.L("mbCollect"),58,-37,480,12,{.65,.70,.62})
-  w.Switch(card,entry.included,620,-22,function(value)
-   if M.SetIncluded(entry.id,value) and K.Render then K.Render() end
-  end,not InCombatLockdown())
-  y=y-80
- end
+  return at
+ end)
  return y
 end

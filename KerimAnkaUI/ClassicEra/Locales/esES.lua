@@ -41,7 +41,7 @@ K.locales.esES = {
  ["enableHelp"]="Cambia la lista de addons de este personaje. Requiere recargar; los addons ya cargados siguen funcionando hasta entonces. Las dependencias no se activan ni desactivan automáticamente.",
  ["errorCustom"]="Filtros personalizados",
  ["errorCustomHelp"]="ACTIVO oculta el grupo de errores; INACTIVO lo muestra. Los errores importantes y desconocidos siguen visibles. Solo se filtran errores conocidos. Usa el modo de avisos importantes para ocultar todos los demás tipos.",
- ["errorImportantHelp"]="Oculta todos los errores rojos excepto bolsas o banco llenos, registro de misiones lleno, dinero insuficiente y límites de cantidad de objetos. Desactiva « Conservar avisos importantes » para ocultarlos también. No afecta a los mensajes de progreso de misiones.",
+ ["errorImportantHelp"]="Conserva espacio y registro de misiones llenos, dinero insuficiente, límites de objetos y restricciones de combate. Oculta otros errores rojos, sin afectar al progreso de misiones.",
  ["errorImportantOnly"]="Solo avisos importantes",
  ["errorShowAll"]="Mostrar todos",
  ["errorShowHelp"]="Visualización normal de errores de Blizzard, sin filtros de texto adicionales.",
@@ -70,7 +70,7 @@ K.locales.esES = {
  ["invalidIds"]="Usa solo ID numéricos positivos (máximo 30 entradas).",
  ["inventory"]="Bolsas",
  ["keepImportantErrors"]="Conservar avisos importantes",
- ["keepImportantErrorsHelp"]="En este modo conserva los errores de bolsas o banco llenos, registro de misiones lleno, dinero insuficiente y límites de cantidad de objetos. Desactiva para ocultar todos los errores rojos.",
+ ["keepImportantErrorsHelp"]="En este modo conserva avisos de espacio, misiones, dinero, límites de objetos y restricciones de combate, como comer o cambiar equipo cuando el combate lo impide. Desactiva para ocultar todos los errores rojos.",
  ["language"]="Idioma",
  ["languageHelp"]="Elige el idioma del panel. Los textos sin traducir se muestran en inglés.",
  ["listen"]="Escuchar",
@@ -159,7 +159,7 @@ K.locales.esES["barsEditor"]="Abrir modo de edición de Blizzard"
 K.locales.esES["barsLocked"]="El seguimiento de barras está pausado en modo fijo. Elige « Ajustar a las barras » arriba para cambiar esta selección."
 K.locales.esES["barsMissingBT"]="Has elegido Bartender, pero sus barras no están activas. Actívalo y recarga la interfaz, o elige Automático / Blizzard."
 K.locales.esES["barsNative"]="Blizzard"
-K.locales.esES["barsNativeActive"]="Se usan las barras de Blizzard. Activa las barras 2 y 3 en las opciones del juego y coloca las tres barras horizontales una sobre otra en el modo de edición. El diseño sigue las barras seleccionadas y visibles."
+K.locales.esES["barsNativeActive"]="Se usan las barras Blizzard. Activa las que necesites. Las barras 2 y 3 para tres filas horizontales son un ejemplo, no un requisito. El diseño sigue las barras visibles seleccionadas."
 K.locales.esES["barsNativeList"]="Barras de Blizzard incluidas"
 K.locales.esES["barsNoEditor"]="El modo de edición de Blizzard no está disponible ahora. Usa el menú del juego fuera de combate."
 K.locales.esES["barsSource"]="Origen de las barras de acción"
@@ -938,3 +938,110 @@ K.locales.esES["xpTexturedBarsHelp"]="Desactivado: relleno uniforme del color el
 
 K.locales.esES["xpShowBackground"]="Mostrar fondo del panel"
 K.locales.esES["xpShowBackgroundHelp"]="Muestra u oculta el fondo del panel. Las barras, los textos y el marco decorativo siguen separados. Se conserva la opacidad configurada."
+
+-- Classic home page groups.
+K.locales["esES"]["homeAudio"]="Sonidos del juego"
+K.locales["esES"]["homeSuspended"]="No disponible en Classic"
+
+-- Grouped Chat settings navigation.
+K.locales["esES"]["csAppearance"]="Apariencia"
+K.locales["esES"]["csLayout"]="Distribución"
+K.locales["esES"]["csVisibility"]="Visibilidad"
+K.locales["esES"]["csMicro"]="Micromenú"
+K.locales["esES"]["csReset"]="Restablecer"
+K.locales["esES"]["csAlwaysHelp"]="El texto, el fondo y los controles permanecen visibles al alejar el cursor."
+K.locales["esES"]["csMessagesHelp"]="El texto permanece visible; el fondo y los controles se ocultan al alejar el cursor."
+K.locales["esES"]["csHideHelp"]="El texto, el fondo y los controles se ocultan al alejar el cursor."
+
+-- Grouped action-button backdrop settings.
+K.locales["esES"]["bdAppearance"]="Apariencia"
+K.locales["esES"]["bdLabels"]="Texto y alcance"
+K.locales["esES"]["bdBars"]="Selección de barras"
+K.locales["esES"]["bdStyledBars"]="Barras con estilo de botones"
+K.locales["esES"]["bdScopeHelp"]="Esta selección no muestra ni oculta barras del juego. Solo elige los botones que reciben fondo y borde. La selección decorativa del diseño de clase es independiente. La fuente de barras se comparte entre ambas secciones."
+K.locales["esES"]["bdSharedColorHelp"]="Este color de panel se comparte con el diseño de clase. Cambia el panel decorativo detrás de los botones, no sus bordes individuales."
+K.locales["esES"]["bdNativeLabelsHelp"]="Estos textos de teclas y macros se aplican a las barras Blizzard. Para Bartender, configura los textos en Bartender."
+
+-- Shared action bar source status, without a duplicate source editor.
+K.locales["esES"]["bdActiveSource"]="Fuente de barras actual"
+K.locales["esES"]["bdSourceHint"]="La fuente se comparte con el diseño de clase. Cambiarla modifica las barras que siguen la decoración y el estilo de botones. Puedes cambiarla en Diseño de clase."
+K.locales["esES"]["bdEditSource"]="Cambiar fuente en Diseño de clase"
+
+-- Grouped class-art settings.
+K.locales["esES"]["artPageDesign"]="Diseño"
+K.locales["esES"]["artPageLayout"]="Distribución"
+K.locales["esES"]["artPageBars"]="Fuente y barras"
+K.locales["esES"]["artSelectedDetails"]="Detalles del diseño elegido"
+K.locales["esES"]["artPetGroup"]="Barra de mascota"
+K.locales["esES"]["artPetHelp"]="Se aplica cuando hay una barra de mascota utilizable. No invoca mascotas ni fuerza la aparición de su barra."
+K.locales["esES"]["artSourceHelp"]="Recomendado: Automático. Detecta la fuente Blizzard o Bartender activa. Elige una fuente fija solo si hace falta. También afecta al fondo de barras."
+K.locales["esES"]["artScopeHelp"]="Elige las barras que sigue el diseño decorativo. No muestra ni oculta barras del juego. El estilo de botones tiene una selección separada."
+K.locales["esES"]["artDecoratedBars"]="Barras que sigue la decoración"
+K.locales["esES"]["artResetHelp"]="Restablece el diseño de clase mediante la función existente, sin restablecer chat, perfiles ni teclas. Un segundo clic confirma."
+
+-- Grouped minimap settings.
+K.locales["esES"]["mmPageAppearance"]="Apariencia"
+K.locales["esES"]["mmPageDetails"]="Reloj y coordenadas"
+K.locales["esES"]["mmSunGroup"]="Icono día/noche"
+K.locales["esES"]["mmClockX"]="Reloj: posición horizontal"
+K.locales["esES"]["mmClockY"]="Reloj: posición vertical"
+K.locales["esES"]["mmPanelLayout"]="Distribución del panel"
+K.locales["esES"]["mmPanelPosition"]="Posición del botón"
+K.locales["esES"]["mmPanelButtonHelp"]="Este botón abre los iconos agrupados. Clic izquierdo: panel. Clic derecho: ajustes del minimapa. Desbloquéalo para moverlo alrededor del minimapa."
+
+-- Grouped bag settings and economy navigation.
+K.locales["esES"]["bgAppearance"]="Apariencia"
+K.locales["esES"]["bgSorting"]="Orden y ventas"
+K.locales["esES"]["bgShortcut"]="Botón y barra"
+K.locales["esES"]["bgStrip"]="Barra de bolsas"
+K.locales["esES"]["bgOrganized"]="Categorías"
+K.locales["esES"]["bgOrganizedHelp"]="Muestra los objetos agrupados por categoría."
+K.locales["esES"]["bgBankAppearance"]="Aspecto del banco"
+K.locales["esES"]["bgBankHelp"]="La bolsa por categorías sigue activa. Esta opción define el aspecto del banco."
+K.locales["esES"]["bgItemLooks"]="Aspecto de objetos"
+K.locales["esES"]["economy"]="Economía"
+
+-- Settings text size.
+K.locales["esES"]["panelTextNormal"]="Texto normal"
+K.locales["esES"]["panelTextLarge"]="Texto grande"
+K.locales["esES"]["panelTextLargest"]="Texto muy grande"
+K.locales["esES"]["panelTextHelp"]="Cambia el tamaño del texto de los ajustes. Los textos del juego y el modelo de vista previa no cambian. Los textos largos se ajustan al espacio disponible."
+
+-- Classic Details-only settings.
+K.locales["esES"]["dtNote"]="Personaliza las ventanas de Details. Las mediciones, el contenido y la gestión de ventanas corresponden a Details."
+K.locales["esES"]["dmClassicDetailsRequired"]="Esta función requiere tener instalado y activado el addon Details."
+
+-- Grouped Experience settings.
+K.locales["esES"]["xpPageGeneral"]="General"
+K.locales["esES"]["xpPageContent"]="Contenido"
+K.locales["esES"]["xpPageAppearance"]="Apariencia"
+K.locales["esES"]["xpPageText"]="Textos"
+
+-- Grouped Threat settings.
+K.locales["esES"]["ftGroupGeneral"]="Indicador"
+K.locales["esES"]["ftGroupAppearance"]="Texto y color"
+K.locales["esES"]["ftGroupPosition"]="Posición"
+
+-- Complete Aspect settings; retain existing translations and custom runtime text.
+K.locales["esES"]["aaCheetah"]=K.locales["esES"]["aaCheetah"] or "Texto de aviso del guepardo"
+K.locales["esES"]["aaEnabled"]=K.locales["esES"]["aaEnabled"] or "Activar avisos de aspecto"
+K.locales["esES"]["aaGlow"]=K.locales["esES"]["aaGlow"] or "Resplandor del guepardo en combate"
+K.locales["esES"]["aaHelp"]=K.locales["esES"]["aaHelp"] or "Controla el aviso independientemente de la carga del addon. Los aspectos no aprendidos y los desplazamientos mantienen sus reglas de ocultación. Desbloquea para mostrar un ejemplo de posición y vuelve a bloquear al terminar."
+K.locales["esES"]["aaLive"]=K.locales["esES"]["aaLive"] or "Volver a los avisos reales"
+K.locales["esES"]["aaLock"]=K.locales["esES"]["aaLock"] or "Bloquear posición"
+K.locales["esES"]["aaMissing"]=K.locales["esES"]["aaMissing"] or "Texto sin aspecto"
+K.locales["esES"]["aaNote"]=K.locales["esES"]["aaNote"] or "Los ajustes pertenecen a este personaje. Los antiguos ajustes compartidos se copian al usarlos por primera vez. Desbloquea y arrastra el aviso para colocarlo."
+K.locales["esES"]["aaOriginal"]=K.locales["esES"]["aaOriginal"] or "Abrir ajustes originales de aspecto"
+K.locales["esES"]["aaPreview"]=K.locales["esES"]["aaPreview"] or "Vista previa del guepardo"
+K.locales["esES"]["aaPreviewHelp"]=K.locales["esES"]["aaPreviewHelp"] or "Muestra un ejemplo temporal en el aviso real. Activa primero el aviso. Cambiar de página o cerrar el panel termina la vista previa. Un aviso desbloqueado puede seguir mostrando su ejemplo de posición. La ocultación durante los desplazamientos permanece activa."
+K.locales["esES"]["aaPreviewMissing"]=K.locales["esES"]["aaPreviewMissing"] or "Vista previa sin aspecto"
+K.locales["esES"]["aaRefresh"]=K.locales["esES"]["aaRefresh"] or "Actualizar valores"
+K.locales["esES"]["aaResetPosition"]=K.locales["esES"]["aaResetPosition"] or "Restablecer posición"
+K.locales["esES"]["aaResetTexts"]=K.locales["esES"]["aaResetTexts"] or "Restaurar textos predeterminados"
+K.locales["esES"]["aaText"]=K.locales["esES"]["aaText"] or "Mostrar texto del aviso"
+K.locales["esES"]["aaTextHelp"]=K.locales["esES"]["aaTextHelp"] or "Texto personalizado de hasta 100 caracteres, guardado al escribir para este personaje. Cambiar el idioma del panel no traduce tu texto."
+K.locales["esES"]["aaUpdate"]=K.locales["esES"]["aaUpdate"] or "Instala la actualización incluida de HunterAspectAlert para usar estos controles."
+K.locales["esES"]["hunterAspect_cheetahText"]=K.locales["esES"]["hunterAspect_cheetahText"] or "Guepardo activo: ¡cambia de aspecto!"
+K.locales["esES"]["hunterAspect_missingText"]=K.locales["esES"]["hunterAspect_missingText"] or "¡Elige un aspecto!"
+K.locales["esES"]["aaCombatNoticeTitle"]=K.locales["esES"]["aaCombatNoticeTitle"] or "Beta: seguimiento de aspectos en combate"
+K.locales["esES"]["aaCombatNotice"]=K.locales["esES"]["aaCombatNotice"] or "El seguimiento funciona fuera de combate. En combate, el juego limita la información de beneficios: puede detectarse el estado inicial o un cambio, pero los cambios posteriores podrían no detectarse y el aviso podría desaparecer. La ausencia de aviso no significa que tu aspecto esté inactivo. Comprueba los iconos de beneficios del juego. Esta función se desarrolló durante la beta; las restricciones y el comportamiento pueden cambiar."

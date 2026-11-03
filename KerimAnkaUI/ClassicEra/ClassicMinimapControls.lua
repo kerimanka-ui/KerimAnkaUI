@@ -127,22 +127,26 @@ local elapsed=0;events:SetScript('OnUpdate',function(_,dt)
  elapsed=elapsed+dt;if elapsed<.2 then return end;elapsed=0
  local d=DB();if d and not InCombatLockdown()then applying=true;if clock and d.clockCustom then PositionClock(d)end;if sun and d.sunCustom then PositionSun(d)end;applying=false end
 end)
-function K.DrawClassicMinimapControls(page,w,y)
+function K.DrawClassicMinimapControls(page,w,y,section)
  local function Refresh()if K.Render then K.Render()end end
- M.Refresh();w.Text(page,K.L('mmControlsTitle'),8,y,698,18,{.73,.62,.41});y=y-36
+ M.Refresh()
  local function Number(label,get,set,x,at,step,available)
   local b=w.Box(page,x,at,349,86);w.Text(b,K.L(label),14,-12,310,13);local value=w.Text(b,string.format('%.0f',get()),14,-49,190,15)
   for i,delta in ipairs({-step,step})do local change=delta;local button=w.Button(b,delta<0 and '−'or '+',251+(i-1)*46,-47,36,32,function()if set(get()+change)then value:SetText(string.format('%.0f',get()))end end);if not available or InCombatLockdown()then button:Disable()end end
  end
+ if section~='clock'then
+ w.Text(page,K.L('mmControlsTitle'),8,y,698,18,{.73,.62,.41});y=y-36
  Number('mmSunSize',function()return M.Get('sunSize')end,function(v)return M.Set('sunSize',v)end,0,y,5,M.SunAvailable())
  Number('mmSunX',function()return M.Get('sunX')end,function(v)return M.Set('sunX',v)end,365,y,1,M.SunAvailable());y=y-100
  Number('mmSunY',function()return M.Get('sunY')end,function(v)return M.Set('sunY',v)end,0,y,1,M.SunAvailable())
  local sunReset=w.Button(page,K.L('mmSunReset'),365,y-25,349,34,function()M.ResetSunPosition();Refresh()end);if not M.SunAvailable()or InCombatLockdown()then sunReset:Disable()end;y=y-110
+ end
+ if section=='sun'then return y end
  w.Text(page,K.L('mmClockTitle'),8,y,698,16,{.73,.62,.41});y=y-32
  w.Text(page,K.L('mmClockHelp'),8,y,698,13,{.65,.70,.62});y=y-56
  local b=w.Box(page,0,y,714,62);w.Text(b,K.L('mmClockLock'),14,-18,580,14);w.Switch(b,M.Get('clockLocked'),620,-16,function(v)M.Set('clockLocked',v)end,M.ClockAvailable()and not InCombatLockdown());y=y-78
- Number('mcX',function()return M.Get('clockX')end,function(v)return M.Set('clockX',v)end,0,y,1,M.ClockAvailable())
- Number('mcY',function()return M.Get('clockY')end,function(v)return M.Set('clockY',v)end,365,y,1,M.ClockAvailable());y=y-100
+ Number('mmClockX',function()return M.Get('clockX')end,function(v)return M.Set('clockX',v)end,0,y,1,M.ClockAvailable())
+ Number('mmClockY',function()return M.Get('clockY')end,function(v)return M.Set('clockY',v)end,365,y,1,M.ClockAvailable());y=y-100
  local reset=w.Button(page,K.L('mmClockReset'),0,y,714,32,function()M.ResetClock();Refresh()end);if not M.ClockAvailable()or InCombatLockdown()then reset:Disable()end
  return y-56
 end

@@ -5,6 +5,10 @@ local frame,pips,label
 local nativeState
 local function DB() return type(KAClassic_ForeverLeatherUnitsDB)=='table' and KAClassic_ForeverLeatherUnitsDB end
 local function Rogue() return select(2,UnitClass('player'))=='ROGUE' end
+local function Cat()
+ local id,token=UnitPowerType('player')
+ return select(2,UnitClass('player'))=='DRUID'and(id==3 or token=='ENERGY')
+end
 local function Config()
  local d=DB();if not d then return end
  if type(d.comboDetached)~='table' then d.comboDetached={} end
@@ -15,7 +19,7 @@ local function Config()
  c.x=tonumber(c.x) or 0;c.y=tonumber(c.y) or -170
  return c
 end
-function M.Wanted() local d=DB();return Rogue() and d and d.showCombo==true or false end
+function M.Wanted() local d=DB();return (Rogue()or Cat()) and d and d.showCombo==true or false end
 local function SuppressNative()
  local f=_G.ComboFrame;if not f or not f.GetAlpha then return end
  if not nativeState or nativeState.frame~=f then
@@ -26,7 +30,7 @@ local function SuppressNative()
    if s.suppressed then s.changing=true;f:SetAlpha(0);s.changing=false end
   end)
  end
- local d=DB();local hide=M.Wanted() or d and d.enabled and d.hideNative or false
+ local d=DB();local hide=M.Wanted() or Rogue() and d and d.enabled and d.hideNative or false
  local s=nativeState
  if hide then
   s.suppressed=true;s.changing=true;f:SetAlpha(0);s.changing=false
@@ -161,9 +165,9 @@ function M.Reset()
  DB().comboDetached=nil;M.Refresh();return true
 end
 local e=CreateFrame('Frame')
-for _,event in ipairs({'PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_TARGET_CHANGED','COMBO_TARGET_CHANGED','UNIT_POWER_FREQUENT','UNIT_MAXPOWER','PLAYER_REGEN_ENABLED','PLAYER_REGEN_DISABLED','ADDON_LOADED'}) do e:RegisterEvent(event) end
+for _,event in ipairs({'PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_TARGET_CHANGED','COMBO_TARGET_CHANGED','UPDATE_SHAPESHIFT_FORM','UNIT_DISPLAYPOWER','UNIT_POWER_FREQUENT','UNIT_MAXPOWER','PLAYER_REGEN_ENABLED','PLAYER_REGEN_DISABLED','ADDON_LOADED'}) do e:RegisterEvent(event) end
 e:SetScript('OnEvent',function(_,event,unit)
- if (event=='UNIT_POWER_FREQUENT' or event=='UNIT_MAXPOWER') and unit~='player' then return end
+ if (event=='UNIT_POWER_FREQUENT'or event=='UNIT_MAXPOWER'or event=='UNIT_DISPLAYPOWER') and unit~='player' then return end
  if event=='PLAYER_REGEN_DISABLED' and frame then frame:StopMovingOrSizing() end
  M.Refresh(event=='PLAYER_TARGET_CHANGED' or event=='PLAYER_LOGIN' or event=='PLAYER_ENTERING_WORLD')
 end)

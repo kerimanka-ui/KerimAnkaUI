@@ -4,7 +4,7 @@
 ## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Notes: Shared settings and ready layouts for KerimAnka UI on Classic Era.
 ## Author: Kerim Anka
-## Version: 0.36.0
+## Version: 0.37.0
 ## SavedVariables: KAClassic_KerimAnkaUIDB
 ## SavedVariablesPerCharacter: KAClassic_KerimAnkaUICharacterDB
 ## OptionalDeps: MinimapButtonButton, Bartender4, Details, Questie, Clique, LibDataBroker-1.1, LibDBIcon-1.0
@@ -22,19 +22,27 @@ ClassicEra\Locales\ruRU.lua
 ClassicEra\NameFonts.xml
 ClassicEra\NameFonts.lua
 ClassicEra\ChatLocales.lua
+ClassicEra\ProfileSerializer.lua
+ClassicEra\Profiles.lua
 ClassicEra\Core.lua
 ClassicEra\Keyring.lua
 ClassicEra\QuestieCompat.lua
 ClassicEra\FPS.lua
 ClassicEra\ClassPresets.lua
 ClassicEra\ProfileLayouts.lua
-ClassicEra\BagCompanions.lua
+ClassicEra\ProfileTransferLocales.lua
+ClassicEra\ProfileTransfer.lua
 ClassicEra\BagShortcut.lua
 ClassicEra\SoundGroups.lua
 ClassicEra\Community.lua
+ClassicEra\ProfilePageLocales.lua
+ClassicEra\ProfilePage.lua
 ClassicEra\Window.lua
 ClassicEra\UnitPreview.lua
 ClassicEra\UnitOptions.lua
+ClassicEra\UnitSettingsLocales.lua
+ClassicEra\UnitSettingsModel.lua
+ClassicEra\UnitSettingsView.lua
 ClassicEra\ActionBarOptions.lua
 ClassicEra\ActionRange.lua
 ClassicEra\MinimapButtons.lua
@@ -49,9 +57,14 @@ ClassicEra\Diagnostics.lua
 ClassicEra\ClassicInventoryStyle.lua
 ClassicEra\ClassicBagDesigns.lua
 ClassicEra\ClassicBags.lua
+ClassicEra\ClassicBagsOrganized.lua
 ClassicEra\ClassicItemRecords.lua
 ClassicEra\ClassicBank.lua
 ClassicEra\ClassicMerchant.lua
+ClassicEra\ClassicEconomy.lua
+ClassicEra\ClassicEconomyLocales.lua
+ClassicEra\ClassicEconomySources.lua
+ClassicEra\ClassicEconomyView.lua
 
 ClassicEra\ClassicSwingEngine.lua
 ClassicEra\ClassicSwingTimer.lua

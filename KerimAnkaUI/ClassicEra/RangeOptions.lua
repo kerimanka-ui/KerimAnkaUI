@@ -43,7 +43,7 @@ function K.DrawRangePage(page)
  if not api or api.version<1 then return false end
  local db=api.GetSettings()
  if not db then return false end
- local w=K.UnitWidgets
+ local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
  w.Text(page,K.L("hrNote"),8,0,690,13,{.65,.70,.62})
  local y=-74
  w.Text(page,K.L("hrPreview"),8,y,640,18,{.73,.62,.41})
@@ -78,7 +78,7 @@ function K.DrawRangePage(page)
    end
    w.Button(c,"−",251,-47,36,32,function() change(-1) end)
    w.Button(c,"+",297,-47,36,32,function() change(1) end)
-  else w.Switch(c,db[key],255,-48,function(value) if not K.InCombat() then api.Set(key,value) end end,true) end
+  else w.Switch(c,db[key],255,-48,function(value) if not K.InCombat() then api.Set(key,value) end end,not K.InCombat()) end
  end
  y=y-math.ceil(#fields/2)*96
  if api.SetText and api.GetText then

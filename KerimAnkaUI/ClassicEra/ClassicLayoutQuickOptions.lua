@@ -134,7 +134,7 @@ function Q.Group(name)
   if name=='micro'then Number(g,api,'microSize','imIconSize',18,48,1);Number(g,api,'microGap','imGap',0,16,1)
   else
    Number(g,api,'bagSize','imBagSize',18,48,1);Number(g,api,'bagGap','imBagShortcutGap',0,16,1)
-   for _,e in ipairs({{'bagBackground','imBagBackground'},{'bagFrame','imBagFrame'},{'bagIconBorder','imBagIconBorder'},{'bagJunk','imJunk'},{'bagQuality','imQuality'},{'bagQuest','imQuestItems'},{'bagEmptySlots','imEmptySlots'}})do Flag(g,api,e[1],e[2])end
+   for _,e in ipairs({{'bagBackground','imBagBackground'},{'bagFrame','imBagFrame'},{'bagJunk','imJunk'},{'bagQuality','imQuality'},{'bagQuest','imQuestItems'},{'bagEmptySlots','imEmptySlots'}})do Flag(g,api,e[1],e[2])end
   end
  elseif name=='bags'then
   api=K.ClassicBags;if not api then return end
