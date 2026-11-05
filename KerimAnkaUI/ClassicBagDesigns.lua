@@ -49,6 +49,18 @@ function D.Layout(id,size,columns,count,gap,bagGap,hidden,keyring)
  return l
 end
 
+-- Keep every footer caption inside the existing footer band at all text levels.
+-- Compact capacity text is preferable to placing it across the shelf divider.
+function D.FooterLayout(l,moneyWidth,fontLevel)
+ local record=math.min(l.recordWidth+(fontLevel or 0)*7,l.width-moneyWidth-44)
+ local capacity=l.width-25-moneyWidth-6-(14+record+8)
+ local iconOnly=capacity<62
+ if iconOnly then record=28;capacity=l.width-25-moneyWidth-6-(14+record+8)end
+ l.recordWidth=record;l.recordIconOnly=iconOnly
+ l.footerX=14+record+8;l.footerWidth=math.max(1,capacity)
+ return l
+end
+
 
 local chrome=setmetatable({},{__mode='k'})
 local u=64/1024
@@ -160,7 +172,7 @@ local function HideSurface(parent,key)
  local t=surfaces[parent]and surfaces[parent][key];if t then for _,a in ipairs(t)do a:Hide()end end
 end
 function D.Glyph(texture,index)
- local r=iconRects[index];if texture.kaGlyphIndex==index then return r[5]or 1 end;texture.kaGlyphIndex=index;texture:SetTexture(MEDIA..'IconAtlas.tga','CLAMP','CLAMP','TRILINEAR');texture:SetTexCoord(r[1],r[2],r[3],r[4]);texture:SetVertexColor(.88,.88,.88,1);if texture.SetSnapToPixelGrid then texture:SetSnapToPixelGrid(false)end;if texture.SetTexelSnappingBias then texture:SetTexelSnappingBias(0)end;return r[5]or 1
+ local r=iconRects[index];texture:Show();if texture.kaGlyphIndex==index then return r[5]or 1 end;texture.kaGlyphIndex=index;texture:SetTexture(MEDIA..'IconAtlas.tga','CLAMP','CLAMP','TRILINEAR');texture:SetTexCoord(r[1],r[2],r[3],r[4]);texture:SetVertexColor(.88,.88,.88,1);if texture.SetSnapToPixelGrid then texture:SetSnapToPixelGrid(false)end;if texture.SetTexelSnappingBias then texture:SetTexelSnappingBias(0)end;return r[5]or 1
 end
 local function PaintSymbol(button)
  local role=button.kaRole
@@ -258,7 +270,7 @@ function D.PaintButton(button,id)
   if not button.icon then button.icon=button:CreateTexture(nil,'OVERLAY')end
   local aspect=D.Glyph(button.icon,glyph);button.icon:ClearAllPoints()
   local size=role=='records'and 17 or 16;button.icon:SetSize(size*math.min(1,aspect),size*math.min(1,1/aspect))
-  if role=='records'then button.icon:SetPoint('LEFT',8,0)else button.icon:SetPoint('CENTER')end
+  if role=='records'and not button.kaRecordIconOnly then button.icon:SetPoint('LEFT',8,0)else button.icon:SetPoint('CENTER')end
  end
  if button.kaLabel then
   button.kaLabel:ClearAllPoints();button.kaLabel:SetPoint('CENTER',role=='records'and 10 or 0,0)
@@ -267,7 +279,7 @@ function D.PaintButton(button,id)
   if role=='close'then button:SetText('×');button.kaLabel:SetTextColor(1,.8,.35)
   elseif role=='clear'then button:SetText('×');button.kaLabel:SetTextColor(.8,.82,.84)end
  end
- if button.kaLabel then button.kaLabel:SetShown(not PaintSymbol(button))end
+ if button.kaLabel then button.kaLabel:SetShown(not PaintSymbol(button)and not button.kaRecordIconOnly)end
  button.kaBagButtonDesign=id
 end
 function D.SkinSearch(search,id,l)
@@ -385,7 +397,7 @@ function D.SearchFocus(search,focused)
 end
 
 function D.CapacityFont(region)
- local code=KerimAnkaUIDB and KerimAnkaUIDB.language or'en'
+ local code=(KerimAnkaUIDB and KerimAnkaUIDB.language or'en')..':'..K.InventoryPresentation.Level('bag')
  if region.kaCapacityLanguage==code then return end
  -- Match the existing readable inventory text; language-aware font fallback
  -- and font objects are owned by InventoryFont, not recreated per refresh.

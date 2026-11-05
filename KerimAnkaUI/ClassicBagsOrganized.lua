@@ -1,7 +1,7 @@
 -- Optional Classic Era presentation. Native bag/slot buttons and Fast3 own item operations.
 local _,K=...
 local O={};K.ClassicBagsOrganized=O
-local categories={'quest','consumable','food','gear','trade','misc','junk'}
+local categories={'quest','consumable','food','ammo','soul','gear','trade','misc','junk'}
 local strings={
  en={'Organized','Quick Access','All','Pinned','Quest','Potions / Supplies','Food / Drink','Equipment','Crafting','Other','Junk','My bags','Pin items','Done','free','Empty slots','No matching items','Show all','Recorded items','Click items to pin / unpin. Finish to use items normally.','Keyring','Resize','Bag settings'},
  tr={'Düzenli','Hızlı Erişim','Tümü','Sabitler','Görev','İksir / Tüketim','Yiyecek / İçecek','Ekipman','Meslek','Diğer','Gri Eşyalar','Çantalarım','Sabitle','Bitir','boş','Boş yuvalar','Eşleşen eşya yok','Tümünü göster','Eşya kayıtları','Sabitlemek / kaldırmak için eşyaya tıkla. Normal kullanıma dönmek için Bitir.','Anahtarlık','Boyutlandır','Çanta ayarları'},
@@ -38,11 +38,17 @@ local capacityText={
  zhCN={'普通','专用','已满','专用格只接受对应类型的物品。','没有合适的\n空格','等待背包类型','所选背包\n没有空间'},
 }
 local function Cap(i)local lang=KerimAnkaUIDB and KerimAnkaUIDB.language or'en';return(capacityText[lang]or capacityText.en)[i]end
-local labelIndex={quest=5,consumable=6,food=7,gear=8,trade=9,misc=10,junk=11,pins=4,all=3}
+local specialLabels={en={'Ammunition','Soul Shards'},tr={'Mühimmat','Ruh Parçaları'},
+ de={'Munition','Seelensplitter'},frFR={'Munitions',"Fragments d’âme"},itIT={'Munizioni','Frammenti d’anima'},
+ esES={'Munición','Fragmentos de alma'},ptBR={'Munição','Fragmentos de alma'},
+ ruRU={'Боеприпасы','Осколки душ'},zhCN={'弹药','灵魂碎片'}}
+for lang,labels in pairs(specialLabels)do strings[lang][25]=labels[1];strings[lang][26]=labels[2]end
+local labelIndex={quest=5,consumable=6,food=7,gear=8,trade=9,misc=10,junk=11,pins=4,all=3,ammo=25,soul=26}
 local function Text(i)
  local lang=KerimAnkaUIDB and KerimAnkaUIDB.language or'en'
  return (strings[lang]or strings.en)[i]or strings.en[i]
 end
+function O.CategoryLabel(id)return Text(id=='empty'and 16 or labelIndex[id]or 10)end
 local function Config()
  if not K.db then return end
  K.db.classicBags=K.db.classicBags or{}
@@ -55,10 +61,10 @@ local function Config()
  c.recentLimit=({[6]=true,[12]=true,[24]=true})[c.recentLimit]and c.recentLimit or 12
  return c
 end
-local defaultOrder={'recent','pins','quest','consumable','food','gear','trade','misc','junk'}
+local defaultOrder={'recent','pins','quest','consumable','food','ammo','soul','gear','trade','misc','junk'}
 function O.Order()
  local d=Config();local result,seen={},{}
- if d and type(d.categoryOrder)=='table'then for i=1,9 do local id=d.categoryOrder[i];for _,valid in ipairs(defaultOrder)do if id==valid and not seen[id]then result[#result+1]=id;seen[id]=true end end end end
+ if d and type(d.categoryOrder)=='table'then for i=1,#defaultOrder do local id=d.categoryOrder[i];for _,valid in ipairs(defaultOrder)do if id==valid and not seen[id]then result[#result+1]=id;seen[id]=true end end end end
  for _,id in ipairs(defaultOrder)do if not seen[id]then result[#result+1]=id end end
  return result
 end
@@ -99,7 +105,16 @@ function O.ObserveRecent()
 end
 local function Combat()return InCombatLockdown and InCombatLockdown()end
 function O.Active()local c=Config();return c and c.enabled==true end
-function O.Category(bag,slot,info)return K.ClassicInventoryStyle.ItemCategory(bag,slot,info)end
+function O.Category(bag,slot,info)
+ local base=K.ClassicInventoryStyle.ItemCategory(bag,slot,info)
+ if base=='quest'then return base end
+ return K.ForeverInventoryAdapter.SpecialCategory(info)or base
+end
+function O.ShelfLayout(width,lastBag,hasKey)
+ local cells=lastBag+1+(hasKey and 1 or 0)
+ local size=math.min(38,math.floor((width-40-7*(cells-1))/cells))
+ return size,math.floor((width-size*cells-7*(cells-1))/2),lastBag+1
+end
 function O.PinKey(info)
  if not info or not info.itemID then return end
  -- Favourite a type, not a physical slot. Random suffixes must remain distinct.
@@ -141,8 +156,7 @@ local function DropHelp()
 end
 local function Refresh()if K.ClassicBags then K.ClassicBags.Refresh()end end
 local function Label(parent,size)
- local f=parent:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');K.InventoryFont(f)
- if size then local font,_,flags=f:GetFont();if font then f:SetFont(font,size,flags)end end
+ local f=parent:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');K.InventoryFont(f,size)
  f:SetWordWrap(false);return f
 end
 local function TabFont(label)K.InventoryFont(label,11)end
@@ -227,8 +241,8 @@ local function Ensure(c)
  s.sub=Label(s.top,10);s.sub:SetPoint('TOPLEFT',47,-29);s.sub:SetTextColor(.55,.60,.53);s.sub:SetJustifyH('LEFT')
  s.close=Button(s.top,'X',function()f:Hide()end);s.close.kaCombatAllowed=true
  
- s.smaller=Button(s.top,'-',function()O.ChangeWidth(-1)end)
- s.larger=Button(s.top,'+',function()O.ChangeWidth(1)end)
+ s.smaller=Button(s.top,'-',function()K.InventoryPresentation.ChangeText('bag',-1)end)
+ s.larger=Button(s.top,'+',function()K.InventoryPresentation.ChangeText('bag',1)end)
  s.edit=Button(s.surface,'',function()if s.reordering then s.reordering=false;s.drag=nil;Refresh();return end;s.editing=not s.editing;if s.editing then Config().collapsed.pins=nil end;Refresh()end)
  s.filterToggle=Button(s.surface,'',function()s.filterOpen=not s.filterOpen;Refresh()end);s.filterToggle.kaCombatAllowed=true
  s.filterPanel=CreateFrame('Frame',nil,s.surface,'BackdropTemplate');Backdrop(s.filterPanel,.065,.065,.06);s.filterPanel:SetFrameLevel(f:GetFrameLevel()+15)
@@ -462,6 +476,8 @@ function O.Render(c)
  if not s.active then HideExisting(s);s.active=true end
  if Combat()then O.StopResize();s.editing=false;s.reordering=false;s.drag=nil;s.tools:Hide()end
  local f=c.frame
+ K.InventoryPresentation.Window(f,'bag',true)
+ local fontLevel=K.InventoryPresentation.Level('bag')
  -- First-use defaults from Dikkatzühtü's approved 400x380 view.
  -- Existing explicit sizes are never overwritten, including older test versions.
  local width=Clamp(d.width,400,1000,400);local height=Clamp(d.height,380,800,380)
@@ -477,13 +493,14 @@ function O.Render(c)
  s.shade:SetShown(background)
  s.brand:SetText(K.ForeverInventoryAdapter.PlayerDisplayName());s.brand:SetWidth(math.max(80,width-166));s.brand:SetJustifyH('LEFT');s.sub:Hide()
  Segments(s.close,'close');Segments(s.smaller,'minus');Segments(s.larger,'plus');Segments(s.grip,'resize')
- s.close.kaTip=TipText(5);s.smaller.kaTip=TipText(1);s.larger.kaTip=TipText(2);s.grip.kaTip=TipText(4)
+ s.close.kaTip=TipText(5);s.smaller.kaTip=K.InventoryPresentation.Tip(1);s.larger.kaTip=K.InventoryPresentation.Tip(2);s.grip.kaTip=TipText(4)
  s.filterToggle.kaTip=TipText(6);s.capacity.kaTip=Text(16)
  
  s.grip:SetBackdropColor(.115,.115,.11,1);s.grip:SetBackdropBorderColor(.43,.39,.31,1)
  
  Place(s.close,s.top,width-30,5,22,22)
  Place(s.smaller,s.top,width-111,5,22,22);Place(s.larger,s.top,width-84,5,22,22)
+ if s.smaller.SetEnabled then s.smaller:SetEnabled(not Combat()and fontLevel>0);s.larger:SetEnabled(not Combat()and fontLevel<3)end
  Place(c.settings,s.top,width-57,5,22,22);SkinPlain(c.settings);c.settings.icon:Hide();c.settings:SetText('');Asset(c.settings,'Settings',15)
  c.settings:SetFrameLevel(s.top:GetFrameLevel()+2)
  c.settings:SetScript('OnClick',function()if not Combat()then s.tools:SetShown(not s.tools:IsShown())end end)
@@ -493,15 +510,17 @@ function O.Render(c)
  s.tools:SetShown(toolsShown)
  for _,b in ipairs(c.frame.kaResizeButtons or{})do b:Hide()end
  c.search:SetFrameLevel(s.surface:GetFrameLevel()+3);c.sort:SetFrameLevel(s.surface:GetFrameLevel()+3);c.records:SetFrameLevel(s.surface:GetFrameLevel()+3)
- local editWidth=62;local filterWidth=124
- c.search:ClearAllPoints();c.search:SetPoint('TOPLEFT',f,'TOPLEFT',14,-40);c.search:SetSize(width-28-editWidth-filterWidth-76-18,28)
+ local editWidth=62+fontLevel*5;local filterWidth=124+fontLevel*7;local sortWidth=76+fontLevel*3
+ if fontLevel>0 then editWidth=math.min(editWidth,math.floor(width*.18));filterWidth=math.min(filterWidth,math.floor(width*.28));sortWidth=math.min(sortWidth,math.floor(width*.20))end
+ local toolsY=40
+ c.search:ClearAllPoints();c.search:SetPoint('TOPLEFT',f,'TOPLEFT',14,-40);c.search:SetSize(width-28-editWidth-filterWidth-sortWidth-18,28)
  if not s.searchBG then s.searchBG=CreateFrame('Frame',nil,c.search,'BackdropTemplate');s.searchBG:SetAllPoints();s.searchBG:SetFrameLevel(c.search:GetFrameLevel()-1);Backdrop(s.searchBG,.012,.012,.009)end
  c.search:SetTextInsets(8,24,0,0);c.searchHint:ClearAllPoints();c.searchHint:SetPoint('LEFT',8,0)
  if c.search.kaSearchGlyph then c.search.kaSearchGlyph:Hide()end
  s.searchBG:Show();c.searchHint:SetWidth(math.max(1,c.search:GetWidth()-45))
  c.clear:ClearAllPoints();c.clear:SetPoint('RIGHT',c.search,'RIGHT',-2,0);c.clear:SetSize(20,20);SkinPlain(c.clear);c.clear:SetFrameLevel(c.search:GetFrameLevel()+2);Segments(c.clear,'close');c.clear:Show()
- Place(s.edit,s.surface,width-14-76-6-editWidth,40,editWidth,28);s.edit.label:SetText(Text((s.editing or s.reordering)and 14 or 13))
- Place(c.sort,s.surface,width-90,40,76,28);SkinPlain(c.sort)
+ Place(s.edit,s.surface,width-14-sortWidth-6-editWidth,toolsY,editWidth,28);s.edit.label:SetText(Text((s.editing or s.reordering)and 14 or 13))
+ Place(c.sort,s.surface,width-14-sortWidth,toolsY,sortWidth,28);SkinPlain(c.sort)
  local total,free=0,0;local groups={pins={},empty={},recent={}};local counts={all=0,pins=0,recent=0};for _,id in ipairs(categories)do groups[id]={};counts[id]=0 end
  local filterBag=c.getFilter();local occupied=0;local representatives,totals={},{}
  local generalFree,generalSlots,specialFree,specialSlots,unknownFree=0,0,0,0,0;local bagSpaces={}
@@ -556,12 +575,14 @@ function O.Render(c)
  for _,group in pairs(c.buttons)do for _,b in pairs(group)do b.kaOrganizedVisible=false end end
  for _,h in pairs(s.headers)do h:Hide()end
  local y=74
- local filterIds={'all','pins','recent'};for _,id in ipairs(categories)do filterIds[#filterIds+1]=id end
- local filterX=width-14-76-6-editWidth-6-filterWidth
- Place(s.filterToggle,s.surface,filterX,40,filterWidth,28)
+ local filterIds={'all','pins','recent'};for _,id in ipairs(categories)do
+  if(id~='ammo'and id~='soul')or counts[id]>0 or s.filter==id then filterIds[#filterIds+1]=id else s.filters[id]:Hide()end
+ end
+ local filterX=width-14-sortWidth-6-editWidth-6-filterWidth
+ Place(s.filterToggle,s.surface,filterX,toolsY,filterWidth,28)
  s.filterToggle.label:SetText((s.filter=='recent'and W(1)or Text(labelIndex[s.filter])));TabFont(s.filterToggle.label);Asset(s.filterToggle,'Down',12,'RIGHT',-6,0)
  s.filterToggle.label:ClearAllPoints();s.filterToggle.label:SetPoint('LEFT',6,0);s.filterToggle.label:SetPoint('RIGHT',-21,0)
- Place(s.filterPanel,s.surface,filterX,72,228,#filterIds*25+12);s.filterPanel:SetShown(s.filterOpen)
+ Place(s.filterPanel,s.surface,filterX,toolsY+32,228,#filterIds*25+12);s.filterPanel:SetShown(s.filterOpen)
  for i,id in ipairs(filterIds)do
   local b=s.filters[id];b:SetParent(s.filterPanel);b:SetFrameLevel(s.filterPanel:GetFrameLevel()+1)
   b.label:SetText((id=='recent'and W(1)or Text(labelIndex[id]))..' '..counts[id]);TabFont(b.label);b.label:SetJustifyH('LEFT')
@@ -582,7 +603,7 @@ function O.Render(c)
   local message=Cap(1)..': '..(generalFree==0 and Cap(3)or generalFree..' '..Text(15))
   Place(s.spaceStatus,s.surface,width-160,y-19,146,16);s.spaceStatus:SetText(message);s.spaceStatus:SetTextColor(unpack(s.spaceColour));s.note:SetWidth(math.max(1,width-185))
  end
- local shelfH=s.shelf and 61 or 0;local bottom=47+shelfH
+ local shelfH=s.shelf and 61 or 0;local footerHeight=fontLevel>0 and 71 or 47;local bottom=footerHeight+shelfH
  local columns=math.max(1,math.floor((width-40+4)/cell))
  -- Pinned groups share the clipped scroll surface; each native slot is drawn once.
  local listY=0;local childWidth=width-34
@@ -650,17 +671,17 @@ function O.Render(c)
  Place(s.track,s.surface,width-8,y,3,s.scroll:GetHeight());s.track:SetShown(s.maxScroll>0)
  local h=s.scroll:GetHeight();local thumb=math.max(18,h*h/math.max(h,s.child:GetHeight()));s.thumb:ClearAllPoints();s.thumb:SetPoint('TOPLEFT',0,-(s.maxScroll>0 and s.scroll:GetVerticalScroll()/s.maxScroll*(h-thumb)or 0));s.thumb:SetSize(3,thumb)
  if s.shelf then
-  Place(s.shelfPanel,s.surface,1,height-47-shelfH,width-2,shelfH);s.shelfTitle:SetText(Text(12))
-  local bw=math.min(38,math.floor((width-100)/6));local start=math.floor((width-(bw+7)*6+7)/2)
-  for bag=0,K.ForeverInventoryAdapter.LastBag()do c.bagButtons[bag]:SetFrameLevel(s.shelfPanel:GetFrameLevel()+2);Place(c.bagButtons[bag],f,start+bag*(bw+7),height-47-shelfH+20,bw,bw)end
+  Place(s.shelfPanel,s.surface,1,height-footerHeight-shelfH,width-2,shelfH);s.shelfTitle:SetText(Text(12))
   local hasKey=KeyRingButton~=nil and(KEYRING_CONTAINER~=nil or Enum and Enum.BagIndex and Enum.BagIndex.Keyring~=nil)
-  if hasKey then c.keyButton:SetFrameLevel(s.shelfPanel:GetFrameLevel()+2);Place(c.keyButton,f,start+5*(bw+7),height-47-shelfH+20,bw,bw)else c.keyButton:Hide()end
+  local last=K.ForeverInventoryAdapter.LastBag();local bw,start,keyIndex=O.ShelfLayout(width,last,hasKey)
+  for bag=0,last do c.bagButtons[bag]:SetFrameLevel(s.shelfPanel:GetFrameLevel()+2);Place(c.bagButtons[bag],f,start+bag*(bw+7),height-47-shelfH+20,bw,bw)end
+  if hasKey then c.keyButton:SetFrameLevel(s.shelfPanel:GetFrameLevel()+2);Place(c.keyButton,f,start+keyIndex*(bw+7),height-47-shelfH+20,bw,bw)else c.keyButton:Hide()end
  else s.shelfPanel:Hide();for _,b in pairs(c.bagButtons)do b:Hide()end;c.keyButton:Hide()end
  local footY=height-36
  Place(c.records,s.surface,10,footY,28,26);SkinPlain(c.records);c.records:SetText('');Asset(c.records,'Book',17);c.records:Show()
- Place(s.shelfButton,s.surface,44,footY,math.min(100,width*.23),26);s.shelfButton.label:SetText(Text(12));s.shelfButton.label:ClearAllPoints();s.shelfButton.label:SetPoint('LEFT',5,0);s.shelfButton.label:SetPoint('RIGHT',-19,0);Asset(s.shelfButton,s.shelf and'Up'or'Down',13,'RIGHT',-4,0)
- local moneyWidth=90
- Place(s.capacity,s.surface,155,footY,width-155-moneyWidth-28,26);local capacity=Cap(1)..': '..(generalFree==0 and Cap(3)or generalFree..' '..Text(15))
+ Place(s.shelfButton,s.surface,44,footY,math.min(100+fontLevel*8,width*.33),26);s.shelfButton.label:SetText(Text(12));s.shelfButton.label:ClearAllPoints();s.shelfButton.label:SetPoint('LEFT',5,0);s.shelfButton.label:SetPoint('RIGHT',-19,0);Asset(s.shelfButton,s.shelf and'Up'or'Down',13,'RIGHT',-4,0)
+ local moneyWidth=90+fontLevel*8
+ Place(s.capacity,s.surface,fontLevel>0 and 14 or 155,fontLevel>0 and footY-28 or footY,fontLevel>0 and width-28 or width-155-moneyWidth-28,fontLevel>0 and 28 or 26);local capacity=Cap(1)..': '..(generalFree==0 and Cap(3)or generalFree..' '..Text(15))
  if specialSlots>0 then capacity=capacity..'\n'..Cap(2)..': '..specialFree..' '..Text(15)end
  if unknownFree>0 then capacity=free..' '..Text(15)..'\n'..Cap(6)end
  s.capacity.label:SetText(capacity);s.capacityWarning=generalFree==0 and unknownFree==0

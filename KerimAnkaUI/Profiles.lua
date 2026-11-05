@@ -73,7 +73,7 @@ schema.root=Shape({chat=Shape(Fields("enabled microDock enterMode microHidden"))
 schema.root.fields.minimapButtons.fields.excluded={kind="iconExclusions"}
 -- Character UI preferences only. Inventory, money and timer runtime state are excluded.
 
-schema.root.fields.classicBags=Shape(Fields("shelfHidden autoSellJunk",{backgroundStyle={1,3},columns={6,14},x={-10000,10000},y={-10000,10000}}))
+schema.root.fields.classicBags=Shape(Fields("shelfHidden autoSellJunk autoReplaceJunk",{backgroundStyle={1,3},columns={6,14},fontLevel={0,3},windowScale={.7,1.5},x={-10000,10000},y={-10000,10000}}))
 schema.root.fields.classicBags.fields.sortMode=Choice("daily legacy custom")
 schema.root.fields.classicBags.fields.sortHearthFirst=B
 local bagPriorityFields={}
@@ -81,7 +81,7 @@ for _,key in ipairs({"first","second","third","fourth","fifth","sixth"})do bagPr
 schema.root.fields.classicBags.fields.sortOrder=Shape(bagPriorityFields)
 schema.root.fields.classicBags.fields.recordColumns=N(8,14)
 schema.root.fields.classicBags.fields.recordRows=N(3,10)
-schema.root.fields.classicBank=Shape({columns=N(6,14)})
+schema.root.fields.classicBank=Shape({columns=N(6,14),fontLevel=N(0,3),windowScale=N(.7,1.5)})
 -- Shared chat appearance, validated for profile import/export.
 schema.root.fields.chat.fields.theme=N(1,3)
 for key,range in pairs({x={0,10000},y={0,10000},width={300,3000},height={100,2000},controlMode={1,3},microGap={0,12},microSize={20,40}})do schema.root.fields.chat.fields[key]=N(range[1],range[2])end

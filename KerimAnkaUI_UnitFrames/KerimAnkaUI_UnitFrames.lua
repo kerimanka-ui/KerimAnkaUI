@@ -123,8 +123,15 @@ local function applyFeedback()
     elseif feedbackUnits.pet then feedbackEvents:RegisterUnitEvent("UNIT_COMBAT", "pet") end
 end
 feedbackEvents:SetScript("OnEvent", function(_, _, unit, event, flags, amount, damageType)
+    if secret(unit) then return end
     local f = feedbackUnits[unit]
     if not f or not f:IsVisible() then return end
+    -- The native helper compares/formats this payload. Forever can send secret
+    -- UNIT_COMBAT values which addon execution must not compare, even indirectly
+    -- through Blizzard's helper. Omit only this portrait-feedback event.
+    if secret(event) or secret(flags) or secret(amount) or secret(damageType) then
+        stopFeedback(f);return
+    end
     local overlay = f.combatFeedback
     local ok = checked(CombatFeedback_OnCombatEvent, overlay, event, flags, amount, damageType)
     if not ok then stopFeedback(f);return end

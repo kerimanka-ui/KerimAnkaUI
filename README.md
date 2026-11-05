@@ -162,3 +162,8 @@ See [product packaging](docs/PRODUCT-PACKAGING.md) for the release layout.
 ## 0.38.0 client boundaries
 
 The combined archive updates Forever (1.60.1). Classic Era keeps its tested 0.37.0 client files. Generic TOCs select Forever; `_Vanilla.toc` files select Classic Era. `ClassicEra/` stays frozen. Some historical `Classic*.lua` filenames in the Forever hub are adapted Forever implementations, never loaded by Classic TOCs. Separate settings namespaces are retained.
+
+
+## 0.39.0 Forever update
+
+Updated bag text sizing, Organized categories, native bank integration and menu icons. Optional full-bag grey-item replacement starts off. Experimental guild-bank theme is session-only opt-in (`/kaguildskin on`); `/kaguildpreview` is a read-only example. Real guild operations remain unverified. Classic Era stays at0.37.0. See CHANGELOG.md for details.

@@ -67,18 +67,12 @@ function C.NewButtonChrome(button,outlineOnly)
 end
 
 -- Display-only surfaces over the real buttons; no replacement click handlers.
-local simpleIcons={CharacterMicroButton='Character',SpellbookMicroButton='Book',TalentMicroButton='Talents',QuestLogMicroButton='Quest',SocialsMicroButton='Social',WorldMapMicroButton='Map',MainMenuMicroButton='Menu',HelpMicroButton='Help'}
--- Modern micro buttons differ from Era. Unknown buttons keep their native art.
-simpleIcons.PlayerSpellsMicroButton='Book'
-simpleIcons.ProfessionMicroButton='Book'
-simpleIcons.AchievementMicroButton='Talents'
-simpleIcons.GuildMicroButton='Social'
-simpleIcons.CollectionsMicroButton='Book'
-simpleIcons.EJMicroButton='Book'
-simpleIcons.LFDMicroButton='Social'
-simpleIcons.LegacyMicroButton='Talents'
-simpleIcons.HousingMicroButton='native'
-simpleIcons.StoreMicroButton='native'
+-- One small atlas; every supported destination has a distinct line glyph.
+local simpleIcons={CharacterMicroButton=1,SpellbookMicroButton=2,TalentMicroButton=3,
+ QuestLogMicroButton=4,SocialsMicroButton=5,WorldMapMicroButton=6,MainMenuMicroButton=7,
+ HelpMicroButton=8,PlayerSpellsMicroButton=9,ProfessionMicroButton=10,
+ AchievementMicroButton=11,GuildMicroButton=12,CollectionsMicroButton=13,
+ EJMicroButton=14,LFDMicroButton=15,LegacyMicroButton=16,HousingMicroButton=17,StoreMicroButton=18}
 local previousButtonChrome=C.NewButtonChrome
 function C.NewButtonChrome(button,outlineOnly)
  local name=button:GetName();local key=name and simpleIcons[name]
@@ -89,14 +83,10 @@ function C.NewButtonChrome(button,outlineOnly)
  local f=CreateFrame('Frame',nil,button);f:SetFrameLevel(button:GetFrameLevel()+2);f:EnableMouse(false);f:SetAllPoints()
  local fill=f:CreateTexture(nil,'BACKGROUND');fill:SetAllPoints();fill:SetColorTexture(.13,.18,.15,1);C.Border(f,1)
  local icon=f:CreateTexture(nil,'OVERLAY')
- if key=='native'then
-  -- New Forever destinations keep their distinct native glyph on our surface.
-  local native=button.GetNormalTexture and button:GetNormalTexture()
-  local atlas=native and native.GetAtlas and native:GetAtlas()
-  if atlas then icon:SetAtlas(atlas)
-  elseif native then icon:SetTexture(native:GetTexture());if native.GetTexCoord then icon:SetTexCoord(native:GetTexCoord())end end
- else icon:SetTexture('Interface\\AddOns\\KerimAnkaUI_Chat\\Chat\\Media\\Simple'..key..'.tga')end
- icon:SetSize(20,20);icon:SetPoint('CENTER');icon:SetVertexColor(.78,.81,.73,1)
+ local x,y=((key-1)%5)*32,math.floor((key-1)/5)*32
+ icon:SetTexture('Interface\\AddOns\\KerimAnkaUI_Chat\\Chat\\Media\\MicroGlyphs.tga')
+ icon:SetTexCoord(x/256,(x+32)/256,y/128,(y+32)/128)
+ icon:SetSize(22,22);icon:SetPoint('CENTER');icon:SetVertexColor(.78,.81,.73,1)
  C.HookScript(button,'OnEnter',function()fill:SetColorTexture(.22,.28,.22,1);icon:SetVertexColor(.91,.84,.66,1)end)
  C.HookScript(button,'OnLeave',function()fill:SetColorTexture(.13,.18,.15,1);icon:SetVertexColor(.78,.81,.73,1)end)
  C.simpleButtons[button]=f;return f

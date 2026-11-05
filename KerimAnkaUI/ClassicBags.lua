@@ -358,7 +358,7 @@ local function PaintCooldown(button,bag,slot,hasItem)
  if active and not counter then
   counter=CreateFrame('Frame',nil,button);button.kaCooldownCounter=counter;counter:SetAllPoints(button);counter:EnableMouse(false)
   counter:SetFrameLevel(math.max(button:GetFrameLevel()+5,cooldown and cooldown:GetFrameLevel()+1 or 0))
-  counter.label=counter:CreateFontString(nil,'OVERLAY','NumberFontNormal');K.InventoryFont(counter.label);counter.label:SetPoint('CENTER');counter.label:SetTextColor(1,1,1,1)
+  counter.label=counter:CreateFontString(nil,'OVERLAY','NumberFontNormal');counter.label.kaInventoryFixedFont=true;K.InventoryFont(counter.label);counter.label:SetPoint('CENTER');counter.label:SetTextColor(1,1,1,1)
   counter.kaElapsed=0
  end
  if counter then
@@ -466,7 +466,8 @@ local function Paint(button,bag,slot,info,provided)
  local quest=K.ClassicInventoryStyle.IsQuestItem(bag,slot,info)
  local junk=info and not quest and quality==0 and not info.hasNoValue and Option('bagJunk',true)
  if SetItemButtonDesaturated then SetItemButtonDesaturated(button,(info and info.isLocked) or junk or false) end
- local texture=button.icon or button.Icon or _G[button:GetName()..'IconTexture']
+ local name=button.GetName and button:GetName()
+ local texture=button.icon or button.Icon or name and _G[name..'IconTexture']
  if texture then texture:SetVertexColor(junk and .55 or 1,junk and .55 or 1,junk and .55 or 1) end
  if button.JunkIcon then button.JunkIcon:SetShown(junk and true or false) end
  if not button.kaJunk then
@@ -860,14 +861,14 @@ local function Ensure()
  end
  frame=CreateFrame('Frame','KerimAnkaUIClassicBagFrame',UIParent,'BackdropTemplate')
  frame:Hide()
- frame.kaClassicInventory=true;frame.kaBagDesignWindow=true
+ frame.kaClassicInventory=true;frame.kaBagDesignWindow=true;frame.kaInventoryTextScope='bag'
  frame:SetFrameStrata('DIALOG');frame:SetMovable(true);frame:SetClampedToScreen(true);frame:EnableMouse(true);frame:RegisterForDrag('LeftButton')
  frame:SetBackdrop({bgFile='Interface\\Buttons\\WHITE8X8',edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=2})
  frame:SetBackdropColor(.045,.05,.04,.97);frame:SetBackdropBorderColor(.63,.49,.25,1)
  frame:SetScript('OnDragStart',function(self) if not Combat() then self:StartMoving() end end)
  frame:SetScript('OnDragStop',function(self)
   self:StopMovingOrSizing();local x,y=self:GetCenter();local px,py=UIParent:GetCenter()
-  local d=Config();if d and x and y and px and py then d.x=x-px;d.y=y-py end
+  K.InventoryPresentation.SavePosition(self)
   Position()
  end)
  local close=K.ClassicBagDesigns.NewButton('KerimAnkaUIClassicBagClose',frame,'close');close:SetSize(26,26);close:SetPoint('TOPRIGHT',-10,-10)
@@ -978,7 +979,7 @@ local function Ensure()
   local b=K.ClassicBagDesigns.NewButton(nil,frame,change<0 and'minus'or'plus');b:SetSize(24,22)
   frame.kaResizeButtons=frame.kaResizeButtons or {};table.insert(frame.kaResizeButtons,b);b.kaResizeDelta=change
   b:SetPoint('TOPRIGHT',change<0 and -112 or -85,-8);b:SetText(change<0 and '-' or '+')
-  b:SetScript('OnClick',function()M.SetColumns(Columns()+change)end)
+  b:SetScript('OnClick',function()K.InventoryPresentation.ChangeText('bag',change)end)
  end
  UISpecialFrames=UISpecialFrames or {};table.insert(UISpecialFrames,'KerimAnkaUIClassicBagFrame')
  frame.kaDesignButtons={close,settings,records,sortButton,searchClear,shelfToggle}
@@ -1003,7 +1004,7 @@ local function CapacityText(free,total,l)
  local compact=string.format('%d / %d',free,total)
  if not l.wideFooter then return compact end
  local full=string.format(T('%d / %d slots free%s'),free,total,filterBag and(T(' | bag ')..filterBag)or'')
- local language=KerimAnkaUIDB and KerimAnkaUIDB.language or'en'
+ local language=(KerimAnkaUIDB and KerimAnkaUIDB.language or'en')..':'..K.InventoryPresentation.Level('bag')
  K.ClassicBagDesigns.CapacityFont(footer)
  if footer.kaFullText~=full or footer.kaMeasureLanguage~=language then
   SetText(footer,full)
@@ -1016,8 +1017,11 @@ function M.RefreshMoney()
  if not frame or not frame:IsShown()then return end
  SetText(moneyText,Money())
  if K.ClassicBagsOrganized then K.ClassicBagsOrganized.MoneyChanged()end
- local width=math.min(96,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth()or 80)+12))
- if moneyText.kaWidth~=width then moneyText:SetWidth(width);moneyHit:SetWidth(width+8);moneyText.kaWidth=width end
+ local width=math.min(140,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth()or 80)+12))
+ if moneyText.kaWidth~=width then
+  moneyText:SetWidth(width);moneyHit:SetWidth(width+8);moneyText.kaWidth=width
+  frame.kaGeometryKey=nil;M.Refresh()
+ end
 end
 function M.RefreshCooldowns()
  if not frame or not frame:IsShown()then return end;Count('cooldown')
@@ -1044,6 +1048,7 @@ local function RefreshVisible()
   K.ClassicBagsOrganized.Release()
  end
  K.ClassicInventoryStyle.Apply(frame,2)
+ K.InventoryPresentation.Window(frame,'bag',false)
  local size=math.max(18,math.min(48,tonumber(Option('bagSize',30)) or 30))
  local cell=size+K.ClassicInventoryStyle.ItemGap();local columns=Columns();local n,total,free=0,0,0
  waitingForItemInfo=false
@@ -1080,12 +1085,13 @@ local function RefreshVisible()
   for slot=count+1,#buttons[bag] do buttons[bag][slot]:Hide() end
  end
  local l=K.ClassicBagDesigns.Layout(K.ClassicBagDesigns.ID(),size,columns,n,K.ClassicInventoryStyle.ItemGap(),shortcutGap,shelfHidden,hasKey)
- SetText(footer,CapacityText(free,total,l))
  M.ShortcutCounts(bagButtons,free)
  SetText(moneyText,Money())
- local moneyWidth=math.min(96,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth()or 80)+12))
- moneyText:SetWidth(moneyWidth);moneyHit:SetWidth(moneyWidth+8)
- local key=table.concat({l.id,size,columns,l.rows,tostring(shelfHidden),tostring(hasKey),K.ClassicInventoryStyle.ItemGap(),shortcutGap,K.ClassicInventoryStyle.BackgroundStyle(),tostring(Option('bagBackground',true)),tostring(Option('bagFrame',true)),KerimAnkaUIDB and KerimAnkaUIDB.language or'en'},':')
+ local moneyWidth=math.min(140,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth()or 80)+12))
+ moneyText:SetWidth(moneyWidth);moneyHit:SetWidth(moneyWidth+8);moneyText.kaWidth=moneyWidth
+ K.ClassicBagDesigns.FooterLayout(l,moneyWidth,K.InventoryPresentation.Level('bag'))
+ SetText(footer,CapacityText(free,total,l))
+ local key=table.concat({l.id,size,columns,l.rows,tostring(shelfHidden),tostring(hasKey),K.ClassicInventoryStyle.ItemGap(),shortcutGap,K.ClassicInventoryStyle.BackgroundStyle(),tostring(Option('bagBackground',true)),tostring(Option('bagFrame',true)),KerimAnkaUIDB and KerimAnkaUIDB.language or'en',K.InventoryPresentation.Level('bag'),moneyWidth},':')
  if frame.kaGeometryKey~=key then
   Count('layout')
  frame:SetSize(l.width,l.height);frame.kaBagLayout=l
@@ -1095,19 +1101,20 @@ local function RefreshVisible()
  end
  keyButton:SetSize(l.id==2 and 24 or 25,l.iconSize);keyButton:ClearAllPoints();keyButton:SetPoint('TOPLEFT',l.icons[K.ForeverInventoryAdapter.LastBag()+1].x,-l.icons[K.ForeverInventoryAdapter.LastBag()+1].y)
  keyButton:SetShown(not shelfHidden and hasKey);K.ClassicBagDesigns.SkinShortcut(keyButton)
- local moneyWidth=math.min(96,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth()or 80)+12))
+ local moneyWidth=math.min(140,math.max(70,(moneyText.GetStringWidth and moneyText:GetStringWidth()or 80)+12))
  local record=frame.kaRecordsButton
  record:ClearAllPoints();footer:ClearAllPoints();moneyText:ClearAllPoints();moneyHit:ClearAllPoints()
- record:SetSize(l.recordWidth,28);record:SetPoint('BOTTOMLEFT',14,10)
+ local fontLevel=K.InventoryPresentation.Level('bag')
+ record.kaRecordIconOnly=l.recordIconOnly;record:SetSize(l.recordWidth,28);record:SetPoint('BOTTOMLEFT',14,10)
  footer:SetPoint('BOTTOMLEFT',l.footerX,16);footer:SetWidth(l.footerWidth);footer:SetJustifyH('CENTER')
- moneyText:SetPoint('BOTTOMRIGHT',-14,16);moneyHit:SetPoint('BOTTOMRIGHT',-10,8)
+ moneyText:SetPoint('BOTTOMRIGHT',-25,16);moneyHit:SetPoint('BOTTOMRIGHT',-23,8)
  footer:SetWordWrap(false);if footer.SetMaxLines then footer:SetMaxLines(1)end
  shelfToggle:SetText('');shelfToggle.icon:SetAlpha(shelfHidden and .55 or 1)
  shelfToggle:ClearAllPoints();shelfToggle:SetSize(l.headerSize,l.headerSize);shelfToggle:SetPoint('TOPLEFT',l.controls.shelf.x,-l.controls.shelf.y)
  for _,b in ipairs(frame.kaResizeButtons or{})do
   local p=b.kaResizeDelta<0 and l.controls.minus or l.controls.plus
   b:SetSize(l.headerSize,l.headerSize);b:ClearAllPoints();b:SetPoint('TOPLEFT',p.x,-p.y)
-  if b.SetEnabled then b:SetEnabled(b.kaResizeDelta<0 and columns>M.MinimumColumns()or b.kaResizeDelta>0 and columns<14)end
+  K.InventoryPresentation.TextButton(b,'bag',b.kaResizeDelta)
  end
  frame.kaBagSettings:ClearAllPoints();frame.kaBagSettings:SetSize(l.headerSize,l.headerSize);frame.kaBagSettings:SetPoint('TOPRIGHT',-40,-l.headerY)
  for _,b in ipairs(frame.kaDesignButtons)do if b.kaRole=='close'then b:SetSize(l.headerSize,l.headerSize);b:ClearAllPoints();b:SetPoint('TOPRIGHT',-10,-l.headerY)end end
@@ -1135,7 +1142,11 @@ function M.Refresh()
  if not ok then error(err,0)end
 end
 CloseNative=function()
- if CloseAllBags then CloseAllBags() end
+ -- CloseAllBags also writes FRAME_THAT_OPENED_BAGS. That shared owner is read
+ -- by the native bank OnShow before SetBankType / protected first-slot purchase.
+ -- Only dismiss carried inventory here; leave service ownership to Blizzard.
+ if CloseBackpack then CloseBackpack()end
+ if CloseBag then for id=1,K.ForeverInventoryAdapter.LastBag()do CloseBag(id)end end
  M.RestoreNativeBagAlpha()
 end
 local function Show()

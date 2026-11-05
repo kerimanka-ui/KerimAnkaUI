@@ -44,7 +44,7 @@ class ClientIsolationTests(unittest.TestCase):
  def test_client_toc_interfaces_versions_and_storage_are_separate(self):
   roots=json.loads((ROOT/'packaging/products.json').read_text())['products']['suite']['roots']
   for mod in roots:
-   for suffix,interface,version in [('',16001,'0.38.0'),('_Vanilla',11509,'0.37.0')]:
+   for suffix,interface,version in [('',16001,M['version']),('_Vanilla',11509,'0.37.0')]:
     text=(ROOT/mod/(mod+suffix+'.toc')).read_text()
     self.assertRegex(text,r'(?m)^## Interface: '+str(interface)+r'\s*$')
     self.assertRegex(text,r'(?m)^## Version: '+re.escape(version)+r'\s*$')
@@ -56,7 +56,7 @@ class ClientIsolationTests(unittest.TestCase):
   self.assertIn('## Interface: 16001',meta);self.assertNotIn('11509',meta)
   config=json.loads((ROOT/'packaging/products.json').read_text())
   self.assertEqual(config['versionFile'],'KerimAnkaUI/KerimAnkaUI.toc')
-  release=json.loads((ROOT/'release/0.38.0.json').read_text())
+  release=json.loads((ROOT/'release'/(M['version']+'.json')).read_text())
   self.assertEqual(set(release['productMembers']),{'suite'})
   self.assertEqual(release['gameVersions'],['1.60.1'])
 if __name__=='__main__':unittest.main()

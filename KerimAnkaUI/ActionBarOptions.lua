@@ -488,6 +488,7 @@ function K.DrawInventoryPage(page)
  elseif inventoryTab=='sorting'then
   if K.ClassicInventoryStyle and K.ClassicInventoryStyle.DrawSortSettings then y=K.ClassicInventoryStyle.DrawSortSettings(page,w,y)end
   if K.ClassicMerchant and K.ClassicMerchant.DrawSettings then y=K.ClassicMerchant.DrawSettings(page,w,y-12)end
+  if K.LootSpace and K.LootSpace.DrawSettings then y=K.LootSpace.DrawSettings(page,w,y-12)end
  elseif inventoryTab=='shortcut'then
   if K.BagShortcut then y=K.BagShortcut.Draw(page,w,y)end
   y=BagFold(page,w,'strip','bgStrip',y,function(at)

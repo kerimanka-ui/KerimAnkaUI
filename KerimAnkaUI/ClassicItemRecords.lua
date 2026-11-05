@@ -162,8 +162,9 @@ local function Backdrop(f)
  f:SetBackdrop({bgFile='Interface\\Buttons\\WHITE8X8',edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=1})
  f:SetBackdropColor(.035,.04,.03,.98);f:SetBackdropBorderColor(.63,.49,.25,1)
 end
-local function Text(parent,size)
- return parent:CreateFontString(nil,'OVERLAY',size or 'GameFontHighlightSmall')
+local function Text(parent,size,fixed)
+ local label=parent:CreateFontString(nil,'OVERLAY',size or 'GameFontHighlightSmall')
+ label.kaInventoryFixedFont=fixed or false;if not fixed then K.InventoryFont(label)end;return label
 end
 local function Button(parent,name,text,x,y,width,fn)
  local b=K.ClassicBagDesigns.NewButton(name,parent,'records');b:SetPoint('TOPLEFT',x,y);b:SetSize(width,24);K.InventoryLabel(b,text);b:SetScript('OnClick',fn);return b
@@ -278,13 +279,13 @@ end
 local function CreateRow(i)
  local b=CreateFrame('Button',nil,panel,'BackdropTemplate');b:SetSize(34,34);b.kaRecordSnapshotButton=true
  b.icon=b:CreateTexture(nil,'ARTWORK');b.icon:SetAllPoints(b)
- b.count=Text(b,'NumberFontNormalSmall');b.count:SetPoint('BOTTOMRIGHT',-1,1)
+ b.count=Text(b,'NumberFontNormalSmall',true);b.count:SetPoint('BOTTOMRIGHT',-1,1)
  b:SetScript('OnEnter',ItemTooltip);b:SetScript('OnLeave',function()GameTooltip:Hide()end)
  rows[i]=b;return b
 end
 local function Ensure()
  if panel then return end
- panel=CreateFrame('Frame','KerimAnkaUIClassicItemRecords',UIParent,'BackdropTemplate');panel:Hide();panel:SetSize(430,430);panel.kaClassicInventory=true;panel.kaRecordWindow=true
+ panel=CreateFrame('Frame','KerimAnkaUIClassicItemRecords',UIParent,'BackdropTemplate');panel:Hide();panel:SetSize(430,430);panel.kaClassicInventory=true;panel.kaRecordWindow=true;panel.kaInventoryTextScope=mode=='bank'and'bank'or'bag'
  panel:SetFrameStrata('DIALOG');panel:SetClampedToScreen(true);panel:EnableMouse(true);panel:EnableMouseWheel(true);panel:SetMovable(true);panel:RegisterForDrag('LeftButton');Backdrop(panel)
  panel:SetScript('OnDragStart',function(self) self:StartMoving() end);panel:SetScript('OnDragStop',function(self) self:StopMovingOrSizing() end)
  panel:SetScript('OnHide',function()M.StopResize();if menu then menu:Hide()end;GameTooltip:Hide()end)
@@ -301,9 +302,9 @@ local function Ensure()
  status=Text(panel);status:SetPoint('TOPLEFT',12,-119);status:SetWidth(406);status:SetJustifyH('LEFT')
  rows={}
  local smaller=K.ClassicBagDesigns.NewButton(nil,panel,'minus');smaller:SetSize(22,22);smaller:SetPoint('TOPRIGHT',-62,-6);panel.kaSmaller=smaller
- smaller:SetScript('OnClick',function()M.SetSize(columns-1,visibleRows)end)
+ smaller:SetScript('OnClick',function()K.InventoryPresentation.ChangeText(mode=='bank'and'bank'or'bag',-1)end)
  local larger=K.ClassicBagDesigns.NewButton(nil,panel,'plus');larger:SetSize(22,22);larger:SetPoint('TOPRIGHT',-34,-6);panel.kaLarger=larger
- larger:SetScript('OnClick',function()M.SetSize(columns+1,visibleRows)end)
+ larger:SetScript('OnClick',function()K.InventoryPresentation.ChangeText(mode=='bank'and'bank'or'bag',1)end)
  local grip=CreateFrame('Button',nil,panel);grip:SetSize(18,18);grip:SetPoint('BOTTOMRIGHT',-5,5);grip:EnableMouse(true);panel.kaGrip=grip
  for i=1,3 do local line=grip:CreateTexture(nil,'OVERLAY');line:SetColorTexture(.73,.67,.48,1);line:SetSize(4+i*3,1.5);line:SetPoint('BOTTOMRIGHT',-i*3,i*3);line:SetRotation(math.pi/4)end
  grip:SetScript('OnMouseDown',function(_,button)if button=='LeftButton'then M.StartResize()end end)
@@ -315,6 +316,9 @@ end
 function M.Refresh()
  if panel then K.ClassicInventoryStyle.Apply(panel,1)end
  if not panel or not panel:IsShown() then return end
+ local scope=mode=='bank'and'bank'or'bag'
+ K.InventoryPresentation.ScopeWindow(panel,scope)
+ K.InventoryPresentation.TextButton(panel.kaSmaller,scope,-1);K.InventoryPresentation.TextButton(panel.kaLarger,scope,1)
  local list=M.Characters()
  if not selected or not Record(selected) then
   local key=Identity();selected=Record(key) and key or list[1] and list[1].key;offset=0

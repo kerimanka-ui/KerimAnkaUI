@@ -1,3 +1,20 @@
+# KerimAnka UI 0.39.0 — Forever bags, bank and interface fixes
+
+This update targets **WoW: Forever (1.60.1)**. The combined archive preserves **Classic Era 0.37.0** unchanged.
+
+- Distinct micro-menu symbols for Forever's expanded menu.
+- Organized bags: separate keyring access and ammunition/Soul Shard categories, with nine-language labels.
+- Separate bag and bank text-size controls; resizing handles across bag designs; improved large-text toolbar, capacity and recorded-bank layouts.
+- Personal bank: updated purchased-slot controls, native purchase flow, item visibility and bank-service closing. Removed a shared bag-owner reset from our handoff. The latest opening handoff runs after native window placement to reduce the initial position flash.
+- Optional room-for-loot feature, **off by default**: after a full-bag loot failure, a normal input may replace an eligible cheaper grey stack with more valuable vendor-price loot. Quest, locked and pinned candidates remain protected; actual deletion and acquisition are reported separately with item links. No auction-price comparison or fabricated sale income.
+- Unit Frames: skip portrait combat-feedback payloads that contain restricted secret values, preserving normal public feedback.
+- Experimental guild-bank theme, **off by default**: `/kaguildskin on` enables it for the current session; `/kaguildskin off` restores the native appearance. Native tabs, permissions, money controls and logs remain native. `/kaguildpreview` is a clearly labeled read-only example requiring no guild membership.
+
+The personal-bank fixes have local regression coverage and user gameplay checks; the final initial-position refinement still needs broader gameplay feedback. Real guild-bank permissions, money, purchasing and server item operations have **not** been verified on a guild member. The guild theme is therefore opt-in and resets off on reload/login.
+
+No independent products, separate Diagnostics addon, personal SavedVariables, test ledger data or disposable loot-probe addon are bundled. Existing settings are preserved. Classic Era receives no new changes in this release.
+
+
 # KerimAnka UI 0.38.0 — Forever
 
 This release updates **WoW: Forever (1.60.1)**. The combined suite archive retains the existing **Classic Era 0.37.0** files unchanged; no new Classic features or fixes are included.
