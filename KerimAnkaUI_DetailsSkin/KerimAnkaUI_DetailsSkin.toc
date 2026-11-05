@@ -4,8 +4,9 @@
 ## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Notes: Optional Details! skin integration. Requires Details!. Configure in KerimAnka UI.
 ## Author: Kerim Anka
-## Version: 0.35.1
-## Dependencies: KerimAnkaUI, Details
+## Version: 0.38.0
+## Dependencies: KerimAnkaUI
+## OptionalDeps: Details
 ## SavedVariablesPerCharacter: ForeverDetailsHunterDB
 
 Media\Geometry.lua

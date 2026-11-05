@@ -1,3 +1,4 @@
+-- Classic Era/Hardcore only: no execution in Forever or Retail.
 local addonName = ...
 local PATH = "Interface\\AddOns\\KerimAnkaUI_UnitFrames\\"
 local W, H = 360, 360 * 686 / 2152
@@ -60,13 +61,15 @@ local function text(parent, size, width, unitName)
     return font
 end
 local function addSplitLabels(f, parent)
-    if not themeGeometry then return end
-    f.useSplit = true
+    if not themeGeometry and playerClass~="ROGUE" then return end
+    -- Rogue shares the existing left-percent/right-value health layout.
+    -- Resource text follows each displayed unit: split mana, numeric energy.
+    if themeGeometry then f.useSplit=true else f.splitHealth=true end
     f.hpText:ClearAllPoints(); f.hpText:SetWidth(f.health:GetWidth() * .55)
     f.hpText:SetPoint("RIGHT", f.health, "RIGHT", -4, 0); f.hpText:SetJustifyH("RIGHT")
     f.hpPercent = text(parent, 12, f.health:GetWidth() * .4)
     f.hpPercent:SetPoint("LEFT", f.health, "LEFT", 4, 0); f.hpPercent:SetJustifyH("LEFT")
-    if f.power then
+    if f.power and (f.useSplit or f.splitHealth) then
         f.powerText:ClearAllPoints(); f.powerText:SetWidth(f.power:GetWidth() * .55)
         f.powerText:SetPoint("RIGHT", f.power, "RIGHT", -4, 0); f.powerText:SetJustifyH("RIGHT")
         f.powerPercent = text(parent, 11, f.power:GetWidth() * .4)
@@ -407,6 +410,17 @@ local function updateInfo(f)
         end
     end
 end
+local function roguePowerLabels(f,isMana,isEnergy)
+    local right=isMana or isEnergy
+    local mode=isMana and "mana" or isEnergy and "energy" or "number"
+    if f.roguePowerMode==mode then return end
+    f.roguePowerMode=mode
+    f.powerText:ClearAllPoints()
+    f.powerText:SetWidth(f.power:GetWidth()*(right and .55 or 1)- (right and 0 or 8))
+    f.powerText:SetPoint(right and "RIGHT" or "CENTER",f.power,right and "RIGHT" or "CENTER",right and -4 or 0,0)
+    f.powerText:SetJustifyH(right and "RIGHT" or "CENTER")
+    if f.powerPercent then f.powerPercent:SetShown(isMana);if not isMana then f.powerPercent:SetText("")end end
+end
 local function updateBars(f)
     local unit = f.unit
     -- Forward secret health and power straight to C UI sinks. Never divide,
@@ -421,7 +435,7 @@ local function updateBars(f)
         checked(f.health.SetMinMaxValues, f.health, 0, hpMax)
         checked(f.health.SetValue, f.health, hp)
     end
-    if f.useSplit then
+    if f.useSplit or f.splitHealth then
         checked(f.hpText.SetFormattedText, f.hpText, "%d", hp)
         setPercent(f.hpPercent, unit, hp, hpMax, false)
     else checked(f.hpText.SetFormattedText, f.hpText, "%d / %d", hp, hpMax) end
@@ -430,12 +444,17 @@ local function updateBars(f)
     local power, powerMax = UnitPower(unit), UnitPowerMax(unit)
     checked(f.power.SetMinMaxValues, f.power, 0, powerMax)
     checked(f.power.SetValue, f.power, power)
-    if f.useSplit then
+    local powerID,token=UnitPowerType(unit)
+    if f.splitHealth then
+        local mana=not secret(token)and not secret(powerID)and(token=="MANA"or powerID==0)
+        roguePowerLabels(f,mana,unit=="player"and not secret(token)and not secret(powerID)and(token=="ENERGY"or powerID==3))
+        checked(f.powerText.SetFormattedText,f.powerText,"%d",power)
+        if mana then setPercent(f.powerPercent,unit,power,powerMax,true)end
+    elseif f.useSplit then
         checked(f.powerText.SetFormattedText, f.powerText, "%d", power)
         setPercent(f.powerPercent, unit, power, powerMax, true)
     else checked(f.powerText.SetFormattedText, f.powerText, "%d / %d", power, powerMax) end
     f.health:SetStatusBarColor(.18, .88, .07)
-    local _, token = UnitPowerType(unit)
     local color
     if not secret(token) and type(token) == "string" and PowerBarColor then color = PowerBarColor[token] end
     if color then f.power:SetStatusBarColor(color.r, color.g, color.b)
@@ -624,9 +643,20 @@ local function makeUnit(unit)
         f.levelBadge:SetFrameLevel(decoration:GetFrameLevel() + 1)
         f.levelBadge:SetPoint("CENTER", f, "TOPLEFT", f.levelX * W, -f.levelY * H)
         f.levelBadge:SetSize(themeGeometry.levelSize[1] * W, themeGeometry.levelSize[2] * H)
-        local black = f.levelBadge:CreateTexture(nil, "BACKGROUND")
+        local fillParent = f.levelBadge
+        if hunterTheme and (unit == "player" or unit == "target") then
+            -- Bleed the black fill under the baked gold ring. A tight mask on
+            -- top of the art leaves a bright seam at fractional UI scales.
+            fillParent = CreateFrame("Frame", nil, f)
+            fillParent:EnableMouse(false)
+            fillParent:SetFrameLevel(decoration:GetFrameLevel() - 1)
+            fillParent:SetPoint("CENTER", f.levelBadge, "CENTER")
+            fillParent:SetSize(themeGeometry.levelSize[1] * W + 4, themeGeometry.levelSize[2] * H + 4)
+            f.hunterLevelBacking = fillParent
+        end
+        local black = fillParent:CreateTexture(nil, "BACKGROUND")
         black:SetAllPoints(); black:SetColorTexture(0, 0, 0, 1)
-        local badgeMask = f.levelBadge:CreateMaskTexture(nil, "ARTWORK")
+        local badgeMask = fillParent:CreateMaskTexture(nil, "ARTWORK")
         badgeMask:SetTexture(PATH .. (warriorTheme and (mirrored and "WarriorLevelMaskRight.tga" or "WarriorLevelMask.tga") or paladinTheme and (mirrored and "PaladinLevelMaskRight.tga" or "PaladinLevelMask.tga") or druidTheme and (mirrored and "DruidLevelMaskRight.tga" or "DruidLevelMask.tga") or priestTheme and (mirrored and "PriestLevelMaskRight.tga" or "PriestLevelMask.tga") or mageTheme and (mirrored and "MageLevelMaskRight.tga" or "MageLevelMask.tga") or shamanTheme and (mirrored and "ShamanLevelMaskRight.tga" or "ShamanLevelMask.tga") or warlockTheme and (mirrored and "WarlockLevelMaskRight.tga" or "WarlockLevelMask.tga") or (mirrored and "HunterLevelMaskRight.tga" or "HunterLevelMask.tga")),
             "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
         badgeMask:SetAllPoints(); black:AddMaskTexture(badgeMask)
@@ -824,6 +854,8 @@ end)
 local function apply()
     if InCombatLockdown() then pending = true; say("Änderung nach dem Kampf."); return end
     pending = false
+    -- Freeze the legacy shared value once; later name changes stay independent.
+    if db.totNameScale==nil then db.totNameScale=db.textScale or 1 end
     if warriorTheme or paladinTheme then frameFile=themeGeometry.File();themeGeometry.frameFile=frameFile end
     for unit, f in pairs(frames) do
         if (warriorTheme or paladinTheme) and f.art then f.art:SetTexture(PATH..frameFile,"CLAMP","CLAMP","TRILINEAR") end
@@ -838,11 +870,12 @@ local function apply()
             f:SetPoint("CENTER", UIParent, "BOTTOM", (db.player.x + db.target.x) / (2 * scale),
                 ((db.player.y + db.target.y) / 2 + (petTheme and -8 or (H * db.scale / 2 + 28))) / scale)
         else f:SetPoint("CENTER", UIParent, "BOTTOM", db[unit].x / scale, db[unit].y / scale) end
-        KerimAnkaUITextAPI.NameFont(f.name, (f.compact and 13 or 14) * db.textScale, false)
+        local nameScale=unit=='targettarget' and db.totNameScale or db.textScale
+        KerimAnkaUITextAPI.NameFont(f.name, (f.compact and 13 or 14) * nameScale, false)
         f.hpText:SetFont(STANDARD_TEXT_FONT, (f.compact and 10 or 12) * db.healthTextScale, "OUTLINE")
-        if f.useSplit then
+        if f.useSplit or f.splitHealth then
             local fontFactor = unit == "pet" and (1 / db.petScale) or 1
-            KerimAnkaUITextAPI.NameFont(f.name, (f.compact and 13 or 14) * db.textScale * fontFactor, false)
+            KerimAnkaUITextAPI.NameFont(f.name, (f.compact and 13 or 14) * nameScale * fontFactor, false)
             f.hpText:SetFont(STANDARD_TEXT_FONT, (f.compact and 10 or 12) * db.healthTextScale * fontFactor, "OUTLINE")
             f.hpPercent:SetFont(STANDARD_TEXT_FONT, (f.compact and 10 or 12) * db.healthTextScale * fontFactor, "OUTLINE")
             if f.powerPercent then f.powerPercent:SetFont(STANDARD_TEXT_FONT, 11 * db.powerTextScale * fontFactor, "OUTLINE") end
@@ -1270,6 +1303,7 @@ events:RegisterEvent("PLAYER_LOGIN")
 ForeverLeatherUnitsAPI = {
     version=2,
     GetSettings=function() return db end,
+    GetPlayerFrame=function() return frames.player end,
     Apply=function() if db then apply() end end,
     IsHunter=function() return hunterTheme end,
     IsWarlock=function() return warlockTheme end,

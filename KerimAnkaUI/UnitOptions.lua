@@ -1,3 +1,4 @@
+-- Classic Era/Hardcore only: no execution in Forever or Retail.
 local _,K=...
 local fields={
  {[1]="section",[2]="ufGeneral"},
@@ -35,6 +36,7 @@ local fields={
  {[1]="target.y",[2]="",[3]="",[4]="",[5]=0,[6]=1800,[7]=5},
  {[1]="showToT",[2]="",[3]="",[4]=""},
  {[1]="totScale",[2]="",[3]="",[4]="",[5]=0.65,[6]=1.4,[7]=0.05},
+ {[1]="totNameScale",[5]=.3,[6]=4,[7]=.05},
  {[1]="targettarget.x",[2]="",[3]="",[4]="",[5]=-2000,[6]=2000,[7]=5},
  {[1]="targettarget.y",[2]="",[3]="",[4]="",[5]=0,[6]=1800,[7]=5},
  {[1]="showCombo",[2]="",[3]="",[4]="",[8]="rogue"},
@@ -105,29 +107,37 @@ local fields={
  {[1]="castY",[2]="",[3]="",[4]="",[5]=-250,[6]=250,[7]=2},
 }
 K.UnitProfileFields=fields
-function K.DrawUnitsPage(page)
- local api=ForeverLeatherUnitsAPI
- local db=api.GetSettings()
- local w=K.UnitWidgets
- local y=0
- w.Text(page,K.L("ufMoveHelp"),8,y,690,14,{.87,.73,.40}); y=y-72
- w.Text(page,K.L("ufNote"),8,y,690,12,{.65,.70,.62}); y=y-68
- K.UnitOptionPositions={}
- local warlock=(api.IsWarrior and api.IsWarrior() or false) or (api.IsWarlock and api.IsWarlock() or false) or (api.IsShaman and api.IsShaman() or false) or (api.IsMage and api.IsMage() or false) or (api.IsDruid and api.IsDruid() or false) or (api.IsPriest and api.IsPriest() or false)
- local shaman=api.IsShaman and api.IsShaman() or false
- local hunter=api.IsHunter(); local petSupported=api.SupportsPet and api.SupportsPet() or hunter
- local function read(key)
-  local unit,axis=key:match("^(%w+)%.([xy])$")
-  if unit then return db[unit] and db[unit][axis] or 0 end
-  return db[key]
- end
- local function write(key,value)
-  if K.InCombat() then return end
+function K.UnitOptionApplies(unit,key)
+ if unit=='targettarget'then return key=='totScale'or key=='totNameScale'or key=='healthTextScale'or key=='showToT'end
+ local visible=key~='enabled'and key~='hideNative'and key~='totScale'and key~='totNameScale'and key~='showToT'and not key:match('^cast')and key~='targetCastEnabled'and not key:match('Aura')and not key:match('Buff')and not key:match('Debuff')and key~='auraCooldown'and key~='auraStacks'
+ if key=='classificationTextScale'then visible=unit=='target'end
+ if key:match('^questie')then visible=unit=='target'and Questie~=nil end
+ if key:match('^pet')or key:match('^happiness')or key=='showPet'or key=='showPetHappiness'then visible=unit=='pet'end
+ if key=='levelTextScale'or key=='levelOffsetY'then visible=unit~='pet'end
+ if key=='restIconSize'or key:match('^hunterSummon')or key=='showCombo'or key=='classicEnergyTickMode'or key=='classicManaTickMode'then visible=unit=='player'end
+ if key=='portraitCombatPlayer'then visible=unit=='player'elseif key=='portraitCombatPet'then visible=unit=='pet'elseif key=='portraitCombatSize'then visible=unit=='player'or unit=='pet'end
+ if key:match('^happiness')or key=='showPetHappiness'then visible=unit=='pet'and ForeverLeatherUnitsAPI.IsHunter()end
+ if unit=='pet'and(key:match('^pvp')or key=='leaderSize'or key=='combatIconSize')then visible=false end
+ return visible and true or false
+end
+
+function K.SetUnitOption(key,value)
+  if K.InCombat() then return false end
+  local api=ForeverLeatherUnitsAPI;local db=api and api.GetSettings()
+  if not db then return false end
+  local spec
+  for _,f in ipairs(fields)do if f[1]==key then spec=f;break end end
+  if not spec or key=='section'then return false end
+  if spec[5]then
+   if type(value)~='number'or value~=value or math.abs(value)==math.huge then return false end
+   value=math.max(spec[5],math.min(spec[6],value))
+  elseif type(value)~='boolean'then return false end
   local unit,axis=key:match("^(%w+)%.([xy])$")
   if unit then
    db[unit]=db[unit] or {}; db[unit][axis]=value
    if unit=="pet" or unit=="targettarget" then db[unit].detached=true end
   else
+   if key=='textScale'and db.totNameScale==nil then db.totNameScale=db.textScale or 1 end
    db[key]=value
    local auraUnit=key:match("^(%w+)AuraBelow$")
    if auraUnit then
@@ -145,53 +155,61 @@ function K.DrawUnitsPage(page)
   end
   api.Apply()
   if K.UpdateUnitPreview then K.UpdateUnitPreview(key) end
- end
- local column=0
- for _,f in ipairs(fields) do
-  if f[1]=="section" and f[2]=="ufHunterSummons" and not (hunter or shaman) then
-   -- Only classes with the supported native summon row expose these controls.
-  elseif f[1]=="section" then
-   if column==1 then y=y-96; column=0 end
-   K.UnitOptionPositions[f[2]]=-y
-   w.Text(page,K.L(shaman and f[2]=="ufHunterSummons" and "ufShamanTotems" or f[2]),8,y,690,19,{.73,.62,.41}); y=y-42
-  elseif (f[8]~="summons" or hunter or shaman) and (f[8]~="notWarlock" or not warlock) and (f[8]~="warlock" or warlock) and (f[8]~="hunter" or hunter) and (f[8]~="pet" or petSupported) and (f[8]~="rogue" or not petSupported) then
-   local key=f[1]
-   local card=w.Box(page,column*365,y,349,86)
-   K.UnitOptionPositions[key]=-y
-   if key==K.highlightUnitOption then w.Rounded(card,.17,.21,.15,{.48,.65,.36,1},8,true) end
-   local labelKey=shaman and key:find("^hunterSummon") and ("uf_"..key:gsub("^hunterSummon","shamanTotem")) or "uf_"..key
-   w.Text(card,K.L(labelKey),14,-12,278,13)
-   local help=w.Button(card,"?",311,-10,22,22,function() end)
-   w.Tip(help,labelKey,key=="locked" and "ufMoveHelp" or key:find("^portraitCombat") and "ufPortraitCombatHelp" or key:find("^questie") and "ufQuestieHelp" or key:find("^hunterSummon") and (shaman and "ufShamanTotemsHelp" or "ufHunterSummonsHelp") or "ufHelp")
-   if f[5] then
-    local value=tonumber(read(key)) or f[5]
-    local text=w.Text(card,string.format(f[7]<1 and "%.2f" or "%.0f",value),14,-54,150,15)
-    local function change(delta)
-     local current=tonumber(read(key)) or value
-     write(key,math.max(f[5],math.min(f[6],math.floor((current+delta*f[7])/f[7]+.5)*f[7])))
-     text:SetText(string.format(f[7]<1 and "%.2f" or "%.0f",tonumber(read(key)) or current))
-    end
-    w.Button(card,"−",251,-47,36,32,function() change(-1) end)
-    w.Button(card,"+",297,-47,36,32,function() change(1) end)
-   else w.Switch(card,read(key)==true,255,-48,function(v) write(key,v) end,true) end
-   column=1-column
-   if column==0 then y=y-96 end
-  end
- end
- if column==1 then y=y-96 end
- w.Button(page,K.L("reload"),0,y,714,36,K.Reload)
- page:SetHeight(-y+64)
+  return true
 end
-function K.JumpToUnitOption(key)
- K.HideTooltip()
- K.highlightUnitOption=key
- C_Timer.After(0,function()
-  if not K.window:IsShown() or not K.UnitOptionPositions then return end
-  K.Render()
-  local offset=K.UnitOptionPositions and K.UnitOptionPositions[key]
-  if offset then
-   K.scroll:UpdateScrollChildRect()
-   K.scroll:SetVerticalScroll(math.min(math.max(0,offset-8),K.scroll:GetVerticalScrollRange()))
-  end
- end)
-end
+
+-- Category view, routing and card rendering live in UnitSettings*.lua.
+
+K.locales.en["mtTitle"]="Mana tick / five-second rule"
+
+K.locales.en["mtHelp"]="The left number shows the five-second spirit-regeneration wait after spending mana, then the next estimated tick. Amber: wait; blue: tick. MP5 and talents can still restore mana during the wait. The rhythm follows observed gains; — means it is not synchronized yet."
+
+K.locales.tr["mtTitle"]="Mana tick / beş saniye kuralı"
+
+K.locales.tr["mtHelp"]="Soldaki süre, mana harcamasından sonraki beş saniyelik ruh yenilenmesi beklemesini, ardından tahmini tick zamanını gösterir. Turuncu: bekleme; mavi: tick. MP5 ve yeteneklerle beklerken de mana gelebilir. Ritim gözlenen artışlara uyar; — henüz eşlenmedi demektir."
+
+K.locales.de["mtTitle"]="Manatick / Fünfsekundenregel"
+
+K.locales.de["mtHelp"]="Links steht nach Manaverbrauch die fünfsekündige Wartezeit der Willenskraft-Regeneration, danach der geschätzte nächste Tick. Orange: Warten; blau: Tick. MP5 und Talente können weiter Mana geben. Der Rhythmus folgt beobachteten Zuwächsen; — bedeutet noch nicht synchronisiert."
+
+K.locales.zhCN["mtTitle"]="法力回复 / 五秒规则"
+
+K.locales.zhCN["mtHelp"]="左侧先显示消耗法力后的五秒精神回复等待时间，再显示预计下次回复时间。橙色为等待，蓝色为回复。每五秒回蓝和天赋仍可能在等待期间恢复法力。节奏根据实际增长校准；— 表示尚未同步。"
+
+K.locales.frFR["mtTitle"]="Cycle de mana / règle des cinq secondes"
+
+K.locales.frFR["mtHelp"]="À gauche : attente de cinq secondes de régénération liée à l’esprit après une dépense, puis prochain cycle estimé. Orange : attente ; bleu : cycle. Le MP5 et les talents peuvent encore rendre du mana. Le rythme suit les gains observés ; — indique l’absence de synchronisation."
+
+K.locales.itIT["mtTitle"]="Impulso di mana / regola dei cinque secondi"
+
+K.locales.itIT["mtHelp"]="A sinistra: attesa di cinque secondi della rigenerazione da spirito dopo una spesa, poi il prossimo impulso stimato. Arancione: attesa; blu: impulso. MP5 e talenti possono comunque restituire mana. Il ritmo segue i guadagni osservati; — indica che non è ancora sincronizzato."
+
+K.locales.esES["mtTitle"]="Pulso de maná / regla de cinco segundos"
+
+K.locales.esES["mtHelp"]="A la izquierda: espera de cinco segundos de regeneración por espíritu tras gastar maná y luego el próximo pulso estimado. Naranja: espera; azul: pulso. El MP5 y los talentos pueden seguir dando maná. El ritmo sigue las ganancias observadas; — indica que aún no está sincronizado."
+
+K.locales.ptBR["mtTitle"]="Pulso de mana / regra dos cinco segundos"
+
+K.locales.ptBR["mtHelp"]="À esquerda: espera de cinco segundos da regeneração por espírito após gastar mana, depois o próximo pulso estimado. Laranja: espera; azul: pulso. MP5 e talentos ainda podem restaurar mana. O ritmo segue ganhos observados; — indica que ainda não está sincronizado."
+
+K.locales.ruRU["mtTitle"]="Такт маны / правило пяти секунд"
+
+K.locales.ruRU["mtHelp"]="Слева: пять секунд ожидания восстановления от духа после расхода маны, затем ожидаемый следующий такт. Оранжевый: ожидание; синий: такт. MP5 и таланты могут восстанавливать ману и во время ожидания. Ритм уточняется по приростам; — означает отсутствие синхронизации."
+
+K.locales.en["uf_totNameScale"]="Target of target: name scale"
+
+K.locales.tr["uf_totNameScale"]="Hedefin hedefi: isim ölçeği"
+
+K.locales.de["uf_totNameScale"]="Ziel des Ziels: Namensgröße"
+
+K.locales.zhCN["uf_totNameScale"]="目标的目标：姓名缩放"
+
+K.locales.frFR["uf_totNameScale"]="Cible de la cible : taille du nom"
+
+K.locales.itIT["uf_totNameScale"]="Bersaglio del bersaglio: scala nome"
+
+K.locales.esES["uf_totNameScale"]="Objetivo del objetivo: escala del nombre"
+
+K.locales.ptBR["uf_totNameScale"]="Alvo do alvo: escala do nome"
+
+K.locales.ruRU["uf_totNameScale"]="Цель цели: масштаб имени"

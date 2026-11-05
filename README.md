@@ -157,3 +157,8 @@ When both editions are enabled, the suite takes priority. The independent editio
 keeps its own saved settings; no automatic settings migration is performed.
 At present only one independent KerimAnka edition can run at a time.
 See [product packaging](docs/PRODUCT-PACKAGING.md) for the release layout.
+
+
+## 0.38.0 client boundaries
+
+The combined archive updates Forever (1.60.1). Classic Era keeps its tested 0.37.0 client files. Generic TOCs select Forever; `_Vanilla.toc` files select Classic Era. `ClassicEra/` stays frozen. Some historical `Classic*.lua` filenames in the Forever hub are adapted Forever implementations, never loaded by Classic TOCs. Separate settings namespaces are retained.

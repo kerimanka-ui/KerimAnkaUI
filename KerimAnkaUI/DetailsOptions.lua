@@ -1,3 +1,4 @@
+-- Classic Era/Hardcore only: no execution in Forever or Retail.
 local _,K=...
 local choices={}
 local function Refresh()
@@ -10,7 +11,7 @@ function K.DrawDetailsPage(page)
  local api=ForeverDetailsHunterAPI
  if not api or api.version<1 then return false end
  local db=api.GetSettings()
- local w=K.UnitWidgets
+ local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
  w.Text(page,K.L("dtNote"),8,0,690,13,{.65,.70,.62})
  local y=-74
  for i,f in ipairs({{"showTrim","dtTrim"},{"keepFonts","dtFonts"},{"trimAlpha","dtAlpha",.1,1,.05},{"edgeTop","dmEdgeTop",-24,48,1},{"edgeBottom","dmEdgeBottom",-24,48,1},{"edgeLeft","dmEdgeLeft",-24,48,1},{"edgeRight","dmEdgeRight",-24,48,1}}) do
@@ -25,9 +26,10 @@ function K.DrawDetailsPage(page)
     local requested=math.max(low,math.min(high,math.floor((db[key]+delta*step)/step+.5)*step))
     if api.Set(key,requested) then value:SetText(string.format(step==1 and "%.0f" or "%.2f",db[key])) end
    end
-   w.Button(c,"−",251,-47,36,32,function() change(-1) end)
-   w.Button(c,"+",297,-47,36,32,function() change(1) end)
-  else w.Switch(c,db[key],255,-48,function(value) if not K.InCombat() then api.Set(key,value) end end,true) end
+   local minus=w.Button(c,"−",251,-47,36,32,function()change(-1)end)
+   local plus=w.Button(c,"+",297,-47,36,32,function()change(1)end)
+   if K.InCombat()then minus:Disable();plus:Disable()end
+  else w.Switch(c,db[key],255,-48,function(value) if not K.InCombat() then api.Set(key,value) end end,not K.InCombat()) end
  end
  y=y-404
  local windows=api.GetWindows()
@@ -44,7 +46,7 @@ function K.DrawDetailsPage(page)
   Refresh()
  end)
  w.Tip(all,"dtAll","dtAllHelp")
- if not api.IsReady() or #windows==0 then all:Disable() end
+ if K.InCombat()or not api.IsReady()or #windows==0 then all:Disable()end
  y=y-58
  if not api.IsReady() then w.Text(page,K.L("dtWaiting"),8,y,690,14); y=y-48 end
  w.Text(page,K.L("dtWindows"),8,y,690,18,{.73,.62,.41}); y=y-36
@@ -74,7 +76,7 @@ function K.DrawDetailsPage(page)
    if ok then K.Message("dtDone") end
    Refresh()
   end)
-  if #skins==0 or not api.IsReady() then prev:Disable(); nextButton:Disable(); apply:Disable() end
+  if K.InCombat()or #skins==0 or not api.IsReady()then prev:Disable(); nextButton:Disable(); apply:Disable() end
   w.Tip(apply,"dtApply","dtHelp")
   y=y-146
  end
@@ -306,7 +308,7 @@ end
 -- KerimAnka UI experience widget. Independent implementation using game data.
 ;(function(K)
 local X={selected="xp"};K.Experience=X
-local D={frameSize=16,verticalSpace=0,backgroundAlpha=.92,enabled=false,locked=true,layout=1,width=500,barHeight=14,subHeight=10,showRep=true,showPet=true,showTime=true,showRate=true,showQuest=true,showRested=true,trim=true,hideNative=false,classColor=true,red=.55,green=.7,blue=.28}
+local D={frameSize=16,verticalSpace=0,backgroundAlpha=.92,showBackground=true,enabled=false,locked=true,layout=1,width=500,barHeight=14,subHeight=10,showRep=true,showPet=true,showTime=true,showRate=true,showQuest=true,showRested=true,trim=true,hideNative=false,classColor=true,texturedBars=false,red=.55,green=.7,blue=.28}
 local ids={"total","levelTime","xp","remaining","rate","reputation","pet"}
 X.ids=ids
 local state={revision=0,questXP=0,questDirty=true,gained=0}
@@ -479,7 +481,7 @@ end
 function X.JumpToText(id)
  if not ValidLabel(id) then return end
  X.selected=id
- if K.Render then K.Render() end
+ if K.OpenExperienceTextSettings then K.OpenExperienceTextSettings(id)elseif K.Render then K.Render()end
  C_Timer.After(0,function()
   if not K.window or not K.window:IsShown() or not K.experiencePageAvailable then return end
   if X.textSettingsOffset then
@@ -489,17 +491,24 @@ function X.JumpToText(id)
  end)
 end
 
-local function Color() return X.GetColor("main") end
+-- The native glossy asset darkens its tint. A white flat asset does not.
+-- Match its approximate average brightness without recreating the bright band.
+-- This affects rendering only: selected/class RGB and saved colors stay intact.
+local function FillColor(key)
+ local r,g,b=X.GetColor(key)
+ local light=X.Get("texturedBars") and 1 or .5
+ return r*light,g*light,b*light
+end
 local function Bar(parent)
  local f=CreateFrame("Frame",nil,parent,"BackdropTemplate")
  f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
  f:SetBackdropColor(.025,.03,.025,1);f:SetBackdropBorderColor(.3,.28,.17,1)
  f.layers={}
- for i=1,3 do local b=CreateFrame("StatusBar",nil,f);b:SetPoint("TOPLEFT",1,-1);b:SetPoint("BOTTOMRIGHT",-1,1);b:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar");b:SetMinMaxValues(0,1);b:SetFrameLevel(f:GetFrameLevel()+i);f.layers[i]=b end
+ for i=1,3 do local b=CreateFrame("StatusBar",nil,f);b:SetPoint("TOPLEFT",1,-1);b:SetPoint("BOTTOMRIGHT",-1,1);b:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8");b:SetMinMaxValues(0,1);b:SetFrameLevel(f:GetFrameLevel()+i);f.layers[i]=b end
  return f
 end
 local function CreateWidget(parent,isPreview)
- local f=CreateFrame("Frame",nil,parent,"BackdropTemplate")
+ local f=CreateFrame("Frame",nil,parent,"BackdropTemplate");f.panelTextExclude=isPreview==true
  f.background=f:CreateTexture(nil,"BACKGROUND")
  f.main=Bar(f);f.rep=Bar(f);f.pet=Bar(f)
  f.textLayer=CreateFrame("Frame",nil,f);f.textLayer:SetAllPoints();f.textLayer:SetFrameLevel(f:GetFrameLevel()+10)
@@ -528,12 +537,26 @@ local function CreateWidget(parent,isPreview)
   end
  end
  f.trim=CreateFrame("Frame",nil,f);f.trim:EnableMouse(false);f.trim:SetAllPoints();f.trim:SetFrameLevel(f:GetFrameLevel()+7);f.parts={}
+ if plainCorners then
+  -- A single native rectangle avoids seams/doubled edges between decorative
+  -- rails and the separately generated plain corner artwork.
+  f.plainTrim=CreateFrame("Frame",nil,f.trim,"BackdropTemplate")
+  f.plainTrim:EnableMouse(false)
+  f.plainTrim:SetBackdrop({edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
+  f.plainTrim:SetBackdropBorderColor(.42,.32,.18,1)
+ else
  for _,name in ipairs({"TL","TR","BL","BR","Top","Bottom","Left","Right"}) do local t=f.trim:CreateTexture(nil,"OVERLAY");t:SetTexture(TrimTexture(name),"CLAMP","CLAMP","TRILINEAR");f.parts[name]=t end
+ end
  return f
 end
 local function Layout(f,data)
  local w=X.Get("width");local horizontal=X.Get("layout")==2
  local bh,sh=X.Get("barHeight"),X.Get("subHeight")
+ -- Change fill assets only when layout/settings change, never on each XP tick.
+ local texture=X.Get("texturedBars") and "Interface\\TargetingFrame\\UI-StatusBar" or "Interface\\Buttons\\WHITE8X8"
+ for _,bar in ipairs({f.main,f.rep,f.pet}) do
+  for _,layer in ipairs(bar.layers) do layer:SetStatusBarTexture(texture) end
+ end
  local c=X.Get("frameSize");local pad=c+4
  local extra=data.rep or data.pet
  local vertical=X.Get("verticalSpace")
@@ -549,6 +572,7 @@ local function Layout(f,data)
  local inset=math.ceil(c*.27)
  f.background:ClearAllPoints();f.background:SetPoint("TOPLEFT",inset,-inset);f.background:SetPoint("BOTTOMRIGHT",-inset,inset)
  f.background:SetColorTexture(.045,.055,.045,X.Get("backgroundAlpha"))
+ f.background:SetShown(X.Get("showBackground"))
  f.main:ClearAllPoints();f.main:SetPoint("TOPLEFT",pad,-barY);f.main:SetSize(w-pad*2,bh);f.main:SetShown(data.main)
  local subW=(data.rep and data.pet) and (w-pad*2-12)/2 or w-pad*2
  for _,id in ipairs({"rep","pet"}) do
@@ -584,20 +608,27 @@ local function Layout(f,data)
   if cfg.visible==false then shown=false end
   label:SetShown(shown);if label.hit then label.hit:SetShown(shown) end
  end
+ if f.plainTrim then
+  -- Match the visible background on all four sides. No extra outer rail.
+  f.plainTrim:ClearAllPoints()
+  f.plainTrim:SetPoint("TOPLEFT",f,"TOPLEFT",inset,-inset)
+  f.plainTrim:SetPoint("BOTTOMRIGHT",f,"BOTTOMRIGHT",-inset,inset)
+ else
  local p=f.parts
  for name,point in pairs({TL="TOPLEFT",TR="TOPRIGHT",BL="BOTTOMLEFT",BR="BOTTOMRIGHT"}) do p[name]:SetSize(c,c);p[name]:ClearAllPoints();p[name]:SetPoint(point) end
  p.Top:ClearAllPoints();p.Top:SetHeight(c);p.Top:SetPoint("TOPLEFT",c,0);p.Top:SetPoint("TOPRIGHT",-c,0)
  p.Bottom:ClearAllPoints();p.Bottom:SetHeight(c);p.Bottom:SetPoint("BOTTOMLEFT",c,0);p.Bottom:SetPoint("BOTTOMRIGHT",-c,0)
  p.Left:ClearAllPoints();p.Left:SetWidth(c);p.Left:SetPoint("TOPLEFT",0,-c);p.Left:SetPoint("BOTTOMLEFT",0,c)
  p.Right:ClearAllPoints();p.Right:SetWidth(c);p.Right:SetPoint("TOPRIGHT",0,-c);p.Right:SetPoint("BOTTOMRIGHT",0,c)
+ end
  f.trim:SetShown(X.Get("trim"));f.height=h
 end
 
 local function Paint(f,data)
  local signature=tostring(data.main)..tostring(data.rep~=nil)..tostring(data.pet~=nil)
  if f.rev~=state.revision or f.signature~=signature then Layout(f,data);f.rev=state.revision;f.signature=signature end
- local max=math.max(1,data.max);local r,g,b=Color()
- local rr,rg,rb=X.GetColor("rested");local qr,qg,qb=X.GetColor("quest")
+ local max=math.max(1,data.max);local r,g,b=FillColor("main")
+ local rr,rg,rb=FillColor("rested");local qr,qg,qb=FillColor("quest")
  f.main.layers[1]:SetStatusBarColor(rr,rg,rb,.45);f.main.layers[2]:SetStatusBarColor(qr,qg,qb,.9);f.main.layers[3]:SetStatusBarColor(r,g,b,1)
  f.main.layers[1]:SetValue(math.min(1,(data.xp+(X.Get("showQuest") and data.quest or 0)+(X.Get("showRested") and data.rested or 0))/max))
  f.main.layers[2]:SetValue(math.min(1,(data.xp+(X.Get("showQuest") and data.quest or 0))/max));f.main.layers[3]:SetValue(math.min(1,data.xp/max))
@@ -608,7 +639,7 @@ local function Paint(f,data)
  for _,id in ipairs({"rep","pet"}) do
   local info=data[id];local bar=f[id]
   if info then
-   bar.layers[1]:SetValue(0);bar.layers[2]:SetValue(0);bar.layers[3]:SetStatusBarColor(X.GetColor(id));bar.layers[3]:SetValue(math.min(1,info.value/math.max(1,info.max)))
+   bar.layers[1]:SetValue(0);bar.layers[2]:SetValue(0);bar.layers[3]:SetStatusBarColor(FillColor(id));bar.layers[3]:SetValue(math.min(1,info.value/math.max(1,info.max)))
    t[id=="rep" and "reputation" or "pet"]:SetText(info.name..(id=="pet" and " · "..K.L("xpLevel").." "..info.level or "").."  "..Num(info.value).." / "..Num(info.max))
   end
  end
@@ -708,7 +739,7 @@ function K.ConfigureExperiencePreview(available)
   local note=previewPanel:CreateFontString(nil,"OVERLAY");note:SetPoint("BOTTOMLEFT",8,3);K.ApplyTextFont(note,10,false,"");previewPanel.note=note
   previewStage=CreateFrame("Frame",nil,previewPanel);previewStage:SetPoint("TOPLEFT",6,-4);previewStage:SetSize(722,126);previewStage:SetClipsChildren(true)
   preview=CreateWidget(previewStage,true)
-  previewToggle=CreateFrame("CheckButton",nil,K.window,"UICheckButtonTemplate");previewToggle:SetPoint("TOPLEFT",752,-126);K.ApplyTextFont(previewToggle.text,11,false,"")
+  previewToggle=CreateFrame("CheckButton",nil,K.window,"UICheckButtonTemplate");previewToggle:SetPoint("TOPLEFT",563,-126);previewToggle.text:SetWidth(245);previewToggle.text:SetWordWrap(true);K.ApplyTextFont(previewToggle.text,13,false,"")
   previewToggle:SetScript("OnClick",function(self) KerimAnkaUIDB.experiencePreview=self:GetChecked() and true or false;K.Render() end)
  end
  local shown=available and KerimAnkaUIDB.experiencePreview~=false
@@ -754,7 +785,7 @@ local function ColorRow(page,w,y,key,label,id)
   edit:SetScript("OnEscapePressed",function(self) self:ClearFocus() end);colorEdits[key]=edit
  end
  edit:SetParent(card);edit:ClearAllPoints();edit:SetPoint("TOPLEFT",260,controlY-3);K.ApplyTextFont(edit,13,false,"");edit:Show()
- if locked then edit:Disable() else edit:Enable() end;edit:SetAlpha(locked and .45 or 1)
+ if locked or K.InCombat()then edit:Disable()else edit:Enable()end;edit:SetAlpha((locked or K.InCombat())and .45 or 1)
  local function Sync()
   if card.xpColorTag~=tag then return end
   local r,g,b=X.GetColor(key,id);chip:SetColorTexture(r,g,b,1)
@@ -772,72 +803,128 @@ local function ColorRow(page,w,y,key,label,id)
  local apply=w.Button(card,K.L("xpApplyColor"),430,controlY,116,30,Apply)
  local reset=w.Button(card,K.L("xpResetColor"),558,controlY,142,30,function() if not K.InCombat() then X.ResetColor(key,id);Sync() end end)
  for _,button in ipairs({choose,apply,reset}) do
-  if locked then button:Disable() else button:Enable() end
+  if locked or K.InCombat()then button:Disable()else button:Enable()end
   button.label:SetTextColor(locked and .48 or .94,locked and .48 or .93,locked and .45 or .85)
  end
  Sync()
  return y-height-10
 end
 
+local experienceTab='general'
+local experienceGroups={colors=false,textColor=false}
+function K.OpenExperienceTextSettings(id)
+ experienceTab='text';K.Experience.selected=id
+ if K.Render then K.Render()end
+end
+local function Repaint()
+ local offset=K.scroll and K.scroll:GetVerticalScroll()or 0
+ K.HideTooltip();K.Render()
+ if K.scroll then K.scroll:SetVerticalScroll(math.min(offset,K.scroll:GetVerticalScrollRange()))end
+end
 function K.DrawExperiencePage(page)
- local X=K.Experience;local w=K.UnitWidgets;local y=0
- w.Text(page,K.L(X.Status()),8,y,690,13,{.65,.7,.62});y=y-82
- for i,item in ipairs({{"xpCompact",1},{"xpHorizontal",2}}) do
-  local b=w.Button(page,K.L(item[1]),(i-1)*365,y,349,34,function() X.Preset(item[2]);Redraw() end);w.Selected(b,X.Get("layout")==item[2])
+ local X=K.Experience;local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
+ local y=-62;local column=0
+ for i,entry in ipairs({{'general','xpPageGeneral'},{'content','xpPageContent'},{'appearance','xpPageAppearance'},{'text','xpPageText'}})do
+  local key=entry[1]
+  local button=w.Button(page,K.L(entry[2]),(i-1)*180,0,174,36,function()
+   experienceTab=key;K.HideTooltip();if K.scroll then K.scroll:SetVerticalScroll(0)end;K.Render()
+  end);w.Selected(button,experienceTab==key)
  end
- y=y-52
- local function Toggle(key,label,x,top,width,reader,writer)
-  local card=w.Box(page,x,top,width,78);w.Text(card,K.L(label),14,-10,width-66,13)
-  local help=w.Button(card,"?",width-38,-8,22,22,function() end);w.Tip(help,label,"xpHelp")
-  w.Switch(card,reader and reader() or X.Get(key),width-94,-41,function(v) if not K.InCombat() then if writer then writer(v) else X.Set(key,v) end;Redraw() end end,true)
+ local function Flush()if column==1 then y=y-96;column=0 end end
+ local function Note(key,height)
+  Flush();w.Text(page,K.L(key),8,y,690,13,{.65,.70,.62}):SetHeight(height or 58);y=y-(height or 58)-16
  end
- for i,f in ipairs({{"enabled","xpEnabled"},{"locked","xpLocked"},{"showRep","xpShowRep"},{"showPet","xpShowPet"},{"showTime","xpShowTime"},{"showRate","xpShowRate"},{"showQuest","xpShowQuest"},{"showRested","xpShowRested"},{"trim","xpTrim"},{"hideNative","xpHideNative"},{"classColor","xpClassColor"}}) do Toggle(f[1],f[2],(i-1)%2*365,y-math.floor((i-1)/2)*88,349) end
- y=y-6*88-16
- local function Step(key,label,low,high,step,reader,writer)
-  local card=w.Box(page,0,y,714,72);w.Text(card,K.L(label),14,-12,480,13)
-  local function read() return reader and reader() or X.Get(key) end
-  local val=w.Text(card,string.format(step<1 and "%.2f" or "%.0f",read()),14,-43,450,14)
-  local function change(delta)
-   if K.InCombat() then return end
-   local v=math.max(low,math.min(high,math.floor((read()+delta*step)/step+.5)*step))
-   if writer then writer(v) else X.Set(key,v) end;val:SetText(string.format(step<1 and "%.2f" or "%.0f",read()))
+ local function Toggle(key,label,reader,writer)
+  local card=w.Box(page,column*365,y,349,86)
+  w.Text(card,K.L(label),14,-12,278,14)
+  local help=w.Button(card,'?',311,-10,22,22,function()end)
+  w.Tip(help,label,key=='texturedBars'and'xpTexturedBarsHelp'or key=='showBackground'and'xpShowBackgroundHelp'or'xpHelp')
+  local value;if reader then value=reader()else value=X.Get(key)end
+  w.Switch(card,value,255,-48,function(v)
+   if K.InCombat()then return end
+   if writer then writer(v)else X.Set(key,v)end;Repaint()
+  end,not K.InCombat())
+  column=1-column;if column==0 then y=y-96 end
+ end
+ local function Numbers(fields)
+  Flush()
+  for i,entry in ipairs(fields)do
+   local key,label,low,high,step,reader,writer=unpack(entry)
+   local card=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*96,349,86)
+   w.Text(card,K.L(label),14,-12,278,14)
+   local help=w.Button(card,'?',311,-10,22,22,function()end);w.Tip(help,label,'xpHelp')
+   local function Read()return reader and reader()or X.Get(key)end
+   local format=step<1 and'%.2f'or'%.0f';local value=w.Text(card,format:format(Read()),14,-54,150,15)
+   for n,delta in ipairs({-1,1})do
+    local direction=delta
+    local button=w.Button(card,delta<0 and'−'or'+',251+(n-1)*46,-47,36,32,function()
+     if K.InCombat()then return end
+     local v=math.max(low,math.min(high,math.floor((Read()+direction*step)/step+.5)*step))
+     if writer then writer(v)else X.Set(key,v)end
+     value:SetText(format:format(Read()))
+    end)
+    if K.InCombat()then button:Disable()end
+   end
   end
-  w.Button(card,"−",616,-30,36,32,function() change(-1) end);w.Button(card,"+",662,-30,36,32,function() change(1) end);y=y-82
+  y=y-math.ceil(#fields/2)*96
  end
- for _,f in ipairs({{"width","xpWidth",280,1400,10},{"verticalSpace","xpPanelSpace",0,120,2},{"frameSize","xpFrameSize",10,24,1},{"backgroundAlpha","xpBackgroundAlpha",0,1,.05},{"barHeight","xpHeight",8,28,1},{"subHeight","xpSubHeight",8,20,1}}) do Step(unpack(f)) end
- w.Text(page,K.L("xpColors"),8,y,690,18,{.73,.62,.41});y=y-36
- y=ColorRow(page,w,y,"main","xpColorMain")
- for _,entry in ipairs({{"quest","xpColorQuest"},{"rested","xpColorRested"},{"rep","xpColorRep"},{"pet","xpColorPet"}}) do y=ColorRow(page,w,y,entry[1],entry[2]) end
- y=y-12
- w.Button(page,K.L("xpPlaceTop"),0,y,349,34,function() X.Place("top");Redraw() end)
- w.Button(page,K.L("xpPlaceMeter"),365,y,349,34,function() X.Place("meter");Redraw() end);y=y-54
- w.Text(page,K.L("xpTextSettings"),8,y,690,18,{.73,.62,.41});y=y-38
- X.selected=X.selected or "xp"
- for i,id in ipairs(X.ids) do
-  local selected=id
-  local b=w.Button(page,K.L("xpLabel_"..id),((i-1)%3)*243,y-math.floor((i-1)/3)*39,235,32,function() X.selected=selected;Redraw() end)
-  w.Selected(b,X.selected==id)
+ local function Fold(id,label,draw)
+  Flush();local button=w.Button(page,'',0,y,714,42,function()experienceGroups[id]=not experienceGroups[id];Repaint()end)
+  w.Text(button,K.L(label),14,-12,650,15,{.73,.62,.41});w.Text(button,experienceGroups[id]and'−'or'+',677,-10,24,18)
+  y=y-56;if experienceGroups[id]then y=draw(y)end;y=y-12
  end
- y=y-3*39-12
- local id=X.selected
- X.textSettingsOffset=-y
- w.Text(page,K.L("xpLabel_"..id).." · "..K.L("xpTextSettings"),8,y,690,17,{.73,.62,.41});y=y-34
- y=ColorRow(page,w,y,"label","xpTextColor",id)
- local function Read(key,default) return function() return X.LabelValue(id,key) end end
- local function Write(key) return function(v) X.SetLabel(id,key,v) end end
- Toggle("","xpLabelVisible",0,y,714,Read("visible",true),Write("visible"));y=y-88
- for i,label in ipairs({"xpLeft","xpCenter","xpRight"}) do
-  local value=i-1;local b=w.Button(page,K.L(label),(i-1)*243,y,235,32,function() X.SetLabel(id,"align",value);Redraw() end)
-  w.Selected(b,X.LabelValue(id,"align")==value)
+ if experienceTab=='general'then
+  Note(X.Status(),68)
+  for i,item in ipairs({{'xpCompact',1},{'xpHorizontal',2}})do
+   local value=item[2];local button=w.Button(page,K.L(item[1]),(i-1)*365,y,349,34,function()if not K.InCombat()then X.Preset(value);Repaint()end end)
+   w.Selected(button,X.Get('layout')==value);if K.InCombat()then button:Disable()end
+  end;y=y-50
+  Toggle('enabled','xpEnabled');Toggle('locked','xpLocked');Toggle('hideNative','xpHideNative');Flush()
+  Numbers({{'width','xpWidth',280,1400,10}})
+  local top=w.Button(page,K.L('xpPlaceTop'),0,y,349,34,function()if not K.InCombat()then X.Place('top');Repaint()end end)
+  local meter=w.Button(page,K.L('xpPlaceMeter'),365,y,349,34,function()if not K.InCombat()then X.Place('meter');Repaint()end end)
+  if K.InCombat()then top:Disable()end
+  if K.InCombat()or not _G.DamageMeter then meter:Disable()end
+  w.Tip(meter,'xpPlaceMeter','xpNoMeter');y=y-52
+ elseif experienceTab=='content'then
+  Note('xpIntro',68)
+  for _,entry in ipairs({{'showRep','xpShowRep'},{'showPet','xpShowPet'},{'showTime','xpShowTime'},{'showRate','xpShowRate'},{'showQuest','xpShowQuest'},{'showRested','xpShowRested'}})do Toggle(unpack(entry))end
+  Flush();Note('xpHelp',118)
+  local reset=w.Button(page,K.L('xpResetSession'),0,y,714,34,function()if not K.InCombat()then X.ResetSession();Repaint()end end)
+  if K.InCombat()then reset:Disable()end;y=y-50
+ elseif experienceTab=='appearance'then
+  for _,entry in ipairs({{'trim','xpTrim'},{'showBackground','xpShowBackground'},{'classColor','xpClassColor'},{'texturedBars','xpTexturedBars'}})do Toggle(unpack(entry))end
+  Numbers({{'verticalSpace','xpPanelSpace',0,120,2},{'frameSize','xpFrameSize',10,24,1},{'backgroundAlpha','xpBackgroundAlpha',0,1,.05},{'barHeight','xpHeight',8,28,1},{'subHeight','xpSubHeight',8,20,1}})
+  Fold('colors','xpColors',function(at)
+   for _,entry in ipairs({{'main','xpColorMain'},{'quest','xpColorQuest'},{'rested','xpColorRested'},{'rep','xpColorRep'},{'pet','xpColorPet'}})do at=ColorRow(page,w,at,entry[1],entry[2])end
+   return at
+  end)
+ else
+  X.selected=X.selected or'xp'
+  w.Text(page,K.L('xpTextSettings'),8,y,690,17,{.73,.62,.41});y=y-34
+  for i,id in ipairs(X.ids)do
+   local selected=id;local button=w.Button(page,K.L('xpLabel_'..id),((i-1)%3)*243,y-math.floor((i-1)/3)*39,235,32,function()X.selected=selected;X.PaintPreview();Repaint()end)
+   w.Selected(button,X.selected==id)
+  end
+  y=y-math.ceil(#X.ids/3)*39-14
+  local id=X.selected;X.textSettingsOffset=-y
+  w.Text(page,K.L('xpLabel_'..id),8,y,690,17,{.73,.62,.41});y=y-34
+  local function Read(key)return function()return X.LabelValue(id,key)end end
+  local function Write(key)return function(value)X.SetLabel(id,key,value)end end
+  Toggle('','xpLabelVisible',Read('visible'),Write('visible'));Flush()
+  Numbers({{'x','xpTextX',-1400,1400,2,Read('x'),Write('x')},{'y','xpTextY',-400,400,2,Read('y'),Write('y')},{'size','xpTextSize',8,28,1,Read('size'),Write('size')}})
+  for i,label in ipairs({'xpLeft','xpCenter','xpRight'})do
+   local value=i-1;local button=w.Button(page,K.L(label),(i-1)*243,y,235,32,function()if not K.InCombat()then X.SetLabel(id,'align',value);Repaint()end end)
+   w.Selected(button,X.LabelValue(id,'align')==value);if K.InCombat()then button:Disable()end
+  end;y=y-46
+  for i,label in ipairs({'xpFontRegular','xpFontBold','xpFontGame'})do
+   local value=i-1;local button=w.Button(page,K.L(label),(i-1)*243,y,235,32,function()if not K.InCombat()then X.SetLabel(id,'font',value);Repaint()end end)
+   w.Selected(button,(X.LabelSettings(id).font or 0)==value);if K.InCombat()then button:Disable()end
+  end;y=y-48
+  Fold('textColor','xpTextColor',function(at)return ColorRow(page,w,at,'label','xpTextColor',id)end)
+  local reset=w.Button(page,K.L('xpResetText'),0,y,714,34,function()if not K.InCombat()then X.ResetLabels();Repaint()end end)
+  if K.InCombat()then reset:Disable()end;y=y-50
  end
- y=y-46
- for _,f in ipairs({{"x","xpTextX",-1400,1400,2,0},{"y","xpTextY",-400,400,2,0},{"size","xpTextSize",8,28,1,id=="xp" and 13 or 11}}) do Step(f[1],f[2],f[3],f[4],f[5],Read(f[1],f[6]),Write(f[1])) end
- for i,label in ipairs({"xpFontRegular","xpFontBold","xpFontGame"}) do
-  local value=i-1;local b=w.Button(page,K.L(label),(i-1)*243,y,235,32,function() X.SetLabel(id,"font",value);Redraw() end);w.Selected(b,(X.LabelSettings(id).font or 0)==value)
- end
- y=y-48
- w.Button(page,K.L("xpResetText"),0,y,349,34,function() X.ResetLabels();Redraw() end)
- w.Button(page,K.L("xpResetSession"),365,y,349,34,function() if not K.InCombat() then X.ResetSession();Redraw() end end)
- page:SetHeight(-y+70)
+ Flush();page:SetHeight(-y+20)
 end
 end)(K)

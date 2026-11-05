@@ -25,9 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Test suite and independent product isolation
-        run: python3 -m unittest discover -s tests -p test_product_boundaries.py -v
-      - name: Build and inspect both real ZIP files
-        run: python3 tools/package_products.py --output dist
+        run: |
+          python3 -m unittest discover -s tests -p test_product_boundaries.py -v
+          python3 -m unittest discover -s tests -p test_client_isolation.py -v
+      - name: Build and inspect the suite ZIP
+        run: python3 tools/package_products.py --product suite --output dist
       - name: Keep preview packages and per-file reports
         uses: actions/upload-artifact@v4
         with:

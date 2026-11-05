@@ -21,34 +21,98 @@ end
 local fonts=setmetatable({},{__mode="k"})
 local path="Interface\\AddOns\\KerimAnkaUI\\Fonts\\"
 local fontSerial=0
-local function Apply(region,spec)
+local sharedFonts={}
+local function PanelRegion(region)
+ if not K.window or region.panelTextFixed then return false end
+ local current=region
+ for _=1,32 do
+  if current.panelTextExclude then return false end
+  if current==K.window then return true end
+  current=current.GetParent and current:GetParent()
+  if not current then return false end
+ end
+ return false
+end
+local factors={1,1.12,1.24}
+function K.PanelTextSize()
+ local value=KerimAnkaUIDB and KerimAnkaUIDB.panelTextSize
+ return value==2 and 2 or value==3 and 3 or 1
+end
+local function Apply(region,spec,fitSize)
+ local scalable=PanelRegion(region)
+ local size=fitSize or(scalable and math.floor(spec.size*factors[K.PanelTextSize()]*2+.5)/2 or spec.size)
  -- An explicit false pins a language name to the bundled Latin/Cyrillic font.
  local native=spec.native==true or (spec.native==nil and KerimAnkaUIDB and KerimAnkaUIDB.language=="zhCN")
  if native then
   -- Never set a raw file or text height on the FontString. Local font
   -- overrides can replace the inherited font's multilingual glyph support.
-  local object=spec.size>=20 and (GameFontNormalHuge or GameFontNormalLarge)
-   or spec.size>=15 and GameFontNormalLarge
-   or spec.size<=11 and GameFontNormalSmall or GameFontNormal
+  local object=size>=20 and (GameFontNormalHuge or GameFontNormalLarge)
+   or size>=15 and GameFontNormalLarge
+   or size<=11 and GameFontNormalSmall or GameFontNormal
   region:SetFontObject(object or GameFontNormal)
  else
-  if not spec.customFont then
-   fontSerial=fontSerial+1
-   spec.customFont=CreateFont("KerimAnkaUIPanelFont"..fontSerial)
+  -- Panel regions share immutable font styles instead of creating a Font per label.
+  local key=(spec.bold and 'b' or 'r')..':'..tostring(size)..':'..spec.flags
+  local object=sharedFonts[key]
+  if not object then
+   fontSerial=fontSerial+1;object=CreateFont("KerimAnkaUIPanelFont"..fontSerial)
+   object:SetFont(path..(spec.bold and "Ubuntu-B.ttf" or "Ubuntu-R.ttf"),size,spec.flags)
+   sharedFonts[key]=object
   end
-  spec.customFont:SetFont(path..(spec.bold and "Ubuntu-B.ttf" or "Ubuntu-R.ttf"),spec.size,spec.flags)
-  region:SetFontObject(spec.customFont)
+  if not region.GetFontObject or region:GetFontObject()~=object then region:SetFontObject(object)end
+ end
+ if not fitSize and scalable and size>spec.size and region.GetText and region:GetText()and region:GetText()~=''then
+  local function Overflow()
+   if region.IsTruncated and region:IsTruncated()then return true end
+   local height=region.GetHeight and region:GetHeight()or 0
+   if height>0 and region.GetStringHeight and region:GetStringHeight()>height+.5 then return true end
+   if region.CanWordWrap and not region:CanWordWrap()then
+    local width=region:GetWidth();return width>0 and region:GetStringWidth()>width+.5
+   end
+   return false
+  end
+  local candidate=size
+  while candidate>spec.size and Overflow()do
+   candidate=math.max(spec.size,candidate-.5);Apply(region,spec,candidate)
+  end
  end
 end
 function K.ApplyTextFont(region,size,bold,flags,native)
  local spec=fonts[region] or {}
  spec.size=size or 13;spec.bold=bold;spec.flags=flags or "";spec.native=native
  fonts[region]=spec;Apply(region,spec)
+ if K.QueuePanelTextFit and PanelRegion(region)then K.QueuePanelTextFit()end
 end
+function K.ReleaseTextFont(region)fonts[region]=nil end
 function K.RefreshPanelFonts()
  if K.SoundShortcut then K.SoundShortcut.Refresh() end
  if K.FPS then K.FPS.Refresh() end
  for region,spec in pairs(fonts) do Apply(region,spec) end
+end
+-- Refresh only visible settings text after a render settles. No polling/OnUpdate.
+local textFitQueued=false
+local lastTextSize=1
+function K.QueuePanelTextFit()
+ if K.PanelTextSize()==1 and lastTextSize==1 then return end
+ if textFitQueued or not K.window or not K.window:IsShown()then return end
+ textFitQueued=true
+ C_Timer.After(0,function()
+  textFitQueued=false
+  if not K.window or not K.window:IsShown()then return end
+  lastTextSize=K.PanelTextSize()
+  for region,spec in pairs(fonts)do
+   if PanelRegion(region)and region:IsVisible()then Apply(region,spec)end
+  end
+ end)
+end
+function K.SetPanelTextSize(value)
+ if value~=1 and value~=2 and value~=3 then return false end
+ if not KerimAnkaUIDB then return false end
+ if K.PanelTextSize()==value then return true end
+ KerimAnkaUIDB.panelTextSize=value
+ if K.HideTooltip then K.HideTooltip()end
+ if K.Render then K.Render()end
+ K.QueuePanelTextFit();return true
 end
 function K.SetLanguage(code)
  if not K.locales[code] then return false end

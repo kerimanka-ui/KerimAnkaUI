@@ -1,3 +1,4 @@
+-- Classic Era/Hardcore only: no execution in Forever or Retail.
 local _,K=...
 local function Refresh()
  C_Timer.After(0,function() if K.window and K.window:IsShown() then K.Render() end end)
@@ -42,7 +43,7 @@ local function BackingColors(page,w,y)
  end)
  if not color.backingSwatch then color.backingSwatch=color:CreateTexture(nil,'ARTWORK') end
  color.backingSwatch:ClearAllPoints();color.backingSwatch:SetPoint('RIGHT',-8,0)
- color.backingSwatch:SetSize(16,16);color.backingSwatch:SetColorTexture(c[1],c[2],c[3],1)
+ color.backingSwatch:SetSize(16,16);color.backingSwatch:SetColorTexture(c[1],c[2],c[3],1);color.backingSwatch:Show()
  local presets={{'backingCream',{.65,.59,.46}},{'backingBrown',{.20,.115,.065}},{'backingGrey',{.12,.13,.14}},{'backingBlack',{0,0,0}}}
  for i,p in ipairs(presets) do
   local rgb=p[2]
@@ -108,13 +109,13 @@ end
 
 -- Reuse the artwork modules' validated getters/setters inside the hub.
 -- These controls used to be available only in the separate AceConfig window.
-function K.DrawArtExtras(page,w,y,onlyPet,onlyMinimap)
- if not onlyPet and not onlyMinimap then y=BackingColors(page,w,y) end
+function K.DrawArtExtras(page,w,y,onlyPet,onlyMinimap,onlyBacking)
+ if not onlyPet and not onlyMinimap and not onlyBacking then y=BackingColors(page,w,y) end
  local groups={}
  if onlyMinimap and ForeverClassArtMinimap then groups[#groups+1]={key="minimap",options=ForeverClassArtMinimap.Options()} end
  if not onlyMinimap and ForeverClassArtBarPanel then groups[#groups+1]={key="backing",options=ForeverClassArtBarPanel.Options(function() return ForeverClassArtLayoutAPI and ForeverClassArtLayoutAPI.GetSettings() or ForeverHunterArtCharacterDB end)} end
  if onlyPet then groups={} end
- if not onlyMinimap and ForeverPetBarPanel then groups[#groups+1]={key="petBar",options=ForeverPetBarPanel.Options()} end
+ if not onlyMinimap and not onlyBacking and ForeverPetBarPanel then groups[#groups+1]={key="petBar",options=ForeverPetBarPanel.Options()} end
  local function eval(value) if type(value)=="function" then return value({}) end; return value end
  for _,group in ipairs(groups) do
   local options=group.options
@@ -175,8 +176,8 @@ function K.DrawArtExtras(page,w,y,onlyPet,onlyMinimap)
  end
  return y
 end
-local function BarList(page,w,y,db,set,helpKey,available)
- w.Text(page,K.L(KerimAnkaUIBarsAPI and KerimAnkaUIBarsAPI.Resolve()=="blizzard" and "barsNativeList" or "abBars"),8,y,690,18,{.73,.62,.41}); y=y-36
+local function BarList(page,w,y,db,set,helpKey,available,titleKey)
+ w.Text(page,K.L(titleKey or (KerimAnkaUIBarsAPI and KerimAnkaUIBarsAPI.Resolve()=="blizzard" and "barsNativeList" or "abBars")),8,y,690,18,{.73,.62,.41}); y=y-36
  if not available then w.Text(page,K.L("barsLocked"),8,y,690,13,{.73,.62,.41}); y=y-48 end
  local barCount=KerimAnkaUIBarsAPI and KerimAnkaUIBarsAPI.Count() or 10
  for bar=1,barCount do
@@ -199,159 +200,359 @@ local function BarList(page,w,y,db,set,helpKey,available)
  end
  return y-math.ceil(barCount/2)*62
 end
+
+local backdropTab='appearance'
+local backdropColorOpen=false
+local function DrawBackdropSettings(page,api,db)
+ local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
+ local function Repaint()
+  local offset=K.scroll and K.scroll:GetVerticalScroll()or 0
+  K.HideTooltip();K.Render()
+  if K.scroll then K.scroll:SetVerticalScroll(math.min(offset,K.scroll:GetVerticalScrollRange()))end
+ end
+ local function Set(key,value)
+  if K.InCombat()then return false end
+  return api.Set(key,value)
+ end
+ for i,entry in ipairs({{'appearance','bdAppearance'},{'labels','bdLabels'},{'bars','bdBars'}})do
+  local id=entry[1]
+  local button=w.Button(page,K.L(entry[2]),(i-1)*240,0,232,36,function()
+   backdropTab=id;if K.scroll then K.scroll:SetVerticalScroll(0)end;K.Render()
+  end);w.Selected(button,backdropTab==id)
+ end
+ local function Toggle(key,label,y,getter,setter,helpKey)
+  local card=w.Box(page,0,y,714,64)
+  w.Text(card,K.L(label),14,-15,550,14):SetHeight(38)
+  local help=w.Button(card,'?',584,-19,22,24,function()end);w.Tip(help,label,helpKey or label..'Help')
+  w.Switch(card,getter(),624,-19,setter,not InCombatLockdown())
+ end
+ if backdropTab=='appearance'then
+  Toggle('enabled','abShow',-62,function()return db.enabled==true end,function(v)Set('enabled',v)end,'abHelp')
+  local fields={{'shade','abShade',0,1,.05},{'border','abBorder',0,6,1},{'slotAlpha','abSlot',0,1,.05}}
+  for i,field in ipairs(fields)do
+   local key,label,low,high,step=unpack(field)
+   local card=w.Box(page,(i-1)%2*365,-146-math.floor((i-1)/2)*102,349,90)
+   w.Text(card,K.L(label),14,-12,278,14)
+   local help=w.Button(card,'?',311,-10,22,24,function()end);w.Tip(help,label,'abHelp')
+   local format=step<1 and'%.2f'or'%.0f'
+   local value=w.Text(card,string.format(format,db[key]),14,-55,170,16)
+   for n,delta in ipairs({-step,step})do
+    local change=delta
+    local button=w.Button(card,delta<0 and'−'or'+',255+(n-1)*43,-49,35,30,function()
+     local requested=math.max(low,math.min(high,math.floor((db[key]+change)/step+.5)*step))
+     if Set(key,requested)then value:SetText(string.format(format,db[key]))end
+    end)
+    if InCombatLockdown()then button:Disable()end
+   end
+  end
+  local y=-366
+  if ForeverBackingColor and ForeverClassArtLayoutAPI then
+   local header=w.Button(page,'',0,y,714,42,function()backdropColorOpen=not backdropColorOpen;Repaint()end)
+   w.Text(header,K.L('backingColorTitle'),13,-12,640,15,{.73,.62,.41})
+   w.Text(header,backdropColorOpen and'−'or'+',677,-10,24,18)
+   y=y-56
+   if backdropColorOpen then
+    w.Text(page,K.L('bdSharedColorHelp'),12,y,690,13,{.65,.70,.62}):SetHeight(60)
+    y=BackingColors(page,w,y-74)
+   end
+  end
+  page:SetHeight(-y+20)
+ elseif backdropTab=='labels'then
+  local y=-62
+  if KerimAnkaUIBarsAPI and KerimAnkaUIBarsAPI.Resolve()=='blizzard'then
+   for _,name in ipairs({'hideNativeHotkeys','hideNativeMacroNames'})do
+    local key=name
+    Toggle(key,key,y,function()return K.db[key]==true end,function(v)K.SetActionBarLabel(key,v)end)
+    y=y-80
+   end
+  else
+   w.Text(page,K.L('bdNativeLabelsHelp'),12,y,690,13,{.65,.70,.62}):SetHeight(60);y=y-76
+  end
+  if K.DrawActionRange then y=K.DrawActionRange(page,w,y)end
+  page:SetHeight(-y+20)
+ else
+  w.Text(page,K.L('bdScopeHelp'),12,-62,690,13,{.65,.70,.62}):SetHeight(92)
+  -- Source ownership stays shared; this page shows status without changing it.
+  local source,blocked=KerimAnkaUIBarsAPI.Resolve()
+  local card=w.Box(page,0,-164,714,158)
+  w.Text(card,K.L('bdActiveSource')..': '..K.L(source=='blizzard'and'barsNative'or'barsBT'),14,-13,680,15)
+  w.Text(card,K.L('bdSourceHint'),14,-43,680,13,{.65,.70,.62}):SetHeight(58)
+  local button=w.Button(card,K.L('bdEditSource'),14,-112,686,32,function()K.ShowPage('art')end)
+  if blocked then w.Tip(button,'bdActiveSource',KerimAnkaUIBarsAPI.Status())end
+  local y=-340
+  y=BarList(page,w,y,db,function(bars)Set('bars',bars)end,'bdScopeHelp',not InCombatLockdown(),'bdStyledBars')
+  page:SetHeight(-y+20)
+ end
+ return true
+end
+
+local artSettingsTab='design'
+local artGroups={details=true,pet=false,color=false,reset=false}
+local artResetArmed=false
+local function DrawClassSettings(page,db,supported)
+ local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
+ local function Repaint()
+  local offset=K.scroll and K.scroll:GetVerticalScroll()or 0
+  K.HideTooltip();K.Render()
+  if K.scroll then K.scroll:SetVerticalScroll(math.min(offset,K.scroll:GetVerticalScrollRange()))end
+ end
+ local function Set(key,value)
+  if K.InCombat()or not supported then return false end
+  local command=key=='enabled'and(value and'show'or'hide')or key..' '..tostring(value)
+  if SlashCmdList.FOREVERHUNTERART then SlashCmdList.FOREVERHUNTERART(command,true);return true end
+  return false
+ end
+ local function Toggle(label,y,value,apply,helpKey)
+  local card=w.Box(page,0,y,714,64)
+  w.Text(card,K.L(label),14,-15,550,14):SetHeight(38)
+  local help=w.Button(card,'?',584,-19,22,24,function()end);w.Tip(help,label,helpKey or label..'Help')
+  w.Switch(card,value,624,-19,apply,not InCombatLockdown())
+  return y-82
+ end
+ local function Fold(id,label,y,draw,description)
+  local height=description and 92 or 42
+  local button=w.Button(page,'',0,y,714,height,function()artGroups[id]=not artGroups[id];artResetArmed=false;Repaint()end)
+  w.Text(button,K.L(label),13,-12,650,15,{.73,.62,.41});w.Text(button,artGroups[id]and'−'or'+',677,-10,24,18)
+  if description then w.Text(button,K.L(description),13,-42,686,13,{.65,.70,.62}):SetHeight(44)end
+  y=y-height-14
+  if artGroups[id]then y=draw(y)end
+  return y-14
+ end
+ for i,entry in ipairs({{'design','artPageDesign'},{'layout','artPageLayout'},{'bars','artPageBars'}})do
+  local id=entry[1]
+  local button=w.Button(page,K.L(entry[2]),(i-1)*240,0,232,36,function()
+   artSettingsTab=id;artResetArmed=false;if K.scroll then K.scroll:SetVerticalScroll(0)end;K.Render()
+  end);w.Selected(button,artSettingsTab==id)
+ end
+ if not supported then
+  w.Text(page,K.L('abUnsupported'),12,-62,690,14):SetHeight(60)
+  local y=Fold('pet','artPetGroup',-142,function(at)return K.DrawArtExtras(page,w,at,true)end,'artPetHelp')
+  page:SetHeight(-y+20);return true
+ end
+ if artSettingsTab=='design'then
+  local y=Toggle('abArt',-62,db.enabled==true,function(v)Set('enabled',v)end,'abArtHelp')
+  y=SkinChooser(page,w,y)
+  y=Toggle('hideActionBarStatues',y,K.db.hideActionBarStatues==true,function(v)K.SetActionBarStatues(v)end,'hideActionBarStatuesHelp')
+  y=Fold('details','artSelectedDetails',y,function(at)return K.DrawArtExtras(page,w,at,false,false,true)end)
+  if ForeverBackingColor and ForeverClassArtLayoutAPI then y=Fold('color','backingColorTitle',y,function(at)
+   w.Text(page,K.L('bdSharedColorHelp'),12,at,690,13,{.65,.70,.62}):SetHeight(60)
+   return BackingColors(page,w,at-74)
+  end)end
+  y=Fold('pet','artPetGroup',y,function(at)return K.DrawArtExtras(page,w,at,true)end,'artPetHelp')
+  y=Fold('reset','csReset',y,function(at)
+   w.Text(page,K.L('artResetHelp'),12,at,690,13,{.65,.70,.62}):SetHeight(64)
+   local button=w.Button(page,K.L(artResetArmed and'art_artConfirm'or'art_artReset'),0,at-78,714,36,function()
+    if K.InCombat()then return end
+    if artResetArmed then if Set('reset','')then artResetArmed=false;Repaint()end else artResetArmed=true;Repaint()end
+   end)
+   if InCombatLockdown()then button:Disable()end
+   if artResetArmed then w.Button(page,K.L('readyConfirmCancel'),0,at-124,714,34,function()artResetArmed=false;Repaint()end)end
+   return at-(artResetArmed and 174 or 128)
+  end)
+  page:SetHeight(-y+20)
+ elseif artSettingsTab=='layout'then
+  w.Text(page,K.L('abMode')..K.L(db.locked and'abFixed'or'abAuto'),12,-62,690,14):SetHeight(32)
+  local lock=w.Button(page,K.L('abLock'),0,-108,349,36,function()if Set('lock','')then Repaint()end end)
+  if db.locked or not db.enabled or select(2,KerimAnkaUIBarsAPI.Resolve())or InCombatLockdown()then lock:Disable()end
+  w.Tip(lock,'abLock','abArtHelp')
+  local follow=w.Button(page,K.L('abFollow'),365,-108,349,36,function()if Set('auto','')then Repaint()end end)
+  if InCombatLockdown()then follow:Disable()end;w.Tip(follow,'abFollow','abArtHelp')
+  local fields={{'width','abWidth',20,300,1},{'height','abHeight',20,300,1},{'x','abX',-500,500,1},{'y','abY',-500,500,1},{'alpha','abAlpha',0,1,.05},{'gap','abGap',0,50,1}}
+  for i,field in ipairs(fields)do
+   local key,label,low,high,step=unpack(field)
+   local card=w.Box(page,(i-1)%2*365,-166-math.floor((i-1)/2)*102,349,90)
+   w.Text(card,K.L(label),14,-12,278,14)
+   local help=w.Button(card,'?',311,-10,22,24,function()end);w.Tip(help,label,'abArtHelp')
+   local format=step<1 and'%.2f'or'%.0f';local value=w.Text(card,string.format(format,db[key]),14,-55,170,16)
+   for n,delta in ipairs({-step,step})do
+    local change=delta
+    local button=w.Button(card,delta<0 and'−'or'+',255+(n-1)*43,-49,35,30,function()
+     local requested=math.max(low,math.min(high,math.floor((db[key]+change)/step+.5)*step))
+     if Set(key,requested)then value:SetText(format:format(db[key]))end
+    end)
+    if InCombatLockdown()or key=='gap'and db.locked then button:Disable()end
+   end
+  end
+  page:SetHeight(484)
+ else
+  w.Text(page,K.L('artSourceHelp'),12,-62,690,13,{.65,.70,.62}):SetHeight(76)
+  local y=SourceChooser(page,w,-156)
+  w.Text(page,K.L('artScopeHelp'),12,y,690,13,{.65,.70,.62}):SetHeight(76)
+  y=BarList(page,w,y-90,db,function(bars)
+   local ids={};for _,id in ipairs(bars)do ids[#ids+1]=tostring(id)end
+   Set('bars',table.concat(ids,' '))
+  end,'artScopeHelp',not db.locked and not InCombatLockdown(),'artDecoratedBars')
+  page:SetHeight(-y+20)
+ end
+ return true
+end
 function K.DrawActionBarPage(page,kind)
  local w=K.UnitWidgets
  local backdrop=kind=="backdrop"
  local api=ForeverBarBackdropAPI
  local db=backdrop and api and api.GetSettings() or (not backdrop and ForeverClassArtLayoutAPI and ForeverClassArtLayoutAPI.GetSettings()) or (not backdrop and ForeverHunterArtCharacterDB)
  if type(db)~="table" then return false end
+ if backdrop then return DrawBackdropSettings(page,api,db)end
  local _,class=UnitClass("player")
  -- Registered class skins automatically enable the shared settings page.
  -- Keep the original classes whose single-theme artwork has no skin selector.
  local skins=ForeverClassArtSkins
  local supported=backdrop or (skins and skins.Available and skins.Available())
   or class=="HUNTER" or class=="ROGUE" or class=="WARRIOR" or class=="PALADIN" or class=="WARLOCK"
- local helpKey=backdrop and "abHelp" or "abArtHelp"
- local function set(key,value)
-  if K.InCombat() or not supported then return false end
-  if backdrop then return api.Set(key,value) end
-  local command=key=="enabled" and (value and "show" or "hide") or key.." "..tostring(value)
-  if SlashCmdList.FOREVERHUNTERART then SlashCmdList.FOREVERHUNTERART(command,true); return true end
-  return false
- end
- w.Text(page,K.L("abIntro"),8,0,690,13,{.65,.70,.62})
- local y=SourceChooser(page,w,-58)
- if KerimAnkaUIBarsAPI.Resolve()=="blizzard" then
-  for _,key in ipairs({"hideNativeHotkeys","hideNativeMacroNames"}) do
-   local labelKey=key
-   local box=w.Box(page,0,y,714,62)
-   w.Text(box,K.L(labelKey),16,-20,550,14)
-   local help=w.Button(box,"?",584,-20,22,22,function() end)
-   w.Tip(help,labelKey,labelKey.."Help")
-   w.Switch(box,K.db[labelKey]==true,620,-16,function(value) K.SetActionBarLabel(labelKey,value) end,not InCombatLockdown())
-   y=y-80
-  end
- end
- if backdrop and K.DrawActionRange then y=K.DrawActionRange(page,w,y) end
- if not supported then w.Text(page,K.L("abUnsupported"),8,y,690,15); if not backdrop then y=K.DrawArtExtras(page,w,y-40,true) end;page:SetHeight(-y+80);return true end
- local card=w.Box(page,0,y,714,62)
- w.Text(card,K.L(backdrop and "abShow" or "abArt"),16,-20,490,15)
- local help=w.Button(card,"?",584,-20,22,22,function() end); w.Tip(help,backdrop and "abShow" or "abArt",helpKey)
- w.Switch(card,db.enabled==true,620,-16,function(value) set("enabled",value) end,true)
- y=y-80
- if not backdrop then
-  local statues=w.Box(page,0,y,714,62)
-  w.Text(statues,K.L("hideActionBarStatues"),16,-20,550,14)
-  local help=w.Button(statues,"?",584,-20,22,22,function() end)
-  w.Tip(help,"hideActionBarStatues","hideActionBarStatuesHelp")
-  w.Switch(statues,K.db.hideActionBarStatues==true,620,-16,function(value)
-   K.SetActionBarStatues(value)
-  end,not K.InCombat())
-  y=y-80
-  y=SkinChooser(page,w,y)
-  w.Text(page,K.L("abMode")..K.L(db.locked and "abFixed" or "abAuto"),8,y,690,14); y=y-35
-  local fixed=w.Button(page,K.L("abLock"),0,y,349,36,function() if set("lock","") then Refresh() end end)
-  if db.locked or not db.enabled or select(2,KerimAnkaUIBarsAPI.Resolve()) then fixed:Disable() end
-  w.Tip(fixed,"abLock",helpKey)
-  local follow=w.Button(page,K.L("abFollow"),365,y,349,36,function() if set("auto","") then Refresh() end end)
-  w.Tip(follow,"abFollow",helpKey)
-  y=y-56
- end
- local fields=backdrop and {{"shade","abShade",0,1,.05},{"border","abBorder",0,6,1},{"slotAlpha","abSlot",0,1,.05}}
-  or {{"width","abWidth",20,300,1},{"height","abHeight",20,300,1},{"x","abX",-500,500,1},{"y","abY",-500,500,1},{"alpha","abAlpha",0,1,.05},{"gap","abGap",0,50,1}}
- local col=0
- for _,field in ipairs(fields) do
-  local key,label,low,high,step=unpack(field)
-  local c=w.Box(page,col*365,y,349,86)
-  w.Text(c,K.L(label),14,-12,278,13)
-  local tip=w.Button(c,"?",311,-10,22,22,function() end); w.Tip(tip,label,helpKey)
-  local function format(value) return string.format(step<1 and "%.2f" or "%.0f",value) end
-  local value=w.Text(c,format(db[key]),14,-54,150,15)
-  local function change(delta)
-   local requested=math.max(low,math.min(high,math.floor((db[key]+delta*step)/step+.5)*step))
-   if set(key,requested) then value:SetText(format(db[key])) end
-  end
-  local minus=w.Button(c,"−",251,-47,36,32,function() change(-1) end)
-  local plus=w.Button(c,"+",297,-47,36,32,function() change(1) end)
-  if key=="gap" and db.locked then minus:Disable(); plus:Disable() end
-  col=1-col; if col==0 then y=y-96 end
- end
- if col==1 then y=y-96 end
- if backdrop then y=BackingColors(page,w,y) end
- y=BarList(page,w,y,db,function(bars)
-  if backdrop then api.Set("bars",bars)
-  else local ids={}; for _,id in ipairs(bars) do ids[#ids+1]=tostring(id) end; set("bars",table.concat(ids," ")) end
- end,helpKey,backdrop or not db.locked)
- if not backdrop then
-  local confirmed=false
-  w.Button(page,K.L("art_artReset"),0,y,714,36,function(self)
-   if K.InCombat() then return end
-   if not confirmed then confirmed=true; self.label:SetText(K.L("art_artConfirm")); return end
-   if set("reset","") then Refresh() end
-  end)
-  y=K.DrawArtExtras(page,w,y-56)
- end
- page:SetHeight(-y+20)
- return true
+ return DrawClassSettings(page,db,supported)
 end
 
-
-
-
-function K.DrawInventoryPage(page)
- local M=K.InventoryMenus;local w=K.UnitWidgets;local y=0
- w.Text(page,K.L(M.Status()),8,y,690,13,{.65,.70,.62});y=y-78
+local inventoryTab='settings'
+function K.IsEconomyPage()return K.economySettingsVisible==true end
+function K.OpenEconomySettings()
+ K.ShowPage('economy')
+end
+function K.OpenBagSettings()
+ inventoryTab='settings';K.ShowPage('inventory')
+end
+local function InventoryControls(page,w,startY)
+ local y,col=startY,0;local M=K.InventoryMenus
+ local function Flush()if col==1 then y=y-96;col=0 end end
  local function Toggle(key,label,help)
-  local box=w.Box(page,0,y,714,62)
-  w.Text(box,K.L(label),16,-20,550,14)
-  local tip=w.Button(box,"?",584,-20,22,22,function() end);w.Tip(tip,label,help)
-  w.Switch(box,M.Get(key)==true,620,-16,function(value) M.Set(key,value);K.Render() end,not InCombatLockdown())
-  y=y-78
+  local box=w.Box(page,col*365,y,349,86)
+  w.Text(box,K.L(label),14,-12,278,13)
+  local tip=w.Button(box,'?',311,-10,22,22,function()end);w.Tip(tip,label,help)
+  w.Switch(box,M.Get(key)==true,255,-48,function(value)M.Set(key,value)end,not InCombatLockdown())
+  col=1-col;if col==0 then y=y-96 end
  end
  local function Numbers(fields)
-  for i,field in ipairs(fields) do
+  Flush()
+  for i,field in ipairs(fields)do
    local key,label,low,high=unpack(field)
    local box=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*96,349,86)
-   w.Text(box,K.L(label),14,-12,310,13)
+   w.Text(box,K.L(label),14,-12,278,13)
+   local tip=w.Button(box,'?',311,-10,22,22,function()end)
+   local help=key=='bagItemGap'and 'imItemLooksHelp'or key=='bagGap'and 'imBagShortcutGapHelp'or key=='bagSize'and 'imBagHelp'or 'imMicroHelp'
+   w.Tip(tip,label,help)
    local value=w.Text(box,tostring(M.Get(key)),14,-54,150,15)
-   for j,delta in ipairs({-1,1}) do
-    local button=w.Button(box,delta==-1 and "−" or "+",j==1 and 251 or 297,-47,36,32,function()
-     if M.Set(key,math.max(low,math.min(high,M.Get(key)+delta))) then value:SetText(tostring(M.Get(key))) end
+   for j,delta in ipairs({-1,1})do
+    local b=w.Button(box,delta==-1 and '−'or '+',j==1 and 251 or 297,-47,36,32,function()
+     if M.Set(key,math.max(low,math.min(high,M.Get(key)+delta)))then value:SetText(tostring(M.Get(key)))end
     end)
-    if InCombatLockdown() then button:Disable() end
+    if InCombatLockdown()then b:Disable()end
    end
   end
   y=y-math.ceil(#fields/2)*96
  end
- if K.BagShortcut then y=K.BagShortcut.Draw(page,w,y) end
- w.Text(page,K.L("imBags"),8,y,690,18,{.73,.62,.41});y=y-34
- Toggle("bagCombined","imCombinedBags","imCombinedBagsHelp")
- Toggle("bagDock","imDock","imBagHelp")
- Toggle("bagExpanded","imExpanded","imBagHelp")
- Toggle("bagBackground","imBagBackground","imBagAppearanceHelp")
- Toggle("bagFrame","imBagFrame","imBagAppearanceHelp")
- Toggle("bagIconBorder","imBagIconBorder","imBagAppearanceHelp")
- Toggle("hideNativeBagBar","imHideNativeBar","imHideNativeBarHelp")
- Toggle("bagJunk","imJunk","imItemLooksHelp")
- Toggle("bagQuality","imQuality","imItemLooksHelp")
- Numbers({{"bagSize","imBagSize",18,48},{"bagGap","imGap",0,16}})
- w.Text(page,K.L("imMicro"),8,y-8,690,18,{.73,.62,.41});y=y-44
- Toggle("microEnabled","imManage","imMicroHelp")
- Toggle("microLocked","imLocked","imMoveHelp")
- Numbers({{"microSize","imIconSize",18,48},{"microGap","imGap",0,16}})
- local align=w.Button(page,K.L("imAlign"),0,y,349,36,function() M.AlignChat();K.Render() end)
- local reset=w.Button(page,K.L("imReset"),365,y,349,36,function()
-  if InCombatLockdown() then return end
-  for _,key in ipairs({"microSize","microGap","microX","microY","microLocked"}) do K.db[key]=nil end
+ return Toggle,Numbers,Flush,function()return y end,function(v)Flush();y=v end
+end
+function K.DrawMicroMenuPage(page)
+ local w=K.UnitWidgets;local M=K.InventoryMenus
+ local Toggle,Numbers,Flush,Y=InventoryControls(page,w,0)
+ Toggle('microEnabled','imManage','imMicroHelp');Toggle('microLocked','imLocked','imMoveHelp')
+ Numbers({{'microSize','imIconSize',18,48},{'microGap','imGap',0,16}})
+ local y=Y()
+ local align=w.Button(page,K.L('imAlign'),0,y,349,36,function()M.AlignChat();K.Render()end)
+ local reset=w.Button(page,K.L('imReset'),365,y,349,36,function()
+  if InCombatLockdown()then return end
+  for _,key in ipairs({'microSize','microGap','microX','microY','microLocked'})do K.db[key]=nil end
   M.Refresh();K.Render()
  end)
- if InCombatLockdown() then align:Disable();reset:Disable() end
- w.Text(page,K.L("imMoveHelp"),8,y-58,690,13,{.65,.70,.62})
- page:SetHeight(-y+130)
+ if InCombatLockdown()then align:Disable();reset:Disable()end
+ w.Text(page,K.L('imMoveHelp'),8,y-58,690,13,{.65,.70,.62});page:SetHeight(-y+130)
+end
+local bagGroups={looks=false,strip=true}
+local function BagRepaint()
+ local offset=K.scroll and K.scroll:GetVerticalScroll()or 0
+ K.HideTooltip();K.Render()
+ if K.scroll then K.scroll:SetVerticalScroll(math.min(offset,K.scroll:GetVerticalScrollRange()))end
+end
+local function BagFold(page,w,id,label,y,draw)
+ local button=w.Button(page,'',0,y,714,42,function()bagGroups[id]=not bagGroups[id];BagRepaint()end)
+ w.Text(button,K.L(label),14,-12,650,15,{.73,.62,.41});w.Text(button,bagGroups[id]and'−'or'+',677,-10,24,18)
+ y=y-56;if bagGroups[id]then y=draw(y)end;return y-14
+end
+function K.DrawEconomyPage(page)
+ local w=K.UnitWidgets
+ local y=K.ClassicEconomyView and K.ClassicEconomyView.Draw(page,w,0)or -60
+ page:SetHeight(-y+20)
+end
+function K.DrawInventoryPage(page)
+ local M=K.InventoryMenus;local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
+ for i,entry in ipairs({{'settings','bgAppearance'},{'sorting','bgSorting'},{'shortcut','bgShortcut'},{'money','bagMoneyTab'},{'records','bagRecordsTab'}})do
+  local key,label=entry[1],entry[2]
+  local button=w.Button(page,K.L(label),(i-1)*144,0,138,40,function()inventoryTab=key;K.HideTooltip();if K.scroll then K.scroll:SetVerticalScroll(0)end;K.Render()end)
+  button.label:SetWordWrap(true);button.label:SetWidth(122);button.label:SetHeight(34);K.ApplyTextFont(button.label,12,false,'')
+  w.Selected(button,inventoryTab==key)
+ end
+ local y=-62
+ if inventoryTab=='money'then
+  if K.ClassicBags and K.ClassicBags.DrawMoneyRecords then y=K.ClassicBags.DrawMoneyRecords(page,w,y)end
+ elseif inventoryTab=='records'then
+  if K.ClassicItemRecords and K.ClassicItemRecords.DrawSettings then y=K.ClassicItemRecords.DrawSettings(page,w,y)end
+ elseif inventoryTab=='sorting'then
+  if K.ClassicInventoryStyle and K.ClassicInventoryStyle.DrawSortSettings then y=K.ClassicInventoryStyle.DrawSortSettings(page,w,y)end
+  if K.ClassicMerchant and K.ClassicMerchant.DrawSettings then y=K.ClassicMerchant.DrawSettings(page,w,y-12)end
+ elseif inventoryTab=='shortcut'then
+  if K.BagShortcut then y=K.BagShortcut.Draw(page,w,y)end
+  y=BagFold(page,w,'strip','bgStrip',y,function(at)
+   local Toggle,Numbers,Flush,Y=InventoryControls(page,w,at)
+   Toggle('bagBackground','imBagBackground','imBagAppearanceHelp');Toggle('bagFrame','imBagFrame','imBagAppearanceHelp')
+   Toggle('hideNativeBagBar','imHideNativeBar','imHideNativeBarHelp');Flush()
+   Numbers({{'bagGap','imBagShortcutGap',0,16}})
+   w.Text(page,K.L('imBagShortcutGapHelp'),8,Y(),690,12,{.65,.70,.62}):SetHeight(44)
+   return Y()-58
+  end)
+ else
+  -- Classic owns its combined window; the retail frame check is not applicable.
+  if not K.ClassicBags then
+   local status=K.L(M.Status());w.Text(page,status,8,y,690,13,{.65,.70,.62}):SetHeight(52);y=y-66
+  end
+  local Toggle,Numbers,Flush,Y=InventoryControls(page,w,y)
+  Toggle('bagCombined','imCombinedBags','imCombinedBagsHelp');Flush();y=Y()-8
+  local organized=K.ClassicBagsOrganized
+  local active=organized and organized.Active()
+  for i=1,4 do
+   local id=i
+   local card=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*156,349,140)
+   local name=id==4 and'bgOrganized'or'imBagDesign'..id
+   w.Text(card,K.L(name),14,-12,320,15,{.83,.74,.53})
+   -- Small layout schematics show the difference without loading artwork.
+   local count=id==4 and 9 or 12
+   for n=1,count do
+    local x=(n-1)%6*29;local row=math.floor((n-1)/6)
+    if id==4 then x=(n-1)%3*29+math.floor((n-1)/3)*90;row=0 end
+    w.Box(card,14+x,-40-row*29,26,26)
+   end
+   local chosen=id==4 and active or id<4 and not active and M.Get('bagDesign')==id
+   local button=w.Button(card,K.L(chosen and'artSkinSelected'or'artSkinUse'),14,-98,321,30,function()
+    if InCombatLockdown()then return end
+    if id==4 then if organized and organized.SetEnabled(true)then BagRepaint()end
+    elseif M.Set('bagDesign',id)then if organized then organized.SetEnabled(false)end;BagRepaint()end
+   end)
+   w.Selected(button,chosen);if chosen or InCombatLockdown()or id==4 and not organized then button:Disable()end
+   w.Tip(card,name,id==4 and'bgOrganizedHelp'or'imBagDesignHelp'..id)
+  end
+  y=y-324
+  if active then
+   w.Text(page,K.L('bgOrganizedHelp'),8,y,690,13,{.65,.70,.62}):SetHeight(40);y=y-54
+   w.Text(page,K.L('bgBankAppearance'),8,y,690,15,{.73,.62,.41});y=y-30
+   for i=1,3 do
+    local id=i;local button=w.Button(page,K.L('imBagDesign'..id),(i-1)*240,y,234,32,function()if M.Set('bagDesign',id)then BagRepaint()end end)
+    w.Selected(button,M.Get('bagDesign')==id);if InCombatLockdown()then button:Disable()end
+   end
+   y=y-46
+   w.Text(page,K.L('bgBankHelp'),8,y,690,12,{.65,.70,.62}):SetHeight(40);y=y-54
+  end
+  if K.ClassicInventoryStyle and K.ClassicInventoryStyle.DrawBackgroundSettings then y=K.ClassicInventoryStyle.DrawBackgroundSettings(page,w,y)end
+  y=BagFold(page,w,'looks','bgItemLooks',y,function(at)
+   local Toggle,Numbers,Flush,Y=InventoryControls(page,w,at)
+   Toggle('bagJunk','imJunk','imItemLooksHelp');Toggle('bagQuality','imQuality','imItemLooksHelp')
+   Toggle('bagQuest','imQuestItems','imQuestItemsHelp');Toggle('bagEmptySlots','imEmptySlots','imEmptySlotsHelp');Flush()
+   Numbers({{'bagItemGap','imItemGap',0,16},{'bagSize','imBagSize',18,48}})
+   return Y()-12
+  end)
+ end
+ page:SetHeight(-y+20)
 end
 
-function K.DrawErrorOptions(page)
- local w=K.UnitWidgets;local mode=K.ErrorMode()
+function K.DrawErrorOptions(page,widgets)
+ local w=widgets or K.UnitWidgets;local mode=K.ErrorMode()
  for i,key in ipairs({"errorShowAll","errorImportantOnly","errorCustom"}) do
   local button=w.Button(page,K.L(key),(i-1)*240,0,230,38,function() K.SetErrorMode(i);K.Render() end)
   w.Selected(button,i==mode)
@@ -376,7 +577,7 @@ function K.DrawErrorOptions(page)
  return y
 end
 
--- Style the existing Blizzard coordinate frame; its data and OnUpdate stay native.
+-- Classic uses its own C_Map-backed coordinate frame; native frames remain supported.
 ;(function(K)
 local M={};K.MinimapCoordinates=M
 local defaults={enabled=false,x=0,y=-40,size=12,font=0,outline=true}
@@ -523,19 +724,45 @@ function K.DrawMinimapCoordinates(page,w,y)
 end
 end)(K)
 
--- One dedicated minimap page; its saved settings and artwork APIs stay intact.
+-- Session-only navigation; drawing never changes saved settings.
+local minimapTab='appearance'
+local minimapGroups={sun=false,panel=false,position=false,preferences=false}
+local function MinimapRepaint()
+ local offset=K.scroll and K.scroll:GetVerticalScroll()or 0
+ K.HideTooltip();K.Render()
+ if K.scroll then K.scroll:SetVerticalScroll(math.min(offset,K.scroll:GetVerticalScrollRange()))end
+end
+function K.MinimapSettingsFold(page,w,id,label,y,draw)
+ local button=w.Button(page,'',0,y,714,42,function()minimapGroups[id]=not minimapGroups[id];MinimapRepaint()end)
+ w.Text(button,K.L(label),14,-12,640,15,{.73,.62,.41})
+ w.Text(button,minimapGroups[id]and'−'or'+',678,-11,22,16)
+ y=y-56
+ if minimapGroups[id]then y=draw(y)end
+ return y-14
+end
 function K.DrawMinimapPage(page)
- local w=K.UnitWidgets
- local y=0
- if K.MinimapButtons and K.MinimapButtons.IsBlocked() then
-  local notice=w.Box(page,0,y,714,128)
-  w.Text(notice,K.L("mbBlockedTitle"),14,-12,686,16,{1,.72,.30})
-  w.Text(notice,K.L("mbBlockedHelp"),14,-42,686,13,{.85,.85,.78})
-  y=y-144
+ local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
+ for i,entry in ipairs({{'appearance','mmPageAppearance'},{'details','mmPageDetails'},{'addons','mbTitle'}})do
+  local key=entry[1]
+  local button=w.Button(page,K.L(entry[2]),(i-1)*240,0,232,36,function()minimapTab=key;K.HideTooltip();if K.scroll then K.scroll:SetVerticalScroll(0)end;K.Render()end)
+  w.Selected(button,minimapTab==key)
  end
- y=K.DrawArtExtras(page,w,y,false,true)
- if not ForeverClassArtMinimap then w.Text(page,K.L("mmArtUnavailable"),8,y,690,13);y=y-72 end
- if K.DrawMinimapCoordinates then y=K.DrawMinimapCoordinates(page,w,y) end
- if K.DrawMinimapButtons then y=K.DrawMinimapButtons(page,w,y) end
+ local y=-62
+ if minimapTab=='appearance'then
+  y=K.DrawArtExtras(page,w,y,false,true)
+  if not ForeverClassArtMinimap then w.Text(page,K.L('mmArtUnavailable'),8,y,690,13);y=y-72 end
+
+ elseif minimapTab=='details'then
+
+  if K.DrawMinimapCoordinates then y=K.DrawMinimapCoordinates(page,w,y-12)end
+ else
+  if K.MinimapButtons and K.MinimapButtons.IsBlocked()then
+   local notice=w.Box(page,0,y,714,128)
+   w.Text(notice,K.L('mbBlockedTitle'),14,-12,686,16,{1,.72,.30})
+   w.Text(notice,K.L('mbBlockedHelp'),14,-42,686,13,{.85,.85,.78}):SetHeight(78)
+   y=y-144
+  end
+  if K.DrawMinimapButtons then y=K.DrawMinimapButtons(page,w,y,true)end
+ end
  page:SetHeight(-y+20)
 end

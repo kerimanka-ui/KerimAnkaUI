@@ -1,3 +1,4 @@
+-- Classic Era/Hardcore only: no execution in Forever or Retail.
 local _,K=...
 local L={};K.ProfileLayouts=L
 local LIMIT=131072
@@ -121,6 +122,8 @@ local function Import(data,label)
   end
   bt.db:SetProfile(name)
   if bt.db:GetCurrentProfile()~=name then error('profile activation failed') end
+  -- Position locking is separate from profile.buttonlock (spell dragging).
+  if bt.Lock then bt:Lock()end
  end)
  if not ok then
   pcall(bt.db.SetProfile,bt.db,previous)
@@ -142,10 +145,20 @@ function L.Queue(record,label)
   local backup=L.Decode(before)
   if not backup or (target.bartender and BT() and not backup.bartender) then return false,'pfFailed' end
  end
- local action=target and target.editMode and {mode='snapshot',target=target.editMode,setupRestore=target.setup} or nil
+ local action=target and target.editMode and {mode=target.runtime and 'restore' or 'snapshot',target=target.editMode,setupRestore=target.setup} or nil
  local ok,err=K.Profiles.Apply(record.code,label or record.name,action)
  if not ok then return false,err end
- if target then K.db.profileTransaction.savedLayouts={target=target,before=before,label=label or record.name} end
+ if target then
+  local native=K.db.profileTransaction.fullLayout
+  if native and native.before and native.before.restoreSlot then
+   local backup=L.Decode(before)
+   if not backup or not backup.editMode then K.Profiles.CancelPending();return false,'pfFailed' end
+   backup.editMode.restoreSlot=Copy(native.before.restoreSlot)
+   before=L.Encode(backup)
+   if not before then K.Profiles.CancelPending();return false,'pfFailed' end
+  end
+  K.db.profileTransaction.savedLayouts={target=target,before=before,label=label or record.name}
+ end
  return true,err
 end
 function L.Commit(transaction)
@@ -155,7 +168,11 @@ function L.Commit(transaction)
  if data.bartender then
   if BT() then
    local ok,name=pcall(Import,data.bartender,request.label)
-   if not ok then return false end
+   if not ok then
+    local setup=transaction.fullLayout and transaction.fullLayout.setupBefore
+    if setup and K.ClassPresets and K.ClassPresets.Restore then pcall(K.ClassPresets.Restore,setup)end
+    return false
+   end
    K.db.savedProfileBartender={status='applied',profile=name}
   else K.db.savedProfileBartender={status='pending',data=Copy(data.bartender),label=request.label} end
   -- A custom snapshot takes precedence over a previously queued ready preset.
@@ -186,22 +203,19 @@ function L.Description(record)
 end
 -- One deferred capture per native event, outside loading and logout teardown.
 -- No ticker, frame polling, or protected Edit Mode manager mutation.
-local scheduled=false
 function L.ScheduleStable()
- if scheduled or not C_Timer or not C_Timer.After then return end
- scheduled=true
- C_Timer.After(.25,function()
-  scheduled=false
-  local p=K.Profiles
-  if K.db and p and p.ready and not p.failed and not Combat() and not K.db.profileTransaction then p.Checkpoint("stable") end
- end)
+ local p=K.Profiles
+ if p and p.ScheduleCheckpoint then p.ScheduleCheckpoint("stable") end
 end
 local events=CreateFrame('Frame')
 for _,event in ipairs({'PLAYER_LOGIN','PLAYER_ENTERING_WORLD','EDIT_MODE_LAYOUTS_UPDATED','ADDON_LOADED','PLAYER_REGEN_ENABLED'}) do events:RegisterEvent(event) end
 events:SetScript('OnEvent',function(_,event,addon)
  if event=='ADDON_LOADED' and addon~='Bartender4' then return end
+ local pending=K.db and K.db.savedProfileBartender and K.db.savedProfileBartender.status=='pending'
  if C_Timer and C_Timer.After then C_Timer.After(0,L.TryDeferred) else L.TryDeferred() end
- if event~='ADDON_LOADED' then L.ScheduleStable() end
+ -- Combat ending alone does not change saved settings. Capture login/world/native
+ -- layout events, or a pending Bartender handoff; explicit saves/logout remain.
+ if event~='ADDON_LOADED'and(event~='PLAYER_REGEN_ENABLED'or pending)then L.ScheduleStable()end
 end)
 if EventRegistry and EventRegistry.RegisterCallback then
  EventRegistry:RegisterCallback('EditMode.Exit',L.ScheduleStable,L)

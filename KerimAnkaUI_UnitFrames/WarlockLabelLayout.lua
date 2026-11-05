@@ -1,3 +1,4 @@
+-- Classic Era/Hardcore only: no execution in Forever or Retail.
 -- Only static samples are measured: unit names/levels may be secret in combat.
 -- Live and preview share these exact placement and typography calculations.
 local G=ForeverWarlockUnitsGeometry
@@ -57,10 +58,12 @@ end
 function G.ApplyLabels(f,db,unit,W,H,font,mirrored)
     local pet=unit=="pet" and (db.petTextScale or 1) or 1
     local nameHeight=H*.13
-    local nameSize=Fit(font,14*(db.textScale or 1)*pet,"Ag",nil,nameHeight-2)
+    -- Fit a fixed reference once, then honor the requested name scale.
+    -- Refitting each requested size caused plateaus and pixel-rounding shrinkage.
+    local nameSize=Fit(font,14,"Ag",nil,nameHeight-2)*(db.textScale or 1)*pet
     f.name:ClearAllPoints()
     f.name:SetPoint("CENTER",f.anchor or f,"TOPLEFT",(mirrored and 1-G.name[1] or G.name[1])*W+2,-G.name[2]*H+(db.nameOffsetY or 0))
-    f.name:SetSize(W*.54-4,nameHeight);f.name:SetJustifyV("MIDDLE")
+    f.name:SetSize(W*.54-4,math.max(nameHeight,nameSize*1.4+2));f.name:SetJustifyV("MIDDLE");f.name:SetWordWrap(false)
     KerimAnkaUITextAPI.NameFont(f.name,nameSize,false)
     -- Pet bars keep proportional type, rather than cancelling the pet's scale.
     f.hpText:SetFont(font,12*(db.healthTextScale or 1)*pet,"OUTLINE")

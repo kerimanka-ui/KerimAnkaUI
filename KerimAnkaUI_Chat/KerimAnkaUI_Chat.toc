@@ -1,16 +1,13 @@
-## Interface: 11509
-## Title: KerimAnka UI: Chat and Micro Menu [Classic Era]
-## Group: KerimAnkaUI
-## Category: Chat
-## Author: Kerim Anka
-## Version: 0.36.0
+## Interface: 16001
+## Title: KerimAnka UI: Chat and Micro Menu
+## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Dependencies: KerimAnkaUI
-## Notes: Suite chat and micro menu module. Settings are managed by KerimAnka UI.
-
+## Version: 0.38.0
 Bootstrap.lua
-ClassicEra\Chat\Geometry.lua
-ClassicEra\Chat\Appearance.lua
-ClassicEra\Chat\Bronze.lua
-ClassicEra\Chat\NativeAdapter.lua
-ClassicEra\Chat\Input.lua
-ClassicEra\Chat\Core.lua
+Chat\Geometry.lua
+Chat\Appearance.lua
+Chat\Bronze.lua
+Chat\NativeAdapter.lua
+Chat\ForeverControls.lua
+Chat\Input.lua
+Chat\Core.lua

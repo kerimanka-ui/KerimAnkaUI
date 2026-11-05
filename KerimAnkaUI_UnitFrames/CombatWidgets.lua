@@ -291,3 +291,5 @@ events:SetScript("OnEvent",function(_,event,unit)
         M.Refresh(event=="PLAYER_TARGET_CHANGED" or event=="PLAYER_ENTERING_WORLD" or event=="UNIT_AURA" or event=="PLAYER_REGEN_ENABLED" or event=="UNIT_PET" or event=="UNIT_CONNECTION",changed,refreshCast)
     end
 end)
+
+function M.GetLayoutElements()return holders,cast end

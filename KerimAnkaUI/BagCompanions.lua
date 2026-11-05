@@ -1,6 +1,7 @@
 -- Native companion windows. Reagent visibility follows its shelf icon;
 -- keyring stays manual. Inventory items and click attributes remain Blizzard's.
 local _,K=...
+if K.ForeverInventoryRuntime then return end
 local M=K.InventoryMenus
 if not M then return end
 local watched,owned={},{}

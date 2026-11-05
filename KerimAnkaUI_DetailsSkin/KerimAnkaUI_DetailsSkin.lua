@@ -296,7 +296,11 @@ end
 
 local loader = CreateFrame("Frame")
 loader:RegisterEvent("PLAYER_LOGIN")
-loader:SetScript("OnEvent", function(self)
+loader:RegisterEvent("ADDON_LOADED")
+loader:SetScript("OnEvent", function(self, event, addon)
+    if event == "ADDON_LOADED" and addon ~= "Details" then return end
+    -- Optional integration: no polling, warning or settings writes when absent.
+    if not _G.Details then return end
     Settings()
     self:UnregisterAllEvents()
     if RegisterSkin() then

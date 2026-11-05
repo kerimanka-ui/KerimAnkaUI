@@ -136,11 +136,22 @@ local function ApplyMeter(config)
  -- Never queue a post-login native geometry/configuration pass.
 end
 
+local function CaptureSwing(result)
+ local get=GetVar()
+ if get then result.swingEnabled=get('showSwingTimer') end
+ local id=Enum and Enum.EditModeAccountSetting and Enum.EditModeAccountSetting.ShowSwingTimer
+ if id and C_EditMode and C_EditMode.GetAccountSettings then
+  for _,value in ipairs(C_EditMode.GetAccountSettings()or{})do
+   if value.setting==id then result.swingPreview={setting=id,value=value.value};break end
+  end
+ end
+end
 function M.Capture()
  if Combat() then return nil,'combatLock' end
  local get=GetVar()
  if not get or not SetVar() or not GetActionBarToggles or not SetActionBarToggles then return nil,'readyUnavailable' end
  local result={source=M.Source(),bars=Pack(GetActionBarToggles()),damage=get('damageMeterEnabled')}
+ if CurrentClass()=='HUNTER'then CaptureSwing(result)end
  result.savedProfileBartender=Copy(K.db.savedProfileBartender)
  result.readyBartenderCaptured=true
  result.readyBartender=Copy(K.db.readyBartender)
@@ -170,6 +181,7 @@ function M.CaptureProfileSetup()
  if Combat() then return end
  local get=GetVar();if not get or not GetActionBarToggles then return end
  local result={bars=Pack(GetActionBarToggles()),damage=get('damageMeterEnabled'),personalResourceEnabled=get('nameplateShowSelf')}
+ CaptureSwing(result)
  if DamageMeter then result.nativeMeter=CaptureMeter() end
  local ids=Enum and Enum.EditModeAccountSetting
  if ids and C_EditMode and C_EditMode.GetAccountSettings then
@@ -214,8 +226,10 @@ function M.Restore(snapshot)
  end
  local set=SetVar();if snapshot.damage~=nil and set then set('damageMeterEnabled',snapshot.damage) end
  if snapshot.personalResourceEnabled~=nil and set then set('nameplateShowSelf',snapshot.personalResourceEnabled) end
+ if snapshot.swingEnabled~=nil and set then set('showSwingTimer',snapshot.swingEnabled) end
  Preview(snapshot.preview)
  Preview(snapshot.personalResourcePreview)
+ Preview(snapshot.swingPreview)
  if snapshot.readyBartenderCaptured then
   K.db.savedProfileBartender=Copy(snapshot.savedProfileBartender)
   K.db.readyBartender=Copy(snapshot.readyBartender)
@@ -284,6 +298,10 @@ function M.Commit(action)
   if data.personalResourceDisplay and before.personalResourceEnabled~=nil then SetVar()('nameplateShowSelf','1') end
   if before.preview then Preview({setting=before.preview.setting,value=1}) end
   if data.personalResourceDisplay and before.personalResourcePreview then Preview({setting=before.personalResourcePreview.setting,value=1}) end
+  if action.class=='HUNTER'then
+   if before.swingEnabled~=nil then SetVar()('showSwingTimer','1')end
+   if before.swingPreview then Preview({setting=before.swingPreview.setting,value=1})end
+  end
  end)
  if not ok then pcall(M.Restore,before);return false,'readyApplyFailed' end
  K.db.savedProfileBartender=nil

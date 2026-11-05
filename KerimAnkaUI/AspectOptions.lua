@@ -1,3 +1,4 @@
+-- Classic Era/Hardcore only: no execution in Forever or Retail.
 local _,K=...
 local edits={}
 function K.HideAspectInputs()
@@ -33,12 +34,9 @@ function K.DrawAspectPage(page)
  local api=HunterAspectAlertAPI
  local db=api and api.GetSettings()
  if not db then return false end
- local w=K.UnitWidgets
+ local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
  w.Text(page,K.L("aaNote"),8,0,690,13,{.65,.70,.62})
- local notice=w.Box(page,0,-64,714,148)
- w.Text(notice,K.L("aaCombatNoticeTitle"),14,-12,686,14,{.85,.69,.37})
- w.Text(notice,K.L("aaCombatNotice"),14,-38,686,13,{.78,.80,.73})
- local y=-230
+ local y=-64
  for i,item in ipairs({{"cheetah","aaPreview"},{"missing","aaPreviewMissing"},{false,"aaLive"}}) do
   local mode=item[1] or nil
   local b=w.Button(page,K.L(item[2]),(i-1)*240,y,234,34,function()
@@ -58,7 +56,7 @@ function K.DrawAspectPage(page)
   w.Switch(c,value,255,-48,function(enabled)
    if K.InCombat() then return end
    if key=="locked" then api.SetLocked(enabled) else api.Set(key,enabled) end
-  end,true)
+  end,not K.InCombat())
  end
  y=y-212
  for _,field in ipairs({{"cheetahText","aaCheetah"},{"missingText","aaMissing"}}) do
