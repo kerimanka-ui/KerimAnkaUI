@@ -238,7 +238,11 @@ events:SetScript("OnEvent",function(self,event,...)
         for key,value in pairs(defaults) do if type(db[key])~=type(value) then db[key]=value end end
         db.width=math.max(150,math.min(420,db.width)); db.height=math.max(28,math.min(60,db.height))
         db.fontSize=math.max(10,math.min(24,db.fontSize))
-        BuildBar(); BuildPanel(); Apply()
+        BuildBar()
+        -- The suite owns the settings page. Do not register a second unused
+        -- standalone options window with the native panel manager in suite mode.
+        if not KerimAnkaUIAPI then BuildPanel() end
+        Apply()
         self:RegisterEvent("PLAYER_TARGET_CHANGED")
         self:RegisterEvent("PLAYER_ENTERING_WORLD")
         -- Forever-specific: a missing event must not abort startup as in older clients.

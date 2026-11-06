@@ -126,15 +126,37 @@ feedbackEvents:SetScript("OnEvent", function(_, _, unit, event, flags, amount, d
     if secret(unit) then return end
     local f = feedbackUnits[unit]
     if not f or not f:IsVisible() then return end
-    -- The native helper compares/formats this payload. Forever can send secret
-    -- UNIT_COMBAT values which addon execution must not compare, even indirectly
-    -- through Blizzard's helper. Omit only this portrait-feedback event.
-    if secret(event) or secret(flags) or secret(amount) or secret(damageType) then
-        stopFeedback(f);return
-    end
+    -- Native CombatFeedback branches on amount/flags. Restricted numeric values
+    -- may be displayed by FontString, but must never enter that Lua helper.
     local overlay = f.combatFeedback
-    local ok = checked(CombatFeedback_OnCombatEvent, overlay, event, flags, amount, damageType)
-    if not ok then stopFeedback(f);return end
+    if secret(event) or secret(flags) or secret(amount) or secret(damageType) then
+        local label=overlay.feedbackText
+        -- Result words do not depend on a damage amount (often a restricted 0).
+        -- Never turn DODGE/PARRY/MISS/IMMUNE into a numeric zero.
+        local word
+        if not secret(event) then
+            word=CombatFeedbackText and CombatFeedbackText[event]
+            if not word and event=="WOUND" and not secret(flags) then
+                word=CombatFeedbackText and CombatFeedbackText[flags]
+            end
+        end
+        if word then
+            label:SetTextHeight(db.portraitCombatSize*.75)
+            label:SetTextColor(1,1,1);label:SetText(word)
+        else
+            if secret(event) or (event~="WOUND" and event~="HEAL" and event~="ENERGIZE") then stopFeedback(f);return end
+            if not secret(amount) and (type(amount)~="number" or amount<=0) then stopFeedback(f);return end
+            label:SetTextHeight(db.portraitCombatSize)
+            local healing=event=="HEAL"
+            label:SetTextColor(healing and 0 or 1,1,healing and 0 or 1)
+            if not checked(label.SetFormattedText,label,"%d",amount) then stopFeedback(f);return end
+        end
+        overlay.feedbackStartTime=GetTime()
+        label:SetAlpha(0);label:Show()
+    else
+        local ok = checked(CombatFeedback_OnCombatEvent, overlay, event, flags, amount, damageType)
+        if not ok then stopFeedback(f);return end
+    end
     overlay:Show()
     overlay:SetScript("OnUpdate", function(self, elapsed)
         if not checked(CombatFeedback_OnUpdate, self, elapsed) or not self.feedbackText:IsShown() then stopFeedback(f) end
@@ -291,6 +313,25 @@ local function maskedTexture(parent, name, mirrored, layer, pet)
     texture:AddMaskTexture(mask)
     return texture, mask, maskFile
 end
+-- Standalone native stone material: never crop a full unit-frame atlas.
+local function nativeBarBackground(bar,unit)
+    bar.background:SetColorTexture(.12,.105,.085,1)
+    local layer=bar:CreateTexture(nil,"BACKGROUND",nil,1)
+    layer:SetAllPoints();layer:SetAlpha(1)
+    -- Bleed only the static surface under Paladin's translucent inner bevel.
+    -- Keep live fills, prediction anchors and text centres unchanged.
+    local bleed=(paladinTheme or priestTheme or shamanTheme or warriorTheme or warlockTheme or druidTheme or mageTheme or hunterTheme) and (unit=="player" or unit=="target") and 1.25 or 0
+    if bleed>0 then
+        for _,texture in ipairs({bar.background,layer})do
+            texture:ClearAllPoints()
+            texture:SetPoint("TOPLEFT",bar,"TOPLEFT",0,bleed)
+            texture:SetPoint("BOTTOMRIGHT",bar,"BOTTOMRIGHT",0,-bleed)
+        end
+    end
+    layer:SetTexture("Interface\\FrameGeneral\\UI-Background-Rock","REPEAT","REPEAT")
+    layer:SetTexCoord(0,math.max(.01,bar:GetWidth()/256),0,math.max(.01,(bar:GetHeight()+2*bleed)/256))
+    layer:SetVertexColor(.75,.75,.75,1)
+end
 local function makeBar(button, name, mirrored)
     local bar = CreateFrame("StatusBar", nil, button)
     bar:EnableMouse(false)
@@ -307,6 +348,7 @@ local function makeBar(button, name, mirrored)
     bg:SetAllPoints()
     bg:SetColorTexture(.025, .025, .02, 1)
     bar.background = bg
+    nativeBarBackground(bar,button.unit,name)
     return bar
 end
 local function updatePortrait(f,retrying)
@@ -351,9 +393,15 @@ local function updateIndicators(f)
             end
         end
     end
-    f.combat:Hide(); f.resting:Hide()
+    f.combat:Hide()
+    local resting=false
     if public(UnitAffectingCombat, unit) == true then f.combat:Show()
-    elseif unit == "player" and public(IsResting) == true then f.resting:Show() end
+    elseif unit == "player" and public(IsResting) == true then resting=true end
+    f.resting:SetShown(resting)
+    if f.restAnimation then
+        if resting then if not f.restAnimation:IsPlaying() then f.restAnimation:Play() end
+        else f.restAnimation:Stop() end
+    end
 end
 local function updateInfo(f)
     local unit = f.unit
@@ -428,6 +476,106 @@ local function roguePowerLabels(f,isMana,isEnergy)
     f.powerText:SetJustifyH(right and "RIGHT" or "CENTER")
     if f.powerPercent then f.powerPercent:SetShown(isMana);if not isMana then f.powerPercent:SetText("")end end
 end
+-- A full-width incoming-heal bar begins at the native health fill's endpoint.
+-- C-side clipping limits overhealing; no arithmetic/comparison on combat values.
+local function predictionBar(f,base,reverse)
+    -- Sibling of the live StatusBar: its fill must not clip this overlay.
+    local clip=CreateFrame("Frame",nil,f)
+    clip:EnableMouse(false);clip:SetAllPoints(base)
+    clip:SetFrameLevel(base:GetFrameLevel()+1);clip:SetClipsChildren(true)
+    local bar=CreateFrame("StatusBar",nil,clip)
+    bar:EnableMouse(false);bar:SetFrameLevel(clip:GetFrameLevel())
+    bar:SetStatusBarTexture(PATH.."BarFill.tga")
+    bar:SetReverseFill(reverse==true)
+    bar:SetPoint(reverse and "TOPRIGHT" or "TOPLEFT",base:GetStatusBarTexture(),"TOPRIGHT",0,0)
+    bar:SetMinMaxValues(0,1);bar:SetValue(0)
+    return bar
+end
+local function createHealPrediction(f)
+    f.healthStatus=text(f.hpText:GetParent(),12,f.health:GetWidth())
+    f.healthStatus:SetPoint("CENTER",f.health,"CENTER")
+    f.healthStatus:SetTextColor(1,.85,.35);f.healthStatus:Hide()
+    if f.unit=="player" and Enum and Enum.StatusBarInterpolation and Enum.StatusBarInterpolation.ExponentialEaseOut then
+        local clip=CreateFrame("Frame",nil,f)
+        clip:EnableMouse(false);clip:SetFrameLevel(f.health:GetFrameLevel()+1)
+        clip:SetPoint("TOPLEFT",f.health:GetStatusBarTexture(),"TOPRIGHT",0,0)
+        clip:SetPoint("BOTTOMRIGHT",f.health,"BOTTOMRIGHT",0,0)
+        clip:SetClipsChildren(true)
+        local trail=CreateFrame("StatusBar",nil,clip)
+        trail:EnableMouse(false);trail:SetFrameLevel(clip:GetFrameLevel())
+        trail:SetAllPoints(f.health);trail:SetStatusBarTexture(PATH.."BarFill.tga")
+        trail:SetStatusBarColor(.9,.12,.08,.75)
+        f.healthLossTrail=trail
+    end
+    if type(UnitGetIncomingHeals)=="function" then
+        f.healPrediction=predictionBar(f,f.health,false)
+        f.healPrediction:SetStatusBarColor(.35,1,.55,.7)
+        if type(CreateUnitHealPredictionCalculator)=="function" and type(UnitGetDetailedHealPrediction)=="function" then
+            f.healCalculator=CreateUnitHealPredictionCalculator()
+        end
+    end
+    if f.unit=="player" and f.power and C_Spell and type(C_Spell.GetSpellPowerCost)=="function" then
+        f.manaPrediction=predictionBar(f,f.power,true)
+        f.manaPrediction:SetStatusBarColor(.65,.8,1,.65)
+        f.predictedManaCost=0
+    end
+    if f.power and Enum and Enum.StatusBarInterpolation and Enum.StatusBarInterpolation.ExponentialEaseOut then
+        local clip=CreateFrame("Frame",nil,f)
+        clip:EnableMouse(false);clip:SetFrameLevel(f.power:GetFrameLevel()+1)
+        clip:SetPoint("TOPLEFT",f.power:GetStatusBarTexture(),"TOPRIGHT",0,0)
+        clip:SetPoint("BOTTOMRIGHT",f.power,"BOTTOMRIGHT",0,0)
+        clip:SetClipsChildren(true)
+        local trail=CreateFrame("StatusBar",nil,clip)
+        trail:EnableMouse(false);trail:SetFrameLevel(clip:GetFrameLevel())
+        trail:SetAllPoints(f.power);trail:SetStatusBarTexture(PATH.."BarFill.tga")
+        trail:SetStatusBarColor(.55,.75,1,.75)
+        f.manaSpendTrail=trail
+    end
+end
+local function updateHealPrediction(f,hpMax)
+    local bar=f.healPrediction;if not bar then return end
+    bar:SetSize(f.health:GetWidth(),f.health:GetHeight())
+    local incoming
+    if f.healCalculator then
+        UnitGetDetailedHealPrediction(f.unit,"player",f.healCalculator)
+        incoming=f.healCalculator:GetIncomingHeals()
+        hpMax=f.healCalculator:GetMaximumHealth()
+    else incoming=UnitGetIncomingHeals(f.unit) end
+    if not secret(incoming) and type(incoming)~="number" then incoming=0 end
+    bar:SetMinMaxValues(0,hpMax);bar:SetValue(incoming)
+end
+local function updateManaCost(f)
+    if not f or not f.manaPrediction then return end
+    f.predictedManaCost=0
+    local powerType=UnitPowerType(f.unit)
+    if secret(powerType) or powerType~=0 then return end
+    local spellID=select(9,UnitCastingInfo(f.unit))
+    if not secret(spellID) and not spellID then return end
+    local ok,costs=pcall(C_Spell.GetSpellPowerCost,spellID)
+    if not ok or secret(costs) or type(costs)~="table" then return end
+    for _,info in ipairs(costs)do
+        if not secret(info) and type(info)=="table" and not secret(info.type) and info.type==0 then
+            local cost=info.cost
+            if secret(cost) or type(cost)=="number" then f.predictedManaCost=cost end
+            return
+        end
+    end
+end
+local function updateHealthStatus(f)
+    -- Follow the client's unit state, never infer death from health==0.
+    -- Restricted identity/state values are not interpreted as a death.
+    local dead=public(UnitIsDeadOrGhost,f.unit)==true
+    if not f.healthStatus then return end
+    if dead then
+        f.healthStatus:SetFont(f.hpText:GetFont())
+        f.healthStatus:SetText(public(UnitIsGhost,f.unit)==true and (GHOST or DEAD) or DEAD)
+    end
+    f.healthStatus:SetShown(dead)
+    f.hpText:SetAlpha(dead and 0 or 1)
+    if f.hpPercent then f.hpPercent:SetAlpha(dead and 0 or 1) end
+    if f.powerText then f.powerText:SetAlpha(dead and 0 or 1) end
+    if f.powerPercent then f.powerPercent:SetAlpha(dead and 0 or 1) end
+end
 local function updateBars(f)
     local unit = f.unit
     -- Forward secret health and power straight to C UI sinks. Never divide,
@@ -447,10 +595,32 @@ local function updateBars(f)
         setPercent(f.hpPercent, unit, hp, hpMax, false)
     else checked(f.hpText.SetFormattedText, f.hpText, "%d / %d", hp, hpMax) end
     f.health:SetStatusBarColor(.18, .88, .07)
+    if f.healthLossTrail then
+        f.healthLossTrail:SetMinMaxValues(0,hpMax)
+        f.healthLossTrail:SetValue(hp,f.healthTrailReady and Enum.StatusBarInterpolation.ExponentialEaseOut or Enum.StatusBarInterpolation.Immediate)
+        f.healthTrailReady=true
+    end
+    updateHealPrediction(f,hpMax)
+    updateHealthStatus(f)
     if f.compact then return end
     local power, powerMax = UnitPower(unit), UnitPowerMax(unit)
     checked(f.power.SetMinMaxValues, f.power, 0, powerMax)
     checked(f.power.SetValue, f.power, power)
+    if f.manaSpendTrail then
+        f.manaSpendTrail:SetMinMaxValues(0,powerMax)
+        -- UnitPowerType is queried below for labels; this trail has its own
+        -- public resource-type gate, with all amounts forwarded to the C bar.
+        local resource=public(UnitPowerType,unit)
+        if f.manaTrailResource~=resource then f.manaTrailReady=nil;f.manaTrailResource=resource end
+        f.manaSpendTrail:SetShown(resource==0)
+        f.manaSpendTrail:SetValue(power,f.manaTrailReady and Enum.StatusBarInterpolation.ExponentialEaseOut or Enum.StatusBarInterpolation.Immediate)
+        f.manaTrailReady=true
+    end
+    if f.manaPrediction then
+        f.manaPrediction:SetSize(f.power:GetWidth(),f.power:GetHeight())
+        f.manaPrediction:SetMinMaxValues(0,powerMax)
+        f.manaPrediction:SetValue(f.predictedManaCost)
+    end
     local powerID,token=UnitPowerType(unit)
     if f.splitHealth then
         local mana=not secret(token)and not secret(powerID)and(token=="MANA"or powerID==0)
@@ -572,6 +742,7 @@ local function makeUnit(unit)
         f.health:SetStatusBarTexture(PATH .. "BarFill.tga")
         local bg = f.health:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints(); bg:SetColorTexture(.025, .025, .02, 1)
+        f.health.background=bg;nativeBarBackground(f.health,unit,"Health")
         local labels = CreateFrame("Frame", nil, f)
         labels:EnableMouse(false); labels:SetAllPoints()
         labels:SetFrameLevel(f:GetFrameLevel() + 3)
@@ -582,6 +753,7 @@ local function makeUnit(unit)
         f.hpText:SetPoint("CENTER", f.health, "CENTER")
         addSplitLabels(f, labels)
         if hunterTheme then border:SetBackdropBorderColor(.32, .38, .18, 1) end
+        createHealPrediction(f)
         frames[unit] = f
         RegisterUnitWatch(f)
         registerClickCasting(f)
@@ -651,7 +823,7 @@ local function makeUnit(unit)
         f.levelBadge:SetPoint("CENTER", f, "TOPLEFT", f.levelX * W, -f.levelY * H)
         f.levelBadge:SetSize(themeGeometry.levelSize[1] * W, themeGeometry.levelSize[2] * H)
         local fillParent = f.levelBadge
-        if hunterTheme and (unit == "player" or unit == "target") then
+        if hunterTheme and not themeGeometry.ApplyCircle and (unit == "player" or unit == "target") then
             -- Bleed the black fill under the baked gold ring. A tight mask on
             -- top of the art leaves a bright seam at fractional UI scales.
             fillParent = CreateFrame("Frame", nil, f)
@@ -667,14 +839,16 @@ local function makeUnit(unit)
         badgeMask:SetTexture(PATH .. (warriorTheme and (mirrored and "WarriorLevelMaskRight.tga" or "WarriorLevelMask.tga") or paladinTheme and (mirrored and "PaladinLevelMaskRight.tga" or "PaladinLevelMask.tga") or druidTheme and (mirrored and "DruidLevelMaskRight.tga" or "DruidLevelMask.tga") or priestTheme and (mirrored and "PriestLevelMaskRight.tga" or "PriestLevelMask.tga") or mageTheme and (mirrored and "MageLevelMaskRight.tga" or "MageLevelMask.tga") or shamanTheme and (mirrored and "ShamanLevelMaskRight.tga" or "ShamanLevelMask.tga") or warlockTheme and (mirrored and "WarlockLevelMaskRight.tga" or "WarlockLevelMask.tga") or (mirrored and "HunterLevelMaskRight.tga" or "HunterLevelMask.tga")),
             "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
         badgeMask:SetAllPoints(); black:AddMaskTexture(badgeMask)
-        if unit == "pet" or warlockTheme or shamanTheme or mageTheme or druidTheme or priestTheme or warriorTheme or paladinTheme then
+        if paladinTheme or priestTheme or shamanTheme or warriorTheme or warlockTheme or druidTheme or mageTheme or hunterTheme then black:Hide() end
+        if unit == "pet" or themeGeometry.ApplyCircle then
             local ring = f.levelBadge:CreateTexture(nil, "ARTWORK")
             ring:SetAllPoints(); ring:SetTexture(PATH .. "HunterLevelBadge.tga", "CLAMP", "CLAMP", "TRILINEAR")
-            if warlockTheme or shamanTheme or mageTheme or druidTheme or priestTheme or warriorTheme or paladinTheme then
+            if themeGeometry.ApplyCircle then
                 local uv=themeGeometry.levelBadgeUV
                 themeGeometry.ApplyCircle(ring)
             else ring:SetVertexColor(.82,.82,.78) end
-            ring:AddMaskTexture(badgeMask)
+            if not(paladinTheme or priestTheme or shamanTheme or warriorTheme or warlockTheme or druidTheme or mageTheme or hunterTheme)then ring:AddMaskTexture(badgeMask)end
+            if paladinTheme or priestTheme or shamanTheme or warriorTheme or warlockTheme or druidTheme or mageTheme or hunterTheme then ring:SetSnapToPixelGrid(false);ring:SetTexelSnappingBias(0)end
         end
     end
     f.skull = levelLayer:CreateTexture(nil, "OVERLAY", nil, 7)
@@ -747,6 +921,16 @@ local function makeUnit(unit)
     end
     f.combat = statusIcon("UI-HUD-UnitFrame-Player-CombatIcon", "Interface\\CharacterFrame\\UI-StateIcon", { .5, 1, 0, .484375 })
     f.resting = statusIcon("UI-HUD-UnitFrame-Player-RestIcon", "Interface\\CharacterFrame\\UI-StateIcon", { 0, .5, 0, .421875 })
+    if unit=="player" and C_Texture and public(C_Texture.GetAtlasInfo,"UI-HUD-UnitFrame-Player-Rest-Flipbook") then
+        f.resting:SetAtlas("UI-HUD-UnitFrame-Player-Rest-Flipbook")
+        local anim=f.resting:CreateAnimationGroup()
+        anim:SetLooping("REPEAT")
+        local flip=anim:CreateAnimation("FlipBook")
+        flip:SetDuration(1.5);flip:SetOrder(1)
+        flip:SetFlipBookRows(7);flip:SetFlipBookColumns(6);flip:SetFlipBookFrames(42)
+        f.restAnimation=anim
+        f:HookScript("OnHide",function()anim:Stop()end)
+    end
     if unit == "player" and playerClass == "ROGUE" then
         local combo = CreateFrame("Frame", nil, decoration)
         combo:EnableMouse(false)
@@ -769,6 +953,7 @@ local function makeUnit(unit)
         end
         f.combo = combo
     end
+    createHealPrediction(f)
     frames[unit] = f
     RegisterUnitWatch(f)
     registerClickCasting(f)
@@ -910,6 +1095,13 @@ local function apply()
             if unit=="pet" then f.level:Hide();if f.levelBadge then f.levelBadge:Hide() end end
             f.powerText:SetFont(STANDARD_TEXT_FONT, 11 * db.powerTextScale * (unit == "pet" and (1 / db.petScale) or 1), "OUTLINE")
             if warlockTheme or shamanTheme or mageTheme or druidTheme or priestTheme or warriorTheme or paladinTheme then themeGeometry.ApplyLabels(f,db,unit,W,H,STANDARD_TEXT_FONT,unit=="target") end
+            if hunterTheme and (unit=="player" or unit=="target") then
+                -- Hunter has its own baked art/center and no ApplyLabels module.
+                -- Change only the native badge size; preserve its level offset.
+                f.levelBadge:SetSize(42,42)
+                f.level:SetSize(42,42)
+                f.level:SetJustifyH("CENTER");f.level:SetJustifyV("MIDDLE")
+            end
             f.skull:SetSize(16 * db.levelTextScale * levelFontFactor, 16 * db.levelTextScale * levelFontFactor)
             f.classification:SetFont(STANDARD_TEXT_FONT, 12 * db.classificationTextScale, "OUTLINE")
             f.pvp:ClearAllPoints()
@@ -1267,6 +1459,16 @@ events:SetScript("OnEvent", function(_, event, unit)
             if petTheme then events:RegisterUnitEvent(name, "player", "target", "targettarget", "pet")
             else events:RegisterUnitEvent(name, "player", "target", "targettarget") end
         end
+        if type(UnitGetIncomingHeals)=="function" then
+            if petTheme then events:RegisterUnitEvent("UNIT_HEAL_PREDICTION","player","target","targettarget","pet")
+            else events:RegisterUnitEvent("UNIT_HEAL_PREDICTION","player","target","targettarget") end
+        end
+        if C_Spell and type(C_Spell.GetSpellPowerCost)=="function" then
+            for _,name in ipairs({"UNIT_SPELLCAST_START","UNIT_SPELLCAST_STOP","UNIT_SPELLCAST_FAILED","UNIT_SPELLCAST_INTERRUPTED","UNIT_SPELLCAST_SUCCEEDED","UNIT_SPELLCAST_DELAYED"})do
+                events:RegisterUnitEvent(name,"player")
+            end
+            updateManaCost(frames.player)
+        end
         events:RegisterUnitEvent("UNIT_PORTRAIT_UPDATE", "player", "target", "targettarget")
         events:RegisterUnitEvent("UNIT_MODEL_CHANGED", "player", "target", "targettarget")
         events:RegisterUnitEvent("UNIT_TARGET", "target")
@@ -1294,12 +1496,24 @@ events:SetScript("OnEvent", function(_, event, unit)
         if pending then apply() end
         refresh(false)
     else
+        if event:match("^UNIT_SPELLCAST_") then
+            if not secret(unit) and unit=="player" and frames.player then
+                if event=="UNIT_SPELLCAST_STOP" or event=="UNIT_SPELLCAST_FAILED" or event=="UNIT_SPELLCAST_INTERRUPTED" then frames.player.predictedManaCost=0
+                else updateManaCost(frames.player) end
+                checked(updateBars,frames.player)
+            end
+            return
+        end
+        if event=="UNIT_HEAL_PREDICTION" then
+            if not secret(unit) and frames[unit] then checked(updateBars,frames[unit]) end
+            return
+        end
         if event=="UNIT_HEALTH" or event=="UNIT_MAXHEALTH" or event=="UNIT_POWER_FREQUENT" or event=="UNIT_MAXPOWER" or event=="UNIT_DISPLAYPOWER" or event=="UNIT_POWER_UPDATE" then
             if frames[unit] then checked(updateBars,frames[unit]) end
             if unit=="player" then updateCombo() end
             return
         end
-        if event == "PLAYER_TARGET_CHANGED" then frames.target.classification:SetText("") end
+        if event == "PLAYER_TARGET_CHANGED" then frames.target.classification:SetText("");frames.target.manaTrailReady=nil;frames.target.healthTrailReady=nil end
         local portrait=event == "PLAYER_TARGET_CHANGED" or event == "PLAYER_ENTERING_WORLD" or event == "UNIT_PORTRAIT_UPDATE" or event == "UNIT_MODEL_CHANGED" or event == "UNIT_TARGET" or event == "PORTRAITS_UPDATED" or event=="UNIT_PET"
         local changed=event=="UNIT_PET" and "pet" or (event~="UNIT_TARGET" and unit or nil)
         refresh(portrait,changed)

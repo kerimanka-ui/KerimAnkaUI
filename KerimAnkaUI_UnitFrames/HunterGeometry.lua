@@ -9,3 +9,13 @@ ForeverHunterUnitsGeometry = {
     levelSize = { 0.064072140, 0.211180124 },
     name = { .61, .29 },
 }
+
+-- Match the approved native brown/gold level ring without sampling live frames.
+function ForeverHunterUnitsGeometry.ApplyCircle(texture)
+    local atlas="UI-HUD-UnitFrame-SmallCircle"
+    if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(atlas) then
+        texture:SetAtlas(atlas);return
+    end
+    texture:SetTexture("Interface\\AddOns\\KerimAnkaUI_UnitFrames\\LevelCircle.tga","CLAMP","CLAMP","TRILINEAR")
+    texture:SetTexCoord(0,1,0,1)
+end

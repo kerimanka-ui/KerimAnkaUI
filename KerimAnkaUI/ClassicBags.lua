@@ -26,16 +26,78 @@ local headerText={
  ["zhCN"]={"%s的背包","显示背包图标","隐藏背包图标","背包设置"},
 }
 local headerTooltip
+local headerTooltips={}
 local function HeaderText(index)
  local lang=KerimAnkaUIDB and KerimAnkaUIDB.language or 'en'
  return (headerText[lang]or headerText.en)[index]
 end
 local function HeaderTip(owner,text)
- if not headerTooltip then headerTooltip=CreateFrame('GameTooltip','KAClassicBagHeaderTooltip',UIParent,'GameTooltipTemplate')end
+ -- Keep native CJK lines separate from reused Latin-font tooltip lines.
+ local native=KerimAnkaUIDB and KerimAnkaUIDB.language=='zhCN' or text:find('[\224-\244]')~=nil
+ local key=native and 'CJK' or 'Roman'
+ headerTooltip=headerTooltips[key]
+ if not headerTooltip then
+  headerTooltip=CreateFrame('GameTooltip','KAClassicBagHeaderTooltip'..key,UIParent,'GameTooltipTemplate')
+  headerTooltips[key]=headerTooltip
+ end
  headerTooltip:SetOwner(owner,'ANCHOR_LEFT');headerTooltip:SetText(text)
+ -- Tooltip lines may only become available when first shown. Apply the font
+ -- after that, retaining the native object's glyph fallback and title color.
+ headerTooltip:Show()
+ if native then
+  local title=_G[headerTooltip:GetName()..'TextLeft1']
+  if title then title:SetFontObject(GameFontNormal) end
+ end
  K.InventoryTooltip(headerTooltip);headerTooltip:Show()
 end
-local function HideHeaderTip()if headerTooltip then headerTooltip:Hide()end end
+local function HideHeaderTip()for _,tip in pairs(headerTooltips)do tip:Hide()end end
+local bagSlotText={
+ en={"Bag slot","Reagent bag slot","Equip a bag","Equip a reagent bag"},
+ tr={"Çanta yuvası","Meslek çantası yuvası","Çanta tak","Meslek çantası tak"},
+ de={"Taschenplatz","Reagenzientaschenplatz","Tasche anlegen","Reagenzientasche anlegen"},
+ frFR={"Emplacement de sac","Emplacement de sac de composants","Équiper un sac","Équiper un sac de composants"},
+ itIT={"Scomparto sacca","Scomparto sacca dei reagenti","Equipaggia una sacca","Equipaggia una sacca dei reagenti"},
+ esES={"Ranura de bolsa","Ranura de bolsa de componentes","Equipar una bolsa","Equipar una bolsa de componentes"},
+ ptBR={"Espaço de bolsa","Espaço de bolsa de reagentes","Equipar uma bolsa","Equipar uma bolsa de reagentes"},
+ ruRU={"Ячейка сумки","Ячейка сумки для реагентов","Надеть сумку","Надеть сумку для реагентов"},
+ zhCN={"背包栏位","材料包栏位","装备背包","装备材料包"},
+}
+function M.BagSlotTooltip(owner,id)
+ local lang=KerimAnkaUIDB and KerimAnkaUIDB.language or 'en'
+ local labels=bagSlotText[lang]or bagSlotText.en
+ local reagentID=Enum and Enum.BagIndex and Enum.BagIndex.ReagentBag or 5
+ local reagent=id==reagentID
+ HideHeaderTip()
+ GameTooltip:SetOwner(owner,'ANCHOR_LEFT')
+ if id==0 then GameTooltip:SetText(BACKPACK_TOOLTIP or T('Backpack'))
+ else
+  local hasItem=false
+  if C_Container.ContainerIDToInventoryID then
+   local inventoryID=C_Container.ContainerIDToInventoryID(id)
+   -- An empty inventory tooltip installs Blizzard's refresh/hide callback.
+   -- Do not start that item-tooltip lifecycle for an unequipped bag slot.
+   if inventoryID and GetInventoryItemTexture('player',inventoryID) then
+    local ok,result=pcall(GameTooltip.SetInventoryItem,GameTooltip,'player',inventoryID)
+    hasItem=ok and not K.ForeverInventoryAdapter.IsSecret(result)and result==true
+   end
+  end
+  if not hasItem then
+   local native=reagent and (_G.CharacterReagentBag0Slot or _G.CharacterBag4Slot)or _G['CharacterBag'..(id-1)..'Slot']
+   local title=native and native.tooltipText
+   if K.ForeverInventoryAdapter.IsSecret(title)or type(title)~='string'or title==''then
+    title=reagent and (EQUIP_REAGENT_BAG or labels[4])or (EQUIP_CONTAINER or labels[3])
+   end
+   GameTooltip:Hide()
+   HeaderTip(owner,title)
+   return
+  end
+  GameTooltip:AddLine(labels[reagent and 2 or 1],.9,.9,.86)
+ end
+ GameTooltip:AddLine(tostring(C_Container.GetContainerNumSlots(id)or 0)..T(' slots | Click: filter / show all'),.9,.9,.86)
+ if id>0 then GameTooltip:AddLine(T('Drag: move bag | Drop a bag here: equip / swap'),.9,.9,.86)
+ else GameTooltip:AddLine(T('Drop an item here: put in backpack'),.9,.9,.86)end
+ K.InventoryTooltip(GameTooltip);GameTooltip:Show()
+end
 local function HeaderIcon(button,texture)
  button:SetText('')
  local icon=button:CreateTexture(nil,'ARTWORK');icon:SetPoint('TOPLEFT',3,-3);icon:SetPoint('BOTTOMRIGHT',-3,3);icon:SetTexture(texture)
@@ -953,15 +1015,9 @@ local function Ensure()
   end
   b:SetScript('OnEnter',function(self)
    M.HoverBag(id)
-   GameTooltip:SetOwner(self,'ANCHOR_LEFT')
-   if id>0 and C_Container.ContainerIDToInventoryID then GameTooltip:SetInventoryItem('player',C_Container.ContainerIDToInventoryID(id))
-   else GameTooltip:SetText(BACKPACK_TOOLTIP or T('Backpack')) end
-   GameTooltip:AddLine(tostring(Slots(id))..T(' slots | Click: filter / show all'),.9,.9,.86)
-   if id>0 then GameTooltip:AddLine(T('Drag: move bag | Drop a bag here: equip / swap'),.9,.9,.86)
-   else GameTooltip:AddLine(T('Drop an item here: put in backpack'),.9,.9,.86) end
-   K.InventoryTooltip(GameTooltip);GameTooltip:Show()
+   M.BagSlotTooltip(self,id)
   end)
-  b:SetScript('OnLeave',function() M.HoverBag(nil);GameTooltip:Hide() end)
+  b:SetScript('OnLeave',function() M.HoverBag(nil);GameTooltip:Hide();HideHeaderTip() end)
   local holder=CreateFrame('Frame','KAClassicBagHolder'..bag,body);holders[bag]=holder
   holder:SetID(bag);holder:SetAllPoints(body);buttons[bag]={}
  end
@@ -1066,7 +1122,7 @@ local function RefreshVisible()
   if row.kaIcon~=icon then row.icon:SetTexture(icon);row.kaIcon=icon end
   -- Position after the filtered item count determines the bottom tray.
   row:SetShown(not shelfHidden)
-  row:SetAlpha(count>0 and 1 or .4);row:SetBackdropBorderColor(.65,.72,.78,filterBag==bag and 1 or 0)
+  row:SetAlpha(count>0 and 1 or .4);row:SetBackdropBorderColor(0,0,0,0)
   total=total+count
   for slot=1,count do
    local info=C_Container.GetContainerItemInfo(bag,slot);if not info then free=free+1 elseif not info.iconFileID then waitingForItemInfo=true end
@@ -1196,11 +1252,13 @@ function M.InstallBagCallHooks()
   end
  end
  local current=_G.ContainerFrame_GenerateFrame
- if type(current)=='function' and callHooks.ContainerFrame_GenerateFrame~=current then
+ -- One named post-hook per module. Bank adds its own post-hook; a new wrapper
+ -- identity is not evidence that the native function was replaced.
+ if type(current)=='function' and not callHooks.ContainerFrame_GenerateFrame then
+  callHooks.ContainerFrame_GenerateFrame=true
   hooksecurefunc('ContainerFrame_GenerateFrame',function(f)
    M.InstallNativeBagHooks();if f and f:IsShown() then MaskNativeBag(f) end
   end)
-  callHooks.ContainerFrame_GenerateFrame=_G.ContainerFrame_GenerateFrame
  end
 end
 QueueNativeHandoff=function() Schedule(false) end
@@ -1238,7 +1296,7 @@ end
 K.BagMode={Get=function() return K.db and K.db.bagCombined~=false end,Set=function(value) return K.InventoryMenus.Set('bagCombined',value) end,ApplySaved=function() end}
 function M.Status()
  local changed=0
- for name,fn in pairs(callHooks) do if _G[name]~=fn then changed=changed+1 end end
+ for name,fn in pairs(callHooks) do if type(fn)=='function'and _G[name]~=fn then changed=changed+1 end end
  Message(string.format('enabled=%s shown=%s busy=%s queued=%s changed=%d',tostring(not not M.Enabled()),tostring(frame and frame:IsShown() or false),tostring(busy),tostring(queued),changed))
  Message(string.format('hooks=%d calls=%d requests=%d handled=%d last=%s',diagnostic.hooks,diagnostic.calls,diagnostic.requests,diagnostic.handled,diagnostic.last))
 end

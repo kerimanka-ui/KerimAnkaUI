@@ -167,3 +167,8 @@ The combined archive updates Forever (1.60.1). Classic Era keeps its tested 0.37
 ## 0.39.0 Forever update
 
 Updated bag text sizing, Organized categories, native bank integration and menu icons. Optional full-bag grey-item replacement starts off. Experimental guild-bank theme is session-only opt-in (`/kaguildskin on`); `/kaguildpreview` is a read-only example. Real guild operations remain unverified. Classic Era stays at0.37.0. See CHANGELOG.md for details.
+
+
+## 0.40.1 Forever update
+
+Chat copy/search tools, Unit Frame feedback/predictions and visual improvements, bag hook/tooltip fixes and combat sound switches. Guild bank uses its original appearance by default. Known combat private-tab limitations are documented in CHANGELOG.md. Classic Era remains0.37.0.

@@ -39,6 +39,8 @@ function G.LevelFont(fallback)
     return fallback
 end
 function G.ApplyCircle(texture)
+    local atlas="UI-HUD-UnitFrame-SmallCircle"
+    if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(atlas) then texture:SetAtlas(atlas);return end
     local _,circle=NativeParts()
     if circle and type(circle.GetAtlas)=="function" and texture.SetAtlas then
         local ok,atlas=pcall(circle.GetAtlas,circle)
@@ -51,7 +53,7 @@ function G.ApplyCircle(texture)
     texture:SetTexCoord(0,1,0,1)
 end
 function G.LevelMetrics(db,unit,font)
-    local diameter=36 -- fixed: independent of glyph count, text and pet scales
+    local diameter=42 -- native brown/gold atlas; small increase from 40
     local size=Fit(G.LevelFont(font),16*(db.levelTextScale or 1),"88",diameter*.74-2,diameter*.72-2)
     return diameter,size
 end

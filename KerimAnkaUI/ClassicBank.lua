@@ -77,8 +77,11 @@ function M.Hooks()
   local f=_G['ContainerFrame'..i]
   if f and not hooked[f] then hooked[f]=true;f:HookScript('OnShow',Mask) end
  end
- if type(ContainerFrame_GenerateFrame)=='function' and hooked.generate~=ContainerFrame_GenerateFrame then
-  hooksecurefunc('ContainerFrame_GenerateFrame',function(f) M.Hooks();Mask(f) end);hooked.generate=ContainerFrame_GenerateFrame
+ -- Bags also post-hooks this function. Comparing wrapper identities makes the
+ -- two modules repeatedly wrap each other, eventually exhausting the C stack.
+ if type(ContainerFrame_GenerateFrame)=='function' and not hooked.generate then
+  hooked.generate=true
+  hooksecurefunc('ContainerFrame_GenerateFrame',function(f) Mask(f) end)
  end
 end
 local native

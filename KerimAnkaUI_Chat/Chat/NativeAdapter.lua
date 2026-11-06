@@ -36,8 +36,6 @@ function C.Restore()
   if r.clearancePoints then
    f:ClearAllPoints();for _,p in ipairs(r.clearancePoints)do f:SetPoint(unpack(p))end
   end
-  if r.fixedWidth then f.fixedWidth=r.fixedWidth;if f.MarkDirty then f:MarkDirty()end end
-  if r.overflowWidth~=nil then f.width=r.overflowWidth end
   if r.inputInsets then f:SetTextInsets(unpack(r.inputInsets))end
   if r.toolFill then r.toolFill:Hide()end
   if r.toolUV then f:SetTexCoord(unpack(r.toolUV))end
@@ -47,7 +45,7 @@ function C.Restore()
    f:ClearAllPoints();for _,p in ipairs(r.textPoints)do f:SetPoint(unpack(p))end
   end
   if r.tabState then
-   f.mouseOverAlpha=r.tabState.mouseOverAlpha;f.noMouseAlpha=r.tabState.noMouseAlpha
+   r.forceTabAlpha=nil
    f:SetAlpha(r.alpha)
    f:SetFrameLevel(r.tabState.level)
   end
@@ -100,12 +98,34 @@ end
 function C.KeepTabVisible(frame)
  if not C.Enabled()or not frame then return end
  local tab=_G[frame:GetName()..'Tab'];if not tab or not C.records[tab]then return end
- if UIFrameFadeRemoveFrame then UIFrameFadeRemoveFrame(tab)end
- tab.mouseOverAlpha=1;tab.noMouseAlpha=1;tab:SetAlpha(1)
+ local r=C.records[tab];r.forceTabAlpha=true
+ C.tabAlphaHooks=C.tabAlphaHooks or setmetatable({},{__mode='k'})
+ if not C.tabAlphaHooks[tab]then
+  C.tabAlphaHooks[tab]=true
+  hooksecurefunc(tab,'SetAlpha',function(self,value)
+   local saved=C.records[self]
+   if not C.Enabled()or not(saved and saved.forceTabAlpha)then return end
+   local visibility=C.visibilityState and C.visibilityState[self]
+   local wanted=visibility and visibility.wanted or 1
+   if value~=wanted then self:SetAlpha(wanted)end
+  end)
+ end
+ local visibility=C.visibilityState and C.visibilityState[tab]
+ tab:SetAlpha(visibility and visibility.wanted or 1)
+end
+-- A blocked native HideUIPanel can leave an unused temporary chat shown.
+-- Its dock-parented custom chrome must not be resurrected by alerts/hover/layout.
+function C.IsClosedConversation(frame)
+ if not frame then return false end
+ local temporary,inUse=frame.isTemporary,frame.inUse
+ if not(issecretvalue and(issecretvalue(temporary)or issecretvalue(inUse)))and temporary==true and inUse==false then return true end
+ local trial=C.ClosedViewTrial
+ return trial and trial.IsMuted and trial.IsMuted(frame)or false
 end
 function C.UpdateTab(tab,selected)
  if not C.Enabled()then return end
  local r=C.records[tab];if not r or not r.tabChrome then return end
+ if C.IsClosedConversation(r.chatFrame)then r.tabChrome:Hide();return end
  C.PlaceTabPlate(tab,r.tabChrome)
  r.tabChrome.accent=C.TabAccent(r.chatFrame)
  C.SelectBronzeTab(r.tabChrome,selected)
@@ -169,6 +189,10 @@ function C.HoverTab(tab,hover)
 end
 function C.StyleTab(frame)
  local tab=_G[frame:GetName()..'Tab'];if not tab then return end
+ if C.IsClosedConversation(frame)then
+  local saved=C.records[tab];if saved and saved.tabChrome then saved.tabChrome:Hide()end
+  return
+ end
  local r=C.Remember(tab);r.chatFrame=frame
  if not r.tabState then
   r.tabState={mouseOverAlpha=tab.mouseOverAlpha,noMouseAlpha=tab.noMouseAlpha,level=tab:GetFrameLevel()}
@@ -248,7 +272,7 @@ function C.StyleFrame(f)
  local bar=f.buttonFrame
  if bar then
   local barRecord=C.Remember(bar)
-  if not barRecord.fixedWidth then barRecord.fixedWidth=bar.fixedWidth;bar.fixedWidth=26;bar:SetWidth(26);barRecord.placed=true end
+  if not barRecord.railSized then barRecord.railSized=true;bar:SetWidth(26);barRecord.placed=true end
   -- Reanchor the native group, never its children: scroll handlers need parent.parent.
   bar:ClearAllPoints()
   if f.buttonSide=='right'then bar:SetPoint('TOPLEFT',f,'TOPRIGHT',8,0)
@@ -274,7 +298,7 @@ function C.StyleFrame(f)
   C.HookScript(edit,'OnShow',C.Queue);C.HookScript(edit,'OnHide',C.Queue)
  end
 end
-function C.PlaceInput(f,g)
+function C.PlaceInput(f,g,skipHeader)
  local edit=f.editBox;if not edit then return end
  local r=C.Remember(edit);r.placed=true
  -- Preserve the native parent and event scripts, including IME and autocomplete.
@@ -282,7 +306,7 @@ function C.PlaceInput(f,g)
  edit:ClearAllPoints();edit:SetPoint('BOTTOMLEFT',g.anchor or UIParent,'BOTTOMLEFT',
   (g.inputX-(g.anchor and g.anchorX or 0))/scale,(g.inputY-(g.anchor and g.anchorY or 0))/scale)
  edit:SetSize(g.inputWidth/scale,g.inputHeight/scale)
- C.AlignInputHeader(edit)
+ if not skipHeader then C.AlignInputHeader(edit)end
 end
 function C.List()
  local list={}
@@ -315,8 +339,11 @@ function C.PlaceDock(g)
  local button=dock.overflowButton
  if button then
   local br=C.Remember(button)
-  if br.overflowWidth==nil then br.overflowWidth=button.width or button:GetWidth()end
-  br.placed=true;button.width=24;button:SetSize(24,27)
+  -- Native tab sizing reads this scalar in FCFDock_CalculateTabSize. A skin
+  -- must not write it (or restore it from addon code), even outside combat.
+  -- Match our visual width to the native reservation instead.
+  local nativeWidth=button.width or button:GetWidth()
+  br.placed=true;button:SetSize(nativeWidth,27)
   button:ClearAllPoints();button:SetPoint('BOTTOMRIGHT',dock,'BOTTOMRIGHT',-1,0)
   if not br.chrome then br.chrome=C.overflowChrome end
   if not br.chrome then

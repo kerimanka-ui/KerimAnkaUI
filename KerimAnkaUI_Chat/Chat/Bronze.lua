@@ -102,6 +102,8 @@ function C.PlaceTabPlate(tab,plate)
  if plate:GetParent()~=parent then plate:SetParent(parent)end
  plate:SetScale(tab:GetEffectiveScale()/parent:GetEffectiveScale())
  local visible=tab:IsShown()and(not tab.IsVisible or tab:IsVisible())
+ local record=C.records and C.records[tab]
+ if record and C.IsClosedConversation and C.IsClosedConversation(record.chatFrame)then visible=false end
  local viewport=dock and dock.scrollFrame
  if visible and viewport and tab:GetParent()==viewport:GetScrollChild()then
   local s=tab:GetEffectiveScale();local v=viewport:GetEffectiveScale()

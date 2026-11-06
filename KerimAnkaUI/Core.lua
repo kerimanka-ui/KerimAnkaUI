@@ -1,6 +1,6 @@
 local addonName, K = ...
 K.ForeverInventoryRuntime=true
-K.name, K.version = addonName, "0.39.0"
+K.name, K.version = addonName, "0.40.1"
 -- Final panel placement captured from Kerimankahan-Hantirt. These are panel
 -- preferences, not the game's UI scale or any gameplay frame coordinates.
 K.panelDefaults={scale=0.8721474221494858,height=819.36083984375,position={x=36.77588658330683,y=209.4805938205954}}
@@ -83,7 +83,9 @@ function K.GetCVar(name)
     if ok and value ~= nil and value ~= "" then return value end
 end
 function K.SetCVar(name, value)
-    if K.InCombat() then return false end
+    -- Only these three ordinary sound switches are usable from the shortcut
+    -- in combat. Layout and all other CVar changes retain their existing gate.
+    if name~='Sound_EnableMusic' and name~='Sound_EnableAmbience' and name~='Sound_EnableAllSound' and K.InCombat() then return false end
     local previous = K.GetCVar(name)
     local setter = C_CVar and C_CVar.SetCVar or SetCVar
     if previous == nil or not setter then K.Message("unavailable"); return false end
@@ -104,7 +106,7 @@ local errorGroups={
  movement={"SPELL_FAILED_MOVING"},
  direction={"ERR_BADATTACKFACING","ERR_BADATTACKPOS","SPELL_FAILED_UNIT_NOT_INFRONT","SPELL_FAILED_LINE_OF_SIGHT"},
  resources={"ERR_OUT_OF_MANA","ERR_OUT_OF_FOCUS","ERR_OUT_OF_ENERGY","ERR_OUT_OF_RAGE","ERR_OUT_OF_COMBO_POINTS","SPELL_FAILED_NO_POWER"},
- important={"ERR_INV_FULL","ERR_BANK_FULL","ERR_BAG_FULL","ERR_QUEST_FAILED_BAG_FULL_S","ERR_QUEST_LOG_FULL","ERR_QUEST_PUSH_LOG_FULL_S","ERR_NOT_ENOUGH_MONEY","ERR_QUEST_FAILED_NOT_ENOUGH_MONEY","ERR_ITEM_MAX_COUNT","ERR_ITEM_MAX_COUNT_EQUIPPED","ERR_ITEM_MAX_COUNT_SOCKETED","ERR_QUEST_FAILED_MAX_COUNT_S","ERR_NOT_IN_COMBAT","ERR_AFFECTING_COMBAT","SPELL_FAILED_AFFECTING_COMBAT","SPELL_FAILED_TARGET_AFFECTING_COMBAT","SPELL_FAILED_TARGET_IN_COMBAT","ERR_EQUIPMENT_MANAGER_COMBAT_SWAP_S"},
+ important={"ERR_INV_FULL","ERR_BANK_FULL","ERR_BAG_FULL","ERR_QUEST_FAILED_BAG_FULL_S","ERR_QUEST_LOG_FULL","ERR_QUEST_PUSH_LOG_FULL_S","ERR_NOT_ENOUGH_MONEY","ERR_BANKSLOT_INSUFFICIENT_FUNDS","ERR_BANKSLOT_FAILED_TOO_MANY","ERR_BANKSLOT_NOTBANKER","ERR_QUEST_FAILED_NOT_ENOUGH_MONEY","ERR_ITEM_MAX_COUNT","ERR_ITEM_MAX_COUNT_EQUIPPED","ERR_ITEM_MAX_COUNT_SOCKETED","ERR_QUEST_FAILED_MAX_COUNT_S","ERR_NOT_IN_COMBAT","ERR_AFFECTING_COMBAT","SPELL_FAILED_AFFECTING_COMBAT","SPELL_FAILED_TARGET_AFFECTING_COMBAT","SPELL_FAILED_TARGET_IN_COMBAT","ERR_EQUIPMENT_MANAGER_COMBAT_SWAP_S"},
 }
 local ids,texts,errorNames={},{},{};local errorRelay
 local function BuildErrorFilter()
@@ -1562,7 +1564,7 @@ function M.Refresh()
   b.label:Show()
   choice.button.label:SetText(K.L('soundShortcut_'..choice.key)..': '..K.L(on and 'soundShortcutOn' or 'soundShortcutOff'))
   choice.button.label:SetTextColor(on and .75 or .7,on and .9 or .7,on and .55 or .7,1)
-  choice.button:SetEnabled(value~=nil and not InCombatLockdown())
+  choice.button:SetEnabled(value~=nil)
  end
 end
 function M.Set(key,value)

@@ -25,7 +25,7 @@ function C.NativeInteraction()
  return false
 end
 function C.Queue()
- if busy or queued or not C.Enabled()or C.NativeInteraction()then return end
+ if busy or queued or C.combatRefreshing or not C.Enabled()or C.NativeInteraction()then return end
  queued=true
  C_Timer.After(0,function()queued=false;C.Refresh()end)
 end
@@ -42,7 +42,17 @@ local function Signature(g)
 end
 function C.Refresh()
  if busy or not C.Enabled()or C.NativeInteraction()then return end
- if InCombatLockdown()then waitingCombat=true;return end
+ -- Release a reused viewport before styling or laying out its first message.
+ if C.ClosedViewTrial then C.ClosedViewTrial.PrepareForReuse()end
+ if InCombatLockdown()then
+  waitingCombat=true
+  if C.RefreshCombat and not C.combatRefreshing then
+   C.combatRefreshing=true
+   local ok,err=pcall(C.RefreshCombat);C.combatRefreshing=false
+   if not ok then error(err,0)end
+  end
+  return
+ end
  C.tabKinds={}
  busy=true;C.stats.refreshes=C.stats.refreshes+1
  C.ApplyInputMode()
@@ -100,7 +110,10 @@ function C.Refresh()
     shell.input:Show()
     C.BindInputTarget(shell,f.editBox)
     shell.inputHint:SetShown(C.EnterMode()and not typing)
-    if docked and attach then C.microDock={x=g.microX,y=g.microY,width=math.max(1,g.microWidth-(d.unlocked and 58 or 36)),height=g.microHeight,anchor=shell,vertical=false,hidden=false,buttonSize=d.microSize or 32,gap=d.microGap or 4,offsetX=10,offsetY=3}end
+    -- Secure micro buttons must not depend on the chat/shell anchor chain:
+    -- otherwise native tab Hide/Show can become forbidden during combat.
+    -- InventoryMenus places this absolute rectangle against UIParent instead.
+    if docked and attach then C.microDock={x=g.microX,y=g.microY,width=math.max(1,g.microWidth-(d.unlocked and 58 or 36)),height=g.microHeight,vertical=false,hidden=false,buttonSize=d.microSize or 32,gap=d.microGap or 4}end
    end
   end
  end
@@ -112,6 +125,7 @@ function C.Refresh()
   if menus then menus.Refresh()end
  end
  C.SyncTabLayers(GENERAL_CHAT_DOCK,true)
+ if C.SyncControlRails then C.SyncControlRails(list)end
  busy=false
  C.UpdateVisibilityDriver()
 end
@@ -179,6 +193,7 @@ function C.SetTheme(id)
  -- Ignore earlier experimental free colors; presets are the sole appearance source.
  d.backgroundColor=nil;d.backgroundAlpha=nil
  for _,shell in pairs(C.shells)do C.PaintBackground(shell)end
+ if C.PaintTextTools then C.PaintTextTools()end
 end
 function C.OpenSettings()
  if not K.window and K.BuildWindow then K.BuildWindow()end
@@ -187,41 +202,18 @@ end
 -- Old slash entry redirects to the real suite page, never the game color picker.
 C.OpenBackgroundPicker=C.OpenSettings
 function C.InstallBackgroundMenu()
- if C.backgroundMenuInstalled or not Menu or not Menu.ModifyMenu or not MenuUtil or not MenuUtil.GetElementText then return end
- C.backgroundMenuInstalled=true
- Menu.ModifyMenu('MENU_FCF_TAB',function(owner,root)
-  if not C.Enabled()then return end
-  for _,entry in root:EnumerateElementDescriptions()do
-   if HUD_EDIT_MODE_MENU and MenuUtil.GetElementText(entry)==HUD_EDIT_MODE_MENU then
-    entry:SetResponder(function()C.OpenEditor();return MenuResponse and MenuResponse.CloseAll end)
-   end
-   local data=entry.GetData and entry:GetData()
-   local isBackground=type(data)=='table' and FCF_SetChatWindowBackGroundColor and data.swatchFunc==FCF_SetChatWindowBackGroundColor
-   if (isBackground or MenuUtil.GetElementText(entry)==BACKGROUND) and entry.SetResponder then
-    if MenuUtil.SetElementText then MenuUtil.SetElementText(entry,'KerimAnka · '..C.Text('Chat görünümü','Chat appearance'))end
-    entry:SetResponder(function()C.OpenSettings();return MenuResponse and MenuResponse.CloseAll end)
-    -- Color swatches may install their own OnClick rather than use the responder.
-    if entry.AddInitializer then entry:AddInitializer(function(button)
-     if button.fontString then button.fontString:SetText('KerimAnka · '..C.Text('Chat görünümü','Chat appearance'))end
-     if button.colorSwatch then button.colorSwatch:Hide()end
-     button:SetScript('OnClick',function()
-      local manager=Menu and Menu.GetManager and Menu.GetManager()
-      if manager and manager.CloseMenus then manager:CloseMenus()end
-      C.OpenSettings()
-     end)
-    end)end
-   end
-  end
- end)
+ -- Leave the native MENU_FCF_TAB descriptions and their secure responders
+ -- untouched. Chat appearance/editor remain available from our own panel.
 end
+
 function C.SettingsButton(shell,g)
  if not shell.settingsButton then
   local b=CreateFrame('Button',nil,shell);b:SetSize(28,28);b:SetFrameStrata('LOW');b:SetFrameLevel(15)
   local bg=b:CreateTexture(nil,'BACKGROUND');bg:SetAllPoints();bg:SetColorTexture(.13,.18,.15,1);C.Border(b,1)
   local icon=b:CreateTexture(nil,'ARTWORK');icon:SetSize(18,18);icon:SetPoint('CENTER')
   icon:SetTexture('Interface\\AddOns\\KerimAnkaUI_Chat\\Chat\\Media\\SimpleSettings.tga')
-  b:SetScript('OnClick',C.OpenSettings)
-  b:SetScript('OnEnter',function(self)C.ButtonTooltip(self,C.Text('Chat ayarları','Chat settings'),C.Text('Görünüm, yerleşim ve mikro menü ayarlarını aç.','Open appearance, layout and micro menu settings.'))end)
+  b:SetScript('OnClick',function(self)if C.ToggleToolsMenu then C.ToggleToolsMenu(self,shell)else C.OpenSettings()end end)
+  b:SetScript('OnEnter',function(self)C.ButtonTooltip(self,C.Text('Chat ayarları','Chat settings'),C.TextTools and C.TextTools.L('menuHint')or C.Text('Görünüm, yerleşim ve mikro menü ayarlarını aç.','Open appearance, layout and micro menu settings.'))end)
   b:SetScript('OnLeave',function()if GameTooltip then GameTooltip:Hide()end end)
   shell.settingsButton=b
  end
@@ -247,6 +239,7 @@ SlashCmdList.KERIMANKACHAT=function(input)
  elseif input=='micro bottom'then print('KerimAnka Chat: test26 uses one fixed bottom toolbar.')
  elseif input=='micro hide'then print('KerimAnka Chat: test26 uses one fixed bottom toolbar.')
  elseif input=='micro show'then print('KerimAnka Chat: test26 uses one fixed bottom toolbar.')
+ elseif input=='copy' or input=='search'then if C.OpenTextTools then C.OpenTextTools(nil,input)end
  elseif input=='settings'then C.OpenSettings()
  elseif input=='background'then C.OpenBackgroundPicker()
  elseif input=='refresh'then C.Queue()
@@ -321,6 +314,12 @@ function C.ApplyManaged(owner,active,attach)
 end
 function C.PlaceControls(frame,g)
  local bar=frame.buttonFrame;if not bar then return end
+ if InCombatLockdown()then
+  if bar.IsProtected and bar:IsProtected()then return end
+  for _,button in ipairs(C.Controls(frame))do
+   if button.IsProtected and button:IsProtected()then return end
+  end
+ end
  local scale=bar:GetEffectiveScale()/UIParent:GetEffectiveScale()
  C.Unclamp(bar)
  local r=C.Remember(bar);r.placed=true
@@ -398,8 +397,6 @@ end
 function C.OwnNativeFrame(frame)
  C.Unclamp(frame)
  local r=C.Remember(frame)
- if not r.lockSaved then r.lockSaved=true;r.nativeLocked=frame.isLocked end
- frame.isLocked=true
  C.nativeEditHooks=C.nativeEditHooks or setmetatable({},{__mode='k'})
  for _,name in ipairs({'Selection','EditModeResizeButton','ResizeButton'})do
   local child=frame[name]
@@ -472,7 +469,16 @@ end
 
 C.tabPalette={guild={.42,.82,.49},party={.57,.69,.96},raid={.96,.65,.34},combat={.94,.53,.35}}
 function C.TabAccent(frame)
- if not Settings().channelColors or not frame then return end
+ if not frame then return end
+ -- Private conversations keep the client's own distinction even when optional
+ -- guild/party channel tinting is off. Reused temporary frames are not cached.
+ local kind=frame.chatType
+ if not(issecretvalue and issecretvalue(kind))and(kind=='BN_WHISPER'or kind=='WHISPER')then
+  local info=ChatTypeInfo and ChatTypeInfo[kind]
+  if info then return {info.r,info.g,info.b}end
+  return kind=='BN_WHISPER'and {.0,.8,1}or {1,.5,1}
+ end
+ if not Settings().channelColors then return end
  C.tabKinds=C.tabKinds or{}
  local cached=C.tabKinds[frame];if cached~=nil then return C.tabPalette[cached]end
  local kind=false

@@ -1,3 +1,23 @@
+# KerimAnka UI 0.40.1 — Forever interface improvements
+
+This update targets **WoW: Forever (1.60.1)**. The combined archive keeps **Classic Era 0.37.0 unchanged**. Existing settings and character records are preserved.
+
+- Chat: a gear menu opens settings, copies the selected tab into a selectable text window, or searches that tab's snapshot. Search results can be navigated without changing the live conversation. The windows follow the selected chat theme and support nine panel languages.
+- Chat: improved Battle.net conversation labels, colors and message indicators; corrected menu mouse handling and a missing mouse-over API error. Restricted names remain guarded rather than guessed.
+- Bags: stopped repeated container hook registration that could grow into a stack overflow. Added hover descriptions for empty ordinary and reagent bag slots, removed the white selection outline, and improved Chinese tooltip font handling.
+- Bank warnings: bank-slot insufficient-funds, limit and banker errors are retained when important warnings are enabled. The native game still owns purchase and transaction operations.
+- Unit Frames: improved portrait combat feedback and localized dodge/parry/miss results; incoming-heal and player cast-mana predictions, a mana-spending trail, localized dead/ghost labels, native resting animation and player health-loss feedback.
+- Unit Frames: opaque stone backgrounds and cleaner bar edges; native brown/gold level rings for Paladin, Priest, Shaman, Warrior, Warlock, Druid, Mage and Hunter while retaining each class's frame layout.
+- Sound shortcut: music, ambience and master sound can now be toggled during combat. Position editing and unrelated settings retain their combat restrictions.
+- Hunter Range: the suite no longer registers an unused separate options window.
+
+**Guild bank:** the original Blizzard appearance is used by default. The optional experimental skin remains off and resets off on reload. Guild permissions, item transfers, purchasing, money controls and logs are native; purchased-tab server operations have not been gameplay-tested by us.
+
+**Known limitation:** closing private chat tabs during combat may still encounter native blocked-action or temporary-view issues. This release does not claim a complete fix; the final closed-view compatibility guard is included and enabled at startup at the user’s request. It hides only confirmed closed orphaned views and restores genuinely reused views; `/kachatclosedview off` disables the guard for the current session. Diagnostic traces are excluded.
+
+No independent products, personal SavedVariables, Diagnostics addon, fake economy data or diagnostic test instrumentation are included. All Forever suite version labels now report **0.40.1**; Classic Era remains **0.37.0**. Additional class/client visual feedback is welcome.
+
+
 # KerimAnka UI 0.39.0 — Forever bags, bank and interface fixes
 
 This update targets **WoW: Forever (1.60.1)**. The combined archive preserves **Classic Era 0.37.0** unchanged.
