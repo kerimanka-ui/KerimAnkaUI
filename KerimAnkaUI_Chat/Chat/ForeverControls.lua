@@ -138,11 +138,27 @@ function C.SyncControlRails(list)
   end
  end
 end
+function C.RestorePrimaryCombatGeometry(primary,g)
+ -- Native level-up/edit-mode updates can move the message viewport while our
+ -- shell and secure toolbar remain at their cached absolute positions.
+ -- Restore only an unprotected viewport, never its secure rail or micro menu.
+ if not Movable(primary)or not primary:IsShown()or not g.viewportWidth or not g.viewportHeight then return end
+ local scale=primary:GetEffectiveScale()/UIParent:GetEffectiveScale()
+ local x,y=primary:GetLeft(),primary:GetBottom()
+ if not x or not y or scale<=0 then return end
+ local moved=math.abs(x*scale-g.anchorX)>.5 or math.abs(y*scale-g.anchorY)>.5
+ local resized=math.abs(primary:GetWidth()*scale-g.viewportWidth)>.5 or math.abs(primary:GetHeight()*scale-g.viewportHeight)>.5
+ if moved then
+  primary:ClearAllPoints();primary:SetPoint('BOTTOMLEFT',UIParent,'BOTTOMLEFT',g.anchorX/scale,g.anchorY/scale)
+ end
+ if resized then primary:SetSize(g.viewportWidth/scale,g.viewportHeight/scale)end
+end
 function C.RefreshCombat()
  local dock=GENERAL_CHAT_DOCK
  local primary=dock and dock.primary or ChatFrame1
  local g=C.mainGeometry
  if not primary or not g then return end
+ C.RestorePrimaryCombatGeometry(primary,g)
  local selected=dock and FCFDock_GetSelectedWindow(dock)or primary
  local shell=C.shells[primary]
  for _,frame in ipairs(C.List())do

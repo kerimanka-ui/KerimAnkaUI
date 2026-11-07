@@ -248,7 +248,6 @@ events:SetScript("OnEvent",function(self,event,...)
         -- Forever-specific: a missing event must not abort startup as in older clients.
         ns.swingEventSupported=pcall(self.RegisterEvent,self,"PLAYER_SWING")
         C_Timer.NewTicker(.15,function() if not dragging and db.enabled then Render() end end)
-        Say(Hint("hunterRangeReady","Hunter Range ready. Settings: KerimAnka UI."))
     elseif event=="PLAYER_TARGET_CHANGED" or event=="PLAYER_ENTERING_WORLD" then
         lastSwing,swingLength=-100,0
         Render()

@@ -223,7 +223,7 @@ function C.SettingsButton(shell,g)
 end
 local events=CreateFrame('Frame')
 for _,event in ipairs({'PLAYER_LOGIN','PLAYER_ENTERING_WORLD','UPDATE_CHAT_WINDOWS','UPDATE_FLOATING_CHAT_WINDOWS',
- 'ADDON_LOADED','PLAYER_REGEN_ENABLED','UI_SCALE_CHANGED','DISPLAY_SIZE_CHANGED','PLAYER_LOGOUT'})do events:RegisterEvent(event)end
+ 'ADDON_LOADED','PLAYER_REGEN_ENABLED','PLAYER_LEVEL_UP','UI_SCALE_CHANGED','DISPLAY_SIZE_CHANGED','PLAYER_LOGOUT'})do events:RegisterEvent(event)end
 events:SetScript('OnEvent',function(_,event)
  if event=='PLAYER_LOGOUT'then C.shuttingDown=true;C.RestoreInputMode();return end
  if event=='ADDON_LOADED' or event=='PLAYER_LOGIN'then C.DiscoverHooks()end
@@ -307,7 +307,7 @@ function C.ApplyManaged(owner,active,attach)
  local r=C.Remember(owner);r.placed=true
  local scale=owner:GetEffectiveScale()/UIParent:GetEffectiveScale()
  owner:ClearAllPoints();owner:SetPoint('BOTTOMLEFT',UIParent,'BOTTOMLEFT',x/scale,y/scale);owner:SetSize(w/scale,h/scale)
- return {x=d.x,y=d.y,width=d.width,height=d.height,anchorX=x,anchorY=y,anchor=owner,
+ return {x=d.x,y=d.y,width=d.width,height=d.height,anchorX=x,anchorY=y,anchor=owner,viewportWidth=w,viewportHeight=h,
  railX=inset-6,footer=footer,inputX=d.x+8,inputWidth=d.width-42,inputY=d.y+footer,inputHeight=26,
  microX=d.x+10,microY=d.y+3,microWidth=d.width-20,microHeight=attach and size or nil,
  horizontal=row,controlsLeft=active~=owner,header=header,dockOffset=header+6}

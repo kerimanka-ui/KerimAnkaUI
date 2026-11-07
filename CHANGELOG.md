@@ -1,3 +1,21 @@
+# KerimAnka UI 0.40.2 — Forever bag and chat fixes
+
+This maintenance update targets **WoW: Forever (1.60.1)**. The combined download preserves **Classic Era 0.37.0 unchanged**. Existing settings are preserved.
+
+- Bags: stack-splitting dialogs opened by the modern game API are raised above KerimAnka inventory windows and return to their original layer when closed.
+- Sorting: compatible items in ordinary bags are routed into available ammunition, soul and profession bags before the existing sorting passes. Matching partial stacks are filled first; full or unknown bag families retain their safe fallback.
+- Inventory interactions: native bag identity is initialized through the game's bag-ID attribute path outside combat, preserving native item-click handlers.
+- Chat: restores a displaced, unprotected primary message viewport to its cached position during combat, including level-up refreshes. Protected frames remain untouched.
+- Hunter Range and Aspect Alert: removed routine ready messages on login/reload. Functional warnings and manual diagnostic commands remain available.
+- Bag troubleshooting: `/kauibags status` now includes the last refresh error or blocked action observed during the current session; it does not add automatic chat messages.
+
+**Gameplay verification:** Hunter ammunition sorting and a fresh character levelling up during combat were tested successfully by the author. Other specialty families and dialog restoration were checked in local regression tests; these are not substitutes for live gameplay coverage.
+
+**Known limitations:** the intermittent report of bags refusing to open has not yet been reproduced conclusively. The exact cause of the reported `UNKNOWN()` protected-action error is also unconfirmed. If bags stop opening, capture `/kauibags status` before reloading. The previously documented combat private-tab limitations remain; this update does not claim to resolve them completely.
+
+Guild bank keeps its original native appearance by default. Independent editions, personal SavedVariables and private diagnostic traces are excluded.
+
+
 # KerimAnka UI 0.40.1 — Forever interface improvements
 
 This update targets **WoW: Forever (1.60.1)**. The combined archive keeps **Classic Era 0.37.0 unchanged**. Existing settings and character records are preserved.

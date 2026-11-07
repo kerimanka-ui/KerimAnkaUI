@@ -158,6 +158,7 @@ local function WithBagLock(action)
  local ok,err=pcall(action)
  busy=previous
  if not ok then
+  diagnostic.lastError=tostring(err)
   -- A failed handoff must not leave invisible native inventory windows.
   M.RestoreNativeBagAlpha()
   error(err,0)
@@ -499,6 +500,9 @@ function M.ActionLog(command)
 end
 
 local function Paint(button,bag,slot,info,provided)
+ -- The native mixin routes bag identity through its attribute bridge to keep
+ -- hardware item interactions out of the addon's parent-identity fallback.
+ if button.SetBagID and not Combat()then button:SetBagID(bag)end
  ObserveItemAction(button)
  if not provided then info=C_Container.GetContainerItemInfo(bag,slot)end
  if button.SetHasItem then button:SetHasItem(info~=nil)end
@@ -567,7 +571,17 @@ function M.PromoteInventoryDialog(dialog,owner)
  dialog:SetFrameStrata('FULLSCREEN_DIALOG');dialog:SetFrameLevel(math.max(dialog:GetFrameLevel(),(owner.GetFrameLevel and owner:GetFrameLevel() or 1)+20))
 end
 local splitHook
+local splitFrames=setmetatable({},{__mode='k'})
 function M.InstallSplitHook()
+ local dialog=StackSplitFrame
+ if dialog and not splitFrames[dialog]then
+  splitFrames[dialog]=true
+  dialog:HookScript('OnShow',function(self)M.PromoteInventoryDialog(self,self.owner)end)
+  -- Modern clients call the frame method, not the retired global wrapper.
+  if type(dialog.OpenStackSplitFrame)=='function'then
+   hooksecurefunc(dialog,'OpenStackSplitFrame',function(self)M.PromoteInventoryDialog(self,self.owner)end)
+  end
+ end
  if type(OpenStackSplitFrame)=='function' and splitHook~=OpenStackSplitFrame then
   hooksecurefunc('OpenStackSplitFrame',function() if StackSplitFrame then M.PromoteInventoryDialog(StackSplitFrame,StackSplitFrame.owner) end end)
   splitHook=OpenStackSplitFrame
@@ -695,10 +709,13 @@ local function ItemData(info,bag,slot)
   sortStats.metadata=sortStats.metadata+1
   if not name or not maxStack or not class then return end
   data={key=key or link,name=name,quality=quality or info.quality or 1,level=level or 0,maxStack=maxStack,equip=equip or '',class=class,subclass=subclass or 0,itemID=info.itemID or 0}
+  local familyGetter=C_Item and C_Item.GetItemFamily or GetItemFamily
+  local family=familyGetter and familyGetter(key or info.itemID)
+  if not K.ForeverInventoryAdapter.IsSecret(family)and type(family)=='number'then data.family=family end
   data.group=K.ClassicInventoryStyle.ItemCategory(bag,slot,info)
   if key then sortCache[key]=data end
  end
- return {key=data.key,name=data.name,quality=data.quality,level=data.level,maxStack=data.maxStack,equip=data.equip,class=data.class,subclass=data.subclass,itemID=data.itemID,count=info.stackCount or 1,priority=(sortHearthFirst and data.itemID==6948)and 0 or(sortRanks[data.group]or 50)}
+ return {key=data.key,name=data.name,quality=data.quality,level=data.level,maxStack=data.maxStack,equip=data.equip,class=data.class,subclass=data.subclass,itemID=data.itemID,family=data.family,count=info.stackCount or 1,priority=(sortHearthFirst and data.itemID==6948)and 0 or(sortRanks[data.group]or 50)}
 end
 local function ReadSortSlots()
  local groups,order={},{}
@@ -756,6 +773,38 @@ local function Same(a,b)
 end
 local function PlanSort(groups,order)
  local moves,remaining={},false
+ -- Fill matching specialty bags before arranging each family's contents.
+ -- Only a proven family match can cross from unrestricted inventory; never
+ -- put an incompatible item into a quiver, soul bag or profession bag.
+ local bands=bit or bit32
+ if groups[0]and bands and bands.band then
+  local used={}
+  for _,family in ipairs(order)do if family~=0 then
+   local slots=groups[family]
+   for _,source in ipairs(groups[0])do
+    local item=source.item
+    if item and type(item.family)=='number'and bands.band(item.family,family)~=0 and not used[source]then
+     local target
+     -- Consolidate an existing specialty stack before consuming another slot.
+     for _,slot in ipairs(slots)do
+      if not used[slot]and slot.item and slot.item.key==item.key and slot.item.count<slot.item.maxStack then
+       if not target or target.locked and not slot.locked then target=slot end
+      end
+     end
+     if not target then for _,slot in ipairs(slots)do if not slot.item and not used[slot]then
+      if not target or target.locked and not slot.locked then target=slot end
+     end end end
+     if target then
+      remaining=true
+      if not source.locked and not target.locked and #moves<2 then
+       moves[#moves+1]={from=source,to=target};used[source]=true;used[target]=true
+      end
+     end
+    end
+   end
+  end end
+  if remaining then return moves,true end
+ end
  -- Merge equal full hyperlinks first. No pair reuses a slot within this batch.
  for _,family in ipairs(order)do
   local partials={}
@@ -1193,6 +1242,7 @@ function M.Refresh()
  refreshing=true;Count('refresh');local began=perf and Clock()
  local diag=_G.KerimAnkaDiagnostics;local sample=diag and diag.captureScopes and Clock()
  local ok,err=pcall(RefreshVisible);refreshing=false
+ if not ok then diagnostic.lastError=tostring(err)end
  if sample then diag.RecordScope('Bags.Refresh',Clock()-sample)end
  if perf and began then perf.ms=perf.ms+math.max(0,Clock()-began)end
  if not ok then error(err,0)end
@@ -1299,6 +1349,9 @@ function M.Status()
  for name,fn in pairs(callHooks) do if type(fn)=='function'and _G[name]~=fn then changed=changed+1 end end
  Message(string.format('enabled=%s shown=%s busy=%s queued=%s changed=%d',tostring(not not M.Enabled()),tostring(frame and frame:IsShown() or false),tostring(busy),tostring(queued),changed))
  Message(string.format('hooks=%d calls=%d requests=%d handled=%d last=%s',diagnostic.hooks,diagnostic.calls,diagnostic.requests,diagnostic.handled,diagnostic.last))
+ Message(string.format('frame=%s alpha=%s refresh=%s replacement=%s',tostring(frame~=nil),tostring(frame and frame:GetAlpha()),tostring(refreshing),tostring(Replacement()or'none')))
+ if diagnostic.lastError then Message('Last error: '..diagnostic.lastError)end
+ if diagnostic.lastBlocked then Message('Last blocked: '..diagnostic.lastBlocked)end
 end
 local events=CreateFrame('Frame')
 -- Native or third-party bag functions may be replaced after PLAYER_LOGIN and
@@ -1309,8 +1362,13 @@ events:SetScript('OnUpdate',function(_,elapsed)
  hookElapsed=hookElapsed+elapsed;if hookElapsed<1 then return end;hookElapsed=0
  if M.Enabled() then M.InstallBagCallHooks();M.InstallNativeBagHooks() end
 end)
-for _,event in ipairs({'QUEST_LOG_UPDATE','BAG_UPDATE_DELAYED','PLAYER_EQUIPMENT_CHANGED','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','PLAYER_MONEY','PLAYER_TRADE_MONEY','TRADE_SHOW','TRADE_CLOSED','SEND_MAIL_MONEY_CHANGED','CURSOR_CHANGED','GET_ITEM_INFO_RECEIVED','PLAYER_REGEN_ENABLED','PLAYER_REGEN_DISABLED','PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_LOGOUT','ADDON_LOADED'}) do K.ForeverInventoryAdapter.RegisterEvent(events,event) end
+for _,event in ipairs({'QUEST_LOG_UPDATE','BAG_UPDATE_DELAYED','PLAYER_EQUIPMENT_CHANGED','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','PLAYER_MONEY','PLAYER_TRADE_MONEY','TRADE_SHOW','TRADE_CLOSED','SEND_MAIL_MONEY_CHANGED','CURSOR_CHANGED','GET_ITEM_INFO_RECEIVED','PLAYER_REGEN_ENABLED','PLAYER_REGEN_DISABLED','PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_LOGOUT','ADDON_LOADED','ADDON_ACTION_BLOCKED','ADDON_ACTION_FORBIDDEN'}) do K.ForeverInventoryAdapter.RegisterEvent(events,event) end
 events:SetScript('OnEvent',function(_,event,initialLogin,isReloadingUi)
+ if event=='ADDON_ACTION_BLOCKED'or event=='ADDON_ACTION_FORBIDDEN'then
+  -- One local observation, no disk/chat spam and no retry of a protected action.
+  if initialLogin=='KerimAnkaUI'then diagnostic.lastBlocked=event..' '..tostring(isReloadingUi)..' @'..tostring(math.floor(GetTime()))end
+  return
+ end
  if perf then perf.events[event]=(perf.events[event]or 0)+1 end
  if event=='BAG_UPDATE_COOLDOWN'then M.RefreshCooldowns();return end
  if sorting and(event=='BAG_UPDATE_DELAYED'or event=='ITEM_LOCK_CHANGED')then M.WakeSort()end

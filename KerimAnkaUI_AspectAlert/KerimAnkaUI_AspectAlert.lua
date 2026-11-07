@@ -369,7 +369,6 @@ addon:SetScript("OnEvent", function(self, event)
             end
         end)
         if ns.RegisterOptions then ns.RegisterOptions() end
-        Message(Hint("hunterAspectReady","Aspect Alert ready. Settings: KerimAnka UI."))
     elseif event == "PLAYER_REGEN_DISABLED" then
         combat = true
     elseif event == "PLAYER_REGEN_ENABLED" then
