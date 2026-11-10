@@ -2,7 +2,7 @@
 local _,K=...
 local T=K.InventoryText
 local M={};K.ClassicBags=M
-local frame,body,footer,moneyText,search,searchHint,keyButton,searchClear,shelfToggle,sortButton
+local frame,body,footer,footerHit,moneyText,search,searchHint,keyButton,searchClear,shelfToggle,sortButton
 local holders,buttons,bagButtons={},{},{}
 local queued,busy,pendingToggle,pendingOpen,pendingRefresh=false,false,false,false,false
 local filterBag,redrawQueued,hoverBag,dockQueued
@@ -705,17 +705,18 @@ local function ItemData(info,bag,slot)
  local data=key and sortCache[key]
  if not data then
   local getter=C_Item and C_Item.GetItemInfo or GetItemInfo
-  local name,link,quality,level,_,_,_,maxStack,equip,_,_,class,subclass=getter(key or info.itemID)
+  local name,link,quality,level,_,_,_,maxStack,equip,_,_,class,subclass,_,_,_,reagent=getter(key or info.itemID)
   sortStats.metadata=sortStats.metadata+1
   if not name or not maxStack or not class then return end
   data={key=key or link,name=name,quality=quality or info.quality or 1,level=level or 0,maxStack=maxStack,equip=equip or '',class=class,subclass=subclass or 0,itemID=info.itemID or 0}
   local familyGetter=C_Item and C_Item.GetItemFamily or GetItemFamily
   local family=familyGetter and familyGetter(key or info.itemID)
   if not K.ForeverInventoryAdapter.IsSecret(family)and type(family)=='number'then data.family=family end
+  if not K.ForeverInventoryAdapter.IsSecret(reagent)then data.reagent=reagent==true end
   data.group=K.ClassicInventoryStyle.ItemCategory(bag,slot,info)
   if key then sortCache[key]=data end
  end
- return {key=data.key,name=data.name,quality=data.quality,level=data.level,maxStack=data.maxStack,equip=data.equip,class=data.class,subclass=data.subclass,itemID=data.itemID,family=data.family,count=info.stackCount or 1,priority=(sortHearthFirst and data.itemID==6948)and 0 or(sortRanks[data.group]or 50)}
+ return {key=data.key,name=data.name,quality=data.quality,level=data.level,maxStack=data.maxStack,equip=data.equip,class=data.class,subclass=data.subclass,itemID=data.itemID,family=data.family,reagent=data.reagent,count=info.stackCount or 1,priority=(sortHearthFirst and data.itemID==6948)and 0 or(sortRanks[data.group]or 50)}
 end
 local function ReadSortSlots()
  local groups,order={},{}
@@ -736,6 +737,10 @@ local function ReadSortSlots()
     family=select(2,C_Container.GetContainerNumFreeSlots(bag))
     if type(family)~='number'then return nil,'Bag-family information is loading. Try again.'end
    end
+   -- Generic reagent bags can report family zero, just like ordinary bags.
+   -- The dedicated inventory slot is still restricted; bank IDs are separate.
+   local reagentID=Enum and Enum.BagIndex and Enum.BagIndex.ReagentBag or 5
+   if not sortContext and bag==reagentID and family==0 then family='reagent'end
    if not groups[family]then groups[family]={};order[#order+1]=family end
    local group=groups[family]
    for slot=1,count do
@@ -771,39 +776,52 @@ local function Same(a,b)
  if not a or not b then return a==b end
  return a.key==b.key and a.itemID==b.itemID and a.count==b.count
 end
-local function PlanSort(groups,order)
- local moves,remaining={},false
- -- Fill matching specialty bags before arranging each family's contents.
- -- Only a proven family match can cross from unrestricted inventory; never
- -- put an incompatible item into a quiver, soul bag or profession bag.
- local bands=bit or bit32
- if groups[0]and bands and bands.band then
-  local used={}
-  for _,family in ipairs(order)do if family~=0 then
-   local slots=groups[family]
-   for _,source in ipairs(groups[0])do
-    local item=source.item
-    if item and type(item.family)=='number'and bands.band(item.family,family)~=0 and not used[source]then
-     local target
-     -- Consolidate an existing specialty stack before consuming another slot.
-     for _,slot in ipairs(slots)do
-      if not used[slot]and slot.item and slot.item.key==item.key and slot.item.count<slot.item.maxStack then
-       if not target or target.locked and not slot.locked then target=slot end
-      end
-     end
-     if not target then for _,slot in ipairs(slots)do if not slot.item and not used[slot]then
-      if not target or target.locked and not slot.locked then target=slot end
-     end end end
-     if target then
-      remaining=true
-      if not source.locked and not target.locked and #moves<2 then
-       moves[#moves+1]={from=source,to=target};used[source]=true;used[target]=true
-      end
-     end
+local function FillSortSlots(sources,targets,accept)
+ local moves,remaining,used={},false,{}
+ for _,source in ipairs(sources)do
+  local item=source.item
+  if item and accept(item)and not used[source]then
+   local target
+   -- Consolidate a matching partial stack before consuming another slot.
+   for _,slot in ipairs(targets)do
+    if not used[slot]and slot.item and slot.item.key==item.key and slot.item.count<slot.item.maxStack then
+     if not target or target.locked and not slot.locked then target=slot end
     end
    end
+   if not target then for _,slot in ipairs(targets)do if not slot.item and not used[slot]then
+    if not target or target.locked and not slot.locked then target=slot end
+   end end end
+   if target then
+    remaining=true
+    if not source.locked and not target.locked and #moves<2 then
+     moves[#moves+1]={from=source,to=target};used[source]=true;used[target]=true
+    end
+   end
+  end
+ end
+ return moves,remaining
+end
+local function PlanSort(groups,order)
+ local moves,remaining={},false
+ -- Narrow family bags take priority, including over the general reagent bag.
+ local bands=bit or bit32
+ if bands and bands.band then
+  local sources={}
+  for _,pool in ipairs({groups[0]or{},groups.reagent or{}})do
+   for _,slot in ipairs(pool)do sources[#sources+1]=slot end
+  end
+  for _,family in ipairs(order)do if type(family)=='number'and family~=0 then
+   local filled,pending=FillSortSlots(sources,groups[family],function(item)
+    return type(item.family)=='number'and bands.band(item.family,family)~=0
+   end)
+   if pending then return filled,true end
   end end
-  if remaining then return moves,true end
+ end
+ -- Only the game's explicit crafting flag admits an item to a generic reagent
+ -- bag. A mining pick's family match does not make it a crafting material.
+ if groups.reagent and groups[0]then
+  local filled,pending=FillSortSlots(groups[0],groups.reagent,function(item)return item.reagent==true end)
+  if pending then return filled,true end
  end
  -- Merge equal full hyperlinks first. No pair reuses a slot within this batch.
  for _,family in ipairs(order)do
@@ -994,6 +1012,13 @@ local function Ensure()
  settings:SetScript('OnEnter',function(self)HeaderTip(self,HeaderText(4))end)
  settings:SetScript('OnLeave',HideHeaderTip)
  footer=frame:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');K.InventoryFont(footer);footer:SetPoint('BOTTOMLEFT',14,12)
+ footerHit=CreateFrame('Frame',nil,frame);footerHit:SetAllPoints(footer);footerHit:EnableMouse(true)
+ frame.kaCapacityHit=footerHit
+ footerHit:SetScript('OnEnter',function(self)
+  if K.ClassicBagsOrganized and K.ClassicBagsOrganized.CapacityTooltip then K.ClassicBagsOrganized.CapacityTooltip(self,frame.kaBagSpaces)end
+ end)
+ footerHit:SetScript('OnLeave',function()GameTooltip:Hide()end)
+ footerHit:SetScript('OnHide',function(self)if GameTooltip.GetOwner and GameTooltip:GetOwner()==self then GameTooltip:Hide()end end)
  local records=K.ClassicBagDesigns.NewButton('KerimAnkaUIClassicBagRecords',frame,'records')
  frame.kaRecordsButton=records;records:SetSize(150,22);records:SetPoint('BOTTOMLEFT',14,33);K.InventoryLabel(records,'Recorded items')
  records:SetScript('OnClick',function() if K.ClassicItemRecords then K.ClassicItemRecords.Toggle() end end)
@@ -1137,6 +1162,7 @@ local function RefreshVisible()
  -- Optional presentation only: all native bag/slot item operations stay here.
  if K.ClassicBagsOrganized then
   if K.ClassicBagsOrganized.Active() then
+   footerHit:Hide()
    local c=frame.kaOrganizedContext
    if not c then
     c={frame=frame,body=body,footer=footer,search=search,searchHint=searchHint,clear=searchClear,
@@ -1153,9 +1179,11 @@ local function RefreshVisible()
   K.ClassicBagsOrganized.Release()
  end
  K.ClassicInventoryStyle.Apply(frame,2)
+ footerHit:Show()
  K.InventoryPresentation.Window(frame,'bag',false)
  local size=math.max(18,math.min(48,tonumber(Option('bagSize',30)) or 30))
  local cell=size+K.ClassicInventoryStyle.ItemGap();local columns=Columns();local n,total,free=0,0,0
+ local bagSpaces={};frame.kaBagSpaces=bagSpaces
  waitingForItemInfo=false
  local query=(search:GetText()or''):match('^%s*(.-)%s*$'):lower()
  local shelfHidden=Config().shelfHidden==true
@@ -1172,9 +1200,9 @@ local function RefreshVisible()
   -- Position after the filtered item count determines the bottom tray.
   row:SetShown(not shelfHidden)
   row:SetAlpha(count>0 and 1 or .4);row:SetBackdropBorderColor(0,0,0,0)
-  total=total+count
+  total=total+count;local freeBag=0
   for slot=1,count do
-   local info=C_Container.GetContainerItemInfo(bag,slot);if not info then free=free+1 elseif not info.iconFileID then waitingForItemInfo=true end
+   local info=C_Container.GetContainerItemInfo(bag,slot);if not info then free=free+1;freeBag=freeBag+1 elseif not info.iconFileID then waitingForItemInfo=true end
    local button=buttons[bag][slot]
    if not button then
     button=CreateFrame('ItemButton',holder:GetName()..'Item'..slot,holder,'ContainerFrameItemButtonTemplate')
@@ -1187,6 +1215,7 @@ local function RefreshVisible()
     Paint(button,bag,slot,info,true);if not button:IsShown()then button:Show()end;n=n+1
    else button:Hide() end
   end
+  bagSpaces[#bagSpaces+1]={bag=bag,free=freeBag,slots=count,family=K.ClassicBagsOrganized and K.ClassicBagsOrganized.SpaceFamily(bag)}
   for slot=count+1,#buttons[bag] do buttons[bag][slot]:Hide() end
  end
  local l=K.ClassicBagDesigns.Layout(K.ClassicBagDesigns.ID(),size,columns,n,K.ClassicInventoryStyle.ItemGap(),shortcutGap,shelfHidden,hasKey)

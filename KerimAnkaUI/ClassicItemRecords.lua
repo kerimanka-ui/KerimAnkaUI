@@ -86,12 +86,75 @@ local function CharacterLabel(record)
  end
  return icon..string.format('|cff%02x%02x%02x%s|r |cff999999%s|r',math.floor(c.r*255+.5),math.floor(c.g*255+.5),math.floor(c.b*255+.5),record.name,record.realm)
 end
+-- Item identities, not inventory ownership: keep observed names usable after
+-- an item is sold or another character's client cache does not know its name.
+local catalogRef,catalogCount
+local function Catalog(create)
+ local db=Store(create);if not db then return end
+ if type(db.knownItemIDs)~='table'and create then db.knownItemIDs={}end
+ local ids=db.knownItemIDs;if type(ids)~='table'then return end
+ if catalogRef~=ids then
+  local count=0;for _ in pairs(ids)do count=count+1;if count>4096 then catalogRef,catalogCount=ids,count;return end end
+  catalogRef,catalogCount=ids,count
+ end
+ if catalogCount<=4096 then return ids end
+end
+local function ItemIdentity(item)
+ if type(item)~='table'or(issecretvalue and issecretvalue(item))then return end
+ local link=item.link
+ if type(link)~='string'or(issecretvalue and issecretvalue(link))or #link>512 then return end
+ local id,name=link:match('|Hitem:(%d+)[^|]*|h%[(.-)%]|h');id=tonumber(id)
+ if not id or id<=0 or id>4294967295 or not name or name==''or #name>200 then return end
+ if issecretvalue and issecretvalue(item.itemID)then return end
+ if item.itemID and item.itemID~=id then return end
+ return name,id
+end
+local function RememberItem(item)
+ local name,id=ItemIdentity(item);if not name then return end
+ local ids=Catalog(true);if not ids then return end
+ if ids[name]==nil then
+  if catalogCount>=4096 then return end
+  ids[name]=id;catalogCount=catalogCount+1
+ elseif ids[name]~=id then ids[name]=false end -- ambiguous names stay unresolved
+end
+function M.FindItemID(name)
+ if type(name)~='string'or(issecretvalue and issecretvalue(name))or name==''or #name>200 then return end
+ local db=Store(false);if not db then return end
+ local ids=Catalog(false);local found=ids and ids[name]
+ if found==false then return nil,'ambiguous' end
+ if type(found)~='number'or found<=0 or found>4294967295 or found~=math.floor(found)then found=nil end
+ -- Also use snapshots created before this catalog existed. Exact displayed
+ -- names and real links only; never persist a guessed or conflicting ID.
+ local budget=8192
+ for key,record in pairs(db.characters)do
+  budget=budget-1;if budget<0 then return end
+  if type(record)=='table'and not db.removed[key]then
+   for _,kind in ipairs({'bags','bank'})do
+    local snapshot=record[kind]
+    if type(snapshot)=='table'and type(snapshot.containers)=='table'then
+     for _,bag in pairs(snapshot.containers)do
+      budget=budget-1;if budget<0 then return end
+      if type(bag)=='table'and type(bag.items)=='table'then
+       for _,item in pairs(bag.items)do
+        budget=budget-1;if budget<0 then return end
+        local itemName,id=ItemIdentity(item)
+        if itemName==name then if found and found~=id then return nil,'ambiguous' end;found=id end
+       end
+      end
+     end
+    end
+   end
+  end
+ end
+ return found
+end
 local function CopyItem(info)
  if not info then return end
  local link=type(info.hyperlink)=='string' and info.hyperlink or nil
  local name=link and link:match('%[(.-)%]')
- return {itemID=tonumber(info.itemID),link=link,icon=info.iconFileID,count=tonumber(info.stackCount) or 1,
+ local item={itemID=tonumber(info.itemID),link=link,icon=info.iconFileID,count=tonumber(info.stackCount) or 1,
   quality=tonumber(info.quality) or 1,name=name}
+ RememberItem(item);return item
 end
 function M.Capture(kind)
  if kind~='bags' and kind~='bank' then return false end

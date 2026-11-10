@@ -1,6 +1,6 @@
 -- Own presentation only. Never replace native module methods, edit its module
 -- list, or call native Update/MarkDirty/Edit Mode layout functions from Lua.
-local API={version=4};ForeverQuestJournalAPI=API
+local API={version=5};ForeverQuestJournalAPI=API
 local db,view,scroll,content,nativeContent,originalAlpha
 local active,editing,queued=false,false,false
 local rows,headers={},{}
@@ -46,9 +46,11 @@ local function Label(parent)
  f:SetFontObject(ObjectiveTrackerLineFont or GameFontNormal)
  f:SetJustifyH('LEFT');return f
 end
-local function MakeView(q)
+local function MakeView()
  if view then return end
- view=CreateFrame('Button','KerimAnkaUIQuestViewport',q)
+ -- Secure quest-item children protect their parents and anchor targets.
+ -- Keep this entire presentation tree independent of native tracker layout.
+ view=CreateFrame('Button','KerimAnkaUIQuestViewport',UIParent)
  view:EnableMouse(true);view:EnableMouseWheel(true);view:SetScript('OnMouseWheel',Wheel)
  scroll=CreateFrame('ScrollFrame',nil,view);scroll:SetAllPoints(view)
  scroll:EnableMouseWheel(true);scroll:SetScript('OnMouseWheel',Wheel)
@@ -278,13 +280,22 @@ local function Refresh()
  local q=QuestObjectiveTracker
  if not db.scrollEnabled or editing or OtherTracker() or not Safe(q) or not Safe(q.ContentsFrame) then Release();return end
  local c=q.ContentsFrame
- if not c:IsShown() or c:GetHeight()<8 or (q.IsCollapsed and q:IsCollapsed()) then Release();return end
+ if not c:IsVisible() or c:GetHeight()<8 or (q.IsCollapsed and q:IsCollapsed()) then Release();return end
  local groups=Entries();if not groups then Release();return end
- MakeView(q)
- if view:GetParent()~=q then view:SetParent(q) end
  local width=math.max(80,c:GetWidth());local height=ViewportHeight(q,c)
  if height<8 then Release();return end
- view:ClearAllPoints();view:SetPoint('TOPLEFT',c,'TOPLEFT',-22,0);view:SetSize(width+22,height)
+ -- Copy the native rectangle outside combat without a parent/anchor edge
+ -- back to q or its ContentsFrame. Item buttons still use secure actions.
+ local left,top=c:GetLeft(),c:GetTop()
+ local parentScale=UIParent:GetEffectiveScale()
+ local scale=q:GetEffectiveScale()/parentScale
+ if not left or not top or scale<=0 then Release();return end
+ local ratio=c:GetEffectiveScale()/parentScale
+ local x=(left*ratio-(UIParent:GetLeft()or 0))/scale-22
+ local y=(top*ratio-(UIParent:GetBottom()or 0))/scale
+ MakeView()
+ view:SetScale(scale);view:SetFrameStrata(q:GetFrameStrata())
+ view:ClearAllPoints();view:SetPoint('TOPLEFT',UIParent,'BOTTOMLEFT',x,y);view:SetSize(width+22,height)
  view:SetFrameLevel(c:GetFrameLevel()+50);scroll:SetSize(width+22,height);content:SetWidth(width+22)
  local y,rowIndex,headerIndex=-(q.fromHeaderOffsetY or -10),0,0
  for _,g in ipairs(groups) do

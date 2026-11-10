@@ -382,10 +382,30 @@ function E.SortRows(items,key,ascending,magnitude)
 end
 
 -- Search only stored names; no item API, inventory scan or history writes.
-local searchCase={['İ']='i',['ı']='i',['Ğ']='ğ',['Ü']='ü',['Ş']='ş',['Ö']='ö',['Ç']='ç',['Ä']='ä',['É']='é',['ẞ']='ß'}
+local searchCase={['ß']='ss',['ẞ']='ss',['Æ']='ae',['æ']='ae',['Œ']='oe',['œ']='oe',['Þ']='th',['þ']='th',['Ё']='е',['ё']='е'}
+local searchGroups={
+ a='ÀÁÂÃÄÅĀĂĄǍàáâãäåāăąǎ',c='ÇĆĈĊČçćĉċč',d='ĎĐÐďđð',
+ e='ÈÉÊËĒĔĖĘĚèéêëēĕėęě',g='ĞĜĠĢğĝġģ',h='ĤĦĥħ',
+ i='ÌÍÎÏĨĪĬĮİıìíîïĩīĭįǏǐ',j='Ĵĵ',k='Ķķĸ',l='ĹĻĽĿŁĺļľŀł',
+ n='ÑŃŅŇŊñńņňŋ',o='ÒÓÔÕÖØŌŎŐǑòóôõöøōŏőǒ',r='ŔŖŘŕŗř',
+ s='ŚŜŞŠȘśŝşšș',t='ŢŤŦȚţťŧț',u='ÙÚÛÜŨŪŬŮŰŲǓùúûüũūŭůűųǔ',
+ w='ŴẀẂẄŵẁẃẅ',y='ÝŸŶýÿŷ',z='ŹŻŽźżž',
+}
+for base,chars in pairs(searchGroups)do for ch in chars:gmatch('[\194-\244][\128-\191]*')do searchCase[ch]=base end end
+local cyrillicLower='абвгдежзийклмнопрстуфхцчшщъыьэюя';local index=1
+for ch in ('АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'):gmatch('[\194-\244][\128-\191]*')do searchCase[ch]=cyrillicLower:sub(index,index+1);index=index+2 end
 local function FoldSearchChar(ch)return searchCase[ch]or ch end
 function E.SearchText(text)
  local normalized=tostring(text or ''):lower():gsub('[\194-\244][\128-\191]*',FoldSearchChar)
+ -- Strip decomposed accents only after Latin letters. Other scripts and
+ -- literal punctuation retain their spelling and search semantics.
+ if normalized:find('[\204\205]')then
+  local first,second
+  repeat
+   normalized,first=normalized:gsub('([a-z])\204[\128-\191]','%1')
+   normalized,second=normalized:gsub('([a-z])\205[\128-\175]','%1')
+  until first+second==0
+ end
  return normalized
 end
 function E.Diagnostics()

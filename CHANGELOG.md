@@ -1,3 +1,24 @@
+# KerimAnka UI 0.40.3 — Forever economy and inventory improvements
+
+This update targets **WoW: Forever (1.60.1)**. The combined download preserves **Classic Era 0.37.0 unchanged**. Existing settings and recorded economy history are preserved.
+
+- Auction mail: matches batched money updates to the correct pending sales, prevents item-only mail from duplicating a sale, and keeps earlier pending receipts when a later native mail request fails. Sales and returned deposits remain separate.
+- Auction purchases: records the real item ID/link and localized item name when the game's auction cache provides them. Taking an already-paid item from mail does not create a second expense.
+- Economy previews: resolves older name-only entries through known account item identities and recorded bag/bank snapshots. Newly observed identities remain available after changing characters or selling an item. Unknown or ambiguous historical items may still have no preview.
+- Economy navigation: source/period filters, list tabs, search, sorting and pagination preserve the current viewport position.
+- Economy search: common Turkish and Latin accents are optional when searching item names, players, sources and transaction types. For example, `ucus` matches `Uçuş` and `egitim` matches `Eğitim`.
+- Travel/training: use the existing transaction search to separate Flight and Training without changing the two-row source grid. Search totals show cash in/out across all matching result pages; the main summaries stay unchanged. Transaction searches cover retained details, not deleted historical records.
+- Bag capacity: Classic, Compact and Leather/Metal layouts now explain general versus special space and per-bag free slots on hover, using the same tooltip as Organized. Reagent-only space is identified separately.
+- Reagent sorting: routes confirmed crafting reagents into the dedicated reagent bag while preserving narrower profession/ammunition priorities; tools and general items are not guessed to be reagents.
+- Quest tracker: keeps the custom secure-item viewport independent of the native tracker frame hierarchy.
+
+**Verification:** one in-game bulk capture matched all 17 sales across 8 money updates. The newer mail-failure path, item metadata, previews, search/totals, bag variants and tracker protection were also checked in local regression tests. Local tests do not replace gameplay coverage of every race, class, locale or mailbox sequence.
+
+**Known issues:** the reported QuestJournal secret-aura taint warning, including the Edit Mode path, remains under investigation. This release does not claim to fix that warning. The intermittent bag-open/UNKNOWN protected-action reports and previously documented combat private-chat limitations also remain unresolved. Old unclassified economy entries are not retroactively rewritten.
+
+Guild bank retains its native appearance by default. Independent editions, private mail-report instrumentation and personal SavedVariables are excluded from the suite release.
+
+
 # KerimAnka UI 0.40.2 — Forever bag and chat fixes
 
 This maintenance update targets **WoW: Forever (1.60.1)**. The combined download preserves **Classic Era 0.37.0 unchanged**. Existing settings are preserved.

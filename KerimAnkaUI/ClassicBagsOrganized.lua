@@ -38,13 +38,42 @@ local capacityText={
  zhCN={'普通','专用','已满','专用格只接受对应类型的物品。','没有合适的\n空格','等待背包类型','所选背包\n没有空间'},
 }
 local function Cap(i)local lang=KerimAnkaUIDB and KerimAnkaUIDB.language or'en';return(capacityText[lang]or capacityText.en)[i]end
+local Text
+-- Presentation only: the dedicated reagent slot can report bag family zero,
+-- but its empty slots are not general-purpose inventory space.
+function O.SpaceFamily(bag)
+ if bag==0 then return 0 end
+ local get=C_Container and C_Container.GetContainerNumFreeSlots
+ local family=get and select(2,get(bag))
+ if type(family)~='number'or(issecretvalue and issecretvalue(family))then return end
+ local reagent=Enum and Enum.BagIndex and Enum.BagIndex.ReagentBag or 5
+ if bag==reagent and family==0 then return 'reagent' end
+ return family
+end
+function O.CapacityTooltip(owner,spaces)
+ local generalFree,generalSlots,specialFree,specialSlots=0,0,0,0
+ for _,e in ipairs(spaces or{})do
+  if e.family==0 then generalFree=generalFree+e.free;generalSlots=generalSlots+e.slots
+  elseif type(e.family)=='number'or e.family=='reagent'then specialFree=specialFree+e.free;specialSlots=specialSlots+e.slots end
+ end
+ GameTooltip:SetOwner(owner,'ANCHOR_RIGHT');GameTooltip:SetText(Text(16))
+ GameTooltip:AddDoubleLine(Cap(1),generalFree..' / '..generalSlots,.8,.8,.75,1,1,1)
+ if specialSlots>0 then GameTooltip:AddDoubleLine(Cap(2),specialFree..' / '..specialSlots,.8,.8,.75,1,1,1)end
+ for _,e in ipairs(spaces or{})do if e.slots>0 then
+  local name=C_Container.GetBagName and C_Container.GetBagName(e.bag)or(K.InventoryText('Backpack')..' '..e.bag)
+  local kind=e.family==0 and Cap(1)or(type(e.family)=='number'or e.family=='reagent')and Cap(2)or Cap(6)
+  GameTooltip:AddDoubleLine(name..' ('..kind..')',e.free..' / '..e.slots,.8,.8,.75,1,1,1)
+ end end
+ if specialSlots>0 then GameTooltip:AddLine(Cap(4),.95,.75,.45,true)end
+ K.InventoryTooltip(GameTooltip);GameTooltip:Show()
+end
 local specialLabels={en={'Ammunition','Soul Shards'},tr={'Mühimmat','Ruh Parçaları'},
  de={'Munition','Seelensplitter'},frFR={'Munitions',"Fragments d’âme"},itIT={'Munizioni','Frammenti d’anima'},
  esES={'Munición','Fragmentos de alma'},ptBR={'Munição','Fragmentos de alma'},
  ruRU={'Боеприпасы','Осколки душ'},zhCN={'弹药','灵魂碎片'}}
 for lang,labels in pairs(specialLabels)do strings[lang][25]=labels[1];strings[lang][26]=labels[2]end
 local labelIndex={quest=5,consumable=6,food=7,gear=8,trade=9,misc=10,junk=11,pins=4,all=3,ammo=25,soul=26}
-local function Text(i)
+Text=function(i)
  local lang=KerimAnkaUIDB and KerimAnkaUIDB.language or'en'
  return (strings[lang]or strings.en)[i]or strings.en[i]
 end
@@ -540,10 +569,10 @@ function O.Render(c)
     end
    end
   end
-  local family=EmptyFamily({bag=bag})
+  local family=O.SpaceFamily(bag)
   bagSpaces[#bagSpaces+1]={bag=bag,free=freeBag,slots=n,family=family}
   if family==0 then generalFree=generalFree+freeBag;generalSlots=generalSlots+n
-  elseif type(family)=='number'then specialFree=specialFree+freeBag;specialSlots=specialSlots+n
+  elseif type(family)=='number'or family=='reagent'then specialFree=specialFree+freeBag;specialSlots=specialSlots+n
   else unknownFree=unknownFree+freeBag end
   local b=c.bagButtons[bag];local inv=bag>0 and C_Container.ContainerIDToInventoryID(bag)
   b.icon:SetTexture(bag==0 and'Interface\\Buttons\\Button-Backpack-Up'or(inv and GetInventoryItemTexture('player',inv))or'Interface\\PaperDoll\\UI-PaperDoll-Slot-Bag')
@@ -685,14 +714,7 @@ function O.Render(c)
  if specialSlots>0 then capacity=capacity..'\n'..Cap(2)..': '..specialFree..' '..Text(15)end
  if unknownFree>0 then capacity=free..' '..Text(15)..'\n'..Cap(6)end
  s.capacity.label:SetText(capacity);s.capacityWarning=generalFree==0 and unknownFree==0
- s.capacity.label:SetTextColor(unpack(s.spaceColour));s.capacity:SetBackdropColor(0,0,0,0);s.capacity:SetBackdropBorderColor(0,0,0,0);s.capacity:SetScript('OnEnter',function(self)self.label:SetTextColor(.91,.84,.66,1);GameTooltip:SetOwner(self,'ANCHOR_RIGHT');GameTooltip:SetText(Text(16))
-  for _,entry in ipairs(bagSpaces)do if entry.slots>0 then
-   local name=C_Container.GetBagName and C_Container.GetBagName(entry.bag)or(K.InventoryText('Backpack')..' '..entry.bag)
-   local kind=entry.family==0 and Cap(1)or type(entry.family)=='number'and Cap(2)or Cap(6)
-   GameTooltip:AddDoubleLine(name..' ('..kind..')',entry.free..' / '..entry.slots,.8,.8,.75,1,1,1)
-  end end
-  if specialSlots>0 then GameTooltip:AddLine(Cap(4),.95,.75,.45,true)end
-  K.InventoryTooltip(GameTooltip);GameTooltip:Show()
+ s.capacity.label:SetTextColor(unpack(s.spaceColour));s.capacity:SetBackdropColor(0,0,0,0);s.capacity:SetBackdropBorderColor(0,0,0,0);s.capacity:SetScript('OnEnter',function(self)self.label:SetTextColor(.91,.84,.66,1);O.CapacityTooltip(self,bagSpaces)
  end);s.capacity:SetScript('OnLeave',function(self)self.label:SetTextColor(unpack(s.capacityColour or s.spaceColour));GameTooltip:Hide()end)
  -- A separate native button for the SAME real free slot stays reachable in
  -- the footer. No synthetic inventory, API retries or custom item clicks.

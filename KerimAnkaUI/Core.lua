@@ -1,6 +1,6 @@
 local addonName, K = ...
 K.ForeverInventoryRuntime=true
-K.name, K.version = addonName, "0.40.2"
+K.name, K.version = addonName, "0.40.3"
 -- Final panel placement captured from Kerimankahan-Hantirt. These are panel
 -- preferences, not the game's UI scale or any gameplay frame coordinates.
 K.panelDefaults={scale=0.8721474221494858,height=819.36083984375,position={x=36.77588658330683,y=209.4805938205954}}

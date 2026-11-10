@@ -80,7 +80,7 @@ local function Button(value,x,y,width,height,click,selected)
  K.ApplyTextFont(b.label,12,false,'');b.label:SetWidth(width-10);b.label:SetTextColor(unpack(selected and gold or muted));b.label:SetWordWrap(false);b.label:SetText(value)
  b:SetScript('OnClick',function()local ok,err=pcall(click);if not ok then ViewError(err)end end);b:Show();return b
 end
-local function Rerender()pageIndex=1;range=nil;scrollOffset=0;V.Render()end
+local function Rerender()pageIndex=1;range=nil;V.Render(true)end
 local function Date(stamp)return stamp<0 and E.L('old')or date('!%d.%m.%Y',stamp)end
 local infoTip
 local function HideTip()
@@ -247,18 +247,39 @@ end
 
 local function SearchItems(items)
  if searchQuery==''then return items end
+ local language=KerimAnkaUIDB and KerimAnkaUIDB.language or'en'
+ if sortedCache.searchLanguage~=language then sortedCache.search={};sortedCache.filteredKey=nil;sortedCache.searchLanguage=language end
  local key=tostring(items)..':'..searchQuery
  if sortedCache.filteredKey==key then return sortedCache.filtered end
  local result={};local started=debugprofilestop and debugprofilestop()or 0
  for _,row in ipairs(items)do
   local text=sortedCache.search[row]
-  if not text then text=E.SearchText((row.item or row.name or '')..' '..(row.peer or '')..' '..E.L(row.source or ''));sortedCache.search[row]=text end
+  if not text then
+   local kind=row.source=='travel'and(row.kind=='flight'or row.kind=='training')and E.L(row.kind)or''
+   local sourceText=E.L(row.source or '')
+   if row.source=='travel'then sourceText=sourceText:match('^(.-)%s*/')or''end
+   text=E.SearchText((row.item or row.name or '')..' '..(row.peer or '')..' '..sourceText..' '..kind);sortedCache.search[row]=text
+  end
   if text:find(searchQuery,1,true)then result[#result+1]=row end
  end
  sortedCache.filteredKey=key;sortedCache.filtered=result
  local cost=(debugprofilestop and debugprofilestop()or started)-started
  V.searchBuilds=(V.searchBuilds or 0)+1;V.searchMs=(V.searchMs or 0)+cost;V.searchPeak=math.max(V.searchPeak or 0,cost)
  return result
+end
+local function FilteredTotals(items,isRecent,flow)
+ local cached=sortedCache.totals
+ if cached and cached.items==items and cached.isRecent==isRecent and cached.flow==flow then return cached end
+ local result={items=items,isRecent=isRecent,flow=flow,income=0,expense=0,transfer=0}
+ for _,row in ipairs(items)do
+  local amount=row.amount or 0
+  if isRecent and row.kind=='transfer'then result.transfer=result.transfer+amount
+  else
+   if not isRecent then amount=flow=='expense'and-math.abs(amount)or math.abs(amount)end
+   if amount>0 then result.income=result.income+amount else result.expense=result.expense-amount end
+  end
+ end
+ sortedCache.totals=result;return result
 end
 local function SearchControl(y)
  if not searchBox then
@@ -268,7 +289,7 @@ local function SearchControl(y)
   searchBox:SetScript('OnEscapePressed',function(self)self:ClearFocus()end)
   local function ApplySearch()
    local query=E.SearchText((searchBox:GetText()or''):match('^%s*(.-)%s*$'))
-   if query~=searchQuery then searchQuery=query;pageIndex=1;HideTip();V.Render()end
+   if query~=searchQuery then searchQuery=query;pageIndex=1;HideTip();V.Render(true)end
   end
   searchBox:SetScript('OnEnterPressed',function(self)searchTicket=searchTicket+1;ApplySearch();self:ClearFocus()end)
   searchBox:SetScript('OnTextChanged',function()
@@ -285,7 +306,7 @@ local function SearchControl(y)
  Surface(searchBox,.07,.09,.08,{.29,.34,.29},4,false);K.ApplyTextFont(searchBox,12,false,'');searchBox:SetTextColor(unpack(gold));searchBox:Show()
  K.ApplyTextFont(searchBox.hint,12,false,'');searchBox.hint:SetText(E.L('searchPlaceholder'));searchBox.hint:SetTextColor(unpack(muted));searchBox.hint:SetShown((searchBox:GetText()or'')=='')
  Button(E.L('clearSearch'),550,y,148,28,function()
-  searchTicket=searchTicket+1;searchQuery='';searchSync=true;searchBox:SetText('');searchSync=false;pageIndex=1;V.Render()
+  searchTicket=searchTicket+1;searchQuery='';searchSync=true;searchBox:SetText('');searchSync=false;pageIndex=1;V.Render(true)
  end)
  Label(E.L('searchHelp'),8,y-34,690,11)
  return y-64
@@ -293,17 +314,37 @@ end
 
 local function Sort(key)
  if sortKey==key then ascending=not ascending else sortKey=key;ascending=false end
- pageIndex=1;V.Render()
+ pageIndex=1;V.Render(true)
 end
 local function Header(key,title,x,y,width)
  return Button(title..(sortKey==key and(ascending and' +'or' -')or''),x,y,width,26,function()Sort(key)end,sortKey==key)
 end
-local function ModifiedItemLink(row)
- if not(IsModifiedClick and IsModifiedClick())and not(IsShiftKeyDown and IsShiftKeyDown())then return false end
- local raw=row.itemLink or(row.itemID and('item:'..row.itemID));if not raw then return false end
- local name,link
+local function ItemReference(row)
+ local raw=row.itemLink or(row.itemID and('item:'..row.itemID));if raw then return raw end
+ -- Sale invoices contain a localized name rather than the sold item's link.
+ -- Resolve on demand only; never rewrite history or invent an item identity.
+ local name=row.source=='auction'and row.kind=='sale'and row.item or row.name
+ if type(name)~='string'or(issecretvalue and issecretvalue(name))or name==''then return end
+ local records=K and K.ClassicItemRecords
+ if records and type(records.FindItemID)=='function'then
+  local ok,id,reason=pcall(records.FindItemID,name)
+  if ok and reason=='ambiguous'then return end
+  if ok and type(id)=='number'and not(issecretvalue and issecretvalue(id))and id>0 and id==math.floor(id)then return 'item:'..id end
+ end
  local get=C_Item and C_Item.GetItemInfo or GetItemInfo
- if get then local ok,a,b=pcall(get,raw);if ok then name,link=a,b end end
+ if type(get)=='function'then
+  local ok,resolved,link=pcall(get,name)
+  if ok and not(issecretvalue and(issecretvalue(resolved)or issecretvalue(link)))and resolved==name and type(link)=='string'then
+   raw=link:match('(item:[^|]+)')
+   if raw and #raw<=256 and raw:match('^item:%d+')then return raw,resolved,link end
+  end
+ end
+end
+local function ModifiedItemLink(row,raw,name,link)
+ if not(IsModifiedClick and IsModifiedClick())and not(IsShiftKeyDown and IsShiftKeyDown())then return false end
+ if not raw then return false end
+ local get=C_Item and C_Item.GetItemInfo or GetItemInfo
+ if not link and get then local ok,a,b=pcall(get,raw);if ok then name,link=a,b end end
  name=name or row.item or row.name or('Item '..tostring(row.itemID or''))
  link=link or('|H'..raw..'|h['..name:gsub('|','||')..']|h')
  if HandleModifiedItemClick then local ok,handled=pcall(HandleModifiedItemClick,link);if ok and handled then return true end end
@@ -316,8 +357,8 @@ local function ModifiedItemLink(row)
  return false
 end
 local function ItemPreview(owner,row)
- if ModifiedItemLink(row)then return end
- local link=row.itemLink or(row.itemID and('item:'..row.itemID))
+ local link,name,fullLink=ItemReference(row)
+ if ModifiedItemLink(row,link,name,fullLink)then return end
  if not link then Tip(owner,E.L('previewUnavailable'),E.L('previewHelp'));return end
  GameTooltip:SetOwner(owner,'ANCHOR_RIGHT')
  local ok=pcall(GameTooltip.SetHyperlink,GameTooltip,link)
@@ -407,6 +448,12 @@ function V.Render(keepPosition)
   end
   y=SearchControl(y)
   local items=SearchItems(SortedItems(report,isRecent,flow))
+  if searchQuery~=''then
+   local totals=FilteredTotals(items,isRecent,flow)
+   Label(E.L('filteredTotal'),8,y,690,11,gold);y=y-22
+   Label(E.L('income')..': '..Money(totals.income)..'   |   '..E.L('expense')..': '..Money(totals.expense),8,y,690,12);y=y-30
+   if totals.transfer~=0 then Label(E.L('transfer')..': '..Money(totals.transfer),8,y,690,11);y=y-25 end
+  end
   if range and isRecent then Button(Date(range.first)..' - '..Date(range.last)..'   X',8,y,690,28,function()range=nil;pageIndex=1;V.Render()end,true);y=y-37 end
   local product=not isRecent and grouping=='products'
   local source=not isRecent and grouping=='sources'
@@ -426,7 +473,7 @@ function V.Render(keepPosition)
    Panel(8,y,690,33,i%2==0 and{.20,.24,.21}or{.14,.18,.15})
    Label(stamp,16,y-7,120,12)
    local label=Label(title,145,y-7,product and 245 or 385,12);label:SetHeight(24)
-   if row.itemLink or row.itemID then
+   if row.itemLink or row.itemID or(row.source=='auction'and row.kind=='sale'and type(row.item)=='string'and row.item~='')or(product and type(row.name)=='string'and row.name~='')then
     label:SetTextColor(unpack(gold))
     local hit;hit=Button('',140,y,product and 250 or 395,33,function()HideTip();ItemPreview(hit,row)end)
     -- No eager item lookups; only the click opens Blizzard's item tooltip.
@@ -441,9 +488,9 @@ function V.Render(keepPosition)
    if product then Label(Money(row.amount/math.max(1,row.quantity or 1)),402,y-7,128,12):SetJustifyH('RIGHT')end
    y=y-34
   end
-  Button(E.L('previous'),8,y-5,150,29,function()pageIndex=math.max(1,pageIndex-1);V.Render()end)
+  Button(E.L('previous'),8,y-5,150,29,function()pageIndex=math.max(1,pageIndex-1);V.Render(true)end)
   Label(pageIndex..' / '..pages,185,y-11,180,13)
-  Button(E.L('next'),548,y-5,150,29,function()pageIndex=math.min(pages,pageIndex+1);V.Render()end);y=y-49
+  Button(E.L('next'),548,y-5,150,29,function()pageIndex=math.min(pages,pageIndex+1);V.Render(true)end);y=y-49
   Label(E.L(source and'sourceHelp'or grouping=='products'and'productHelp'or'detailLimit'),8,y,690,11);y=y-37
  end
  Button(E.L('helpToggle'),8,y,690,28,function()showHelp=not showHelp;V.Render()end,showHelp);y=y-40

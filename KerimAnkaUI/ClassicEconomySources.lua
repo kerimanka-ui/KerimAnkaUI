@@ -1,7 +1,8 @@
 -- Observe confirmed wallet changes. No protected actions, native overrides or retries.
 local _,K=...;local E=K.ClassicEconomy;if not E then return end
+local receivePrepared={};local receiveHooked=setmetatable({},{__mode="k"});local mailAttempt
 local trade;local trace={};local buybacks={};local tokens={};local context={};local mailbox={};local mailQueued=false;local outgoing=0;local outgoingCost;local vendorBatch;local vendorSerial=0;local initQueued=false;local sendPlan;local sendHooked=false
-function E.ClearIntents()tokens={};outgoing=0;outgoingCost=nil;sendPlan=nil end
+function E.ClearIntents()receivePrepared={};mailAttempt=nil;tokens={};outgoing=0;outgoingCost=nil;sendPlan=nil end
 local function Clock()return GetTime()end
 local function Trace(text)trace[#trace+1]=('%.2f '):format(Clock())..text;if #trace>24 then table.remove(trace,1)end end
 function E.GetTrace()return trace end
@@ -10,7 +11,7 @@ local function Intent(source,sign,meta,amount)
  if not E.Active()then return end
  if source=='loot'or source=='quest'then for i=#tokens,1,-1 do if tokens[i].source==source then table.remove(tokens,i)end end end
  local t={source=source,sign=sign,meta=meta or{},amount=amount,expires=Clock()+4}
- tokens[#tokens+1]=t;while #tokens>24 do table.remove(tokens,1)end
+ tokens[#tokens+1]=t;while #tokens>24 do table.remove(tokens,1)end;return t
 end
 local function Guard(fn)return function(...)
  if E.fault then return end
@@ -41,14 +42,20 @@ local function TradeFallback(delta)
 end
 local function Resolve(delta)
  local sign=delta>0 and 1 or -1
- -- Native auto-loot can combine several already-observed mail claims in one
- -- PLAYER_MONEY. Match only the exact sum of bounded, priced positive claims.
+ -- Native auto-loot may queue the next letter before reporting money for the
+ -- preceding letters. Consume only an exact FIFO prefix of live mail claims;
+ -- later claims stay pending for their own wallet confirmation.
  if delta>0 then
-  local total,count=0,0
-  for _,t in ipairs(tokens)do if t.expires>=Clock()and t.sign==1 and(t.source=='mail'or t.source=='auction')and type(t.amount)=='number'and t.amount>0 then total=total+t.amount;count=count+1 end end
-  if count>1 and total==delta then
+  local total,count,last=0,0,0
+  for i,t in ipairs(tokens)do
+   if t.expires>=Clock()and t.sign==1 and(t.source=='mail'or t.source=='auction')and type(t.amount)=='number'and t.amount>0 then
+    total=total+t.amount;count=count+1;last=i
+    if total>=delta then break end
+   end
+  end
+  if count>0 and total==delta then
    local parts={}
-   for i=#tokens,1,-1 do local t=tokens[i]
+   for i=last,1,-1 do local t=tokens[i]
     if t.expires>=Clock()and t.sign==1 and(t.source=='mail'or t.source=='auction')and type(t.amount)=='number'and t.amount>0 then
      local m=t.meta;local refund=type(m.refund)=='number'and math.max(0,math.min(t.amount,m.refund))or 0
      if t.amount-refund>0 then parts[#parts+1]={amount=t.amount-refund,source=t.source,kind=m.kind,peer=m.peer,item=m.item,itemID=m.itemID,itemLink=m.itemLink,batch=m.batch,quantity=m.quantity,evidence='matched'}end
@@ -61,7 +68,7 @@ local function Resolve(delta)
  end
  for i=#tokens,1,-1 do local t=tokens[i]
   if t.expires<Clock()then table.remove(tokens,i)
-  elseif t.sign==sign and(not t.amount or math.abs(delta)==t.amount or math.abs(delta)==t.meta.alternateTotal)and(not t.meta.principal or math.abs(delta)>=t.meta.principal)then
+  elseif not(delta>0 and t.sign==1 and(t.source=='mail'or t.source=='auction')and type(t.amount)=='number'and t.amount>0)and t.sign==sign and(not t.amount or math.abs(delta)==t.amount or math.abs(delta)==t.meta.alternateTotal)and(not t.meta.principal or math.abs(delta)>=t.meta.principal)then
    table.remove(tokens,i);local m=t.meta;if m.sendPlan then m.sendPlan.recorded=true end
    if t.source=='trade'then
     if trade then
@@ -101,10 +108,10 @@ local function Hook(owner,name,fn)
  elseif owner and type(owner[name])=='function'then hooksecurefunc(owner,name,Guard(fn))end
 end
 local function Snapshot(index)
- local _,_,sender,_,money,cod=Call(GetInboxHeaderInfo,index)
+ local _,_,sender,_,money,cod,_,attachments=Call(GetInboxHeaderInfo,index)
  if not sender then return end
  local invoice,item,_,_,_,deposit,_,_,_,_,quantity=Call(GetInboxInvoiceInfo,index)
- return{sender=sender,money=money,cod=cod,invoice=invoice,item=item,quantity=quantity,deposit=deposit}
+ return{sender=sender,money=money,cod=cod,attachments=attachments,invoice=invoice,item=item,quantity=quantity,deposit=deposit}
 end
 local function CacheMail()
  if mailQueued or not context.mail or not E.Active()then return end;mailQueued=true
@@ -114,18 +121,63 @@ local function CacheMail()
   for i=1,count do fresh[i]=Snapshot(i)end;mailbox=fresh
  end))
 end
-local function Mail(index,attachment)
- local m=Snapshot(index);if not m or ((m.money or 0)==0 and (m.cod or 0)==0)then m=mailbox[index]end
+local function Mail(index,attachment,before)
+ if before and not context.mail then return end
+ local prepared=receivePrepared[index]
+ if prepared and prepared.expires>=Clock()then
+  -- A native UI pre-observer already armed this exact claim. The post-hook
+  -- must not read a shifted inbox index or queue a duplicate after settlement.
+  if not before then receivePrepared[index]=nil end
+  return
+ end
+ receivePrepared[index]=nil
+ local m=Snapshot(index);if not before and(not m or ((m.money or 0)==0 and (m.cod or 0)==0))then m=mailbox[index]end
+ if before and m and((type(m.money)=='number'and m.money>0)or(type(m.cod)=='number'and m.cod>0)or(type(m.attachments)=='number'and m.attachments>0))then mailAttempt={expires=Clock()+4}end
  if not m then return end
  local sender,money,cod,invoice,item,quantity=m.sender,m.money,m.cod,m.invoice,m.item,m.quantity
  if attachment and type(cod)=='number'and cod>0 then
   local itemName,_,_,count=Call(GetInboxItem,index,attachment)
   Intent('mail',-1,{kind='purchase',item=itemName,itemLink=Call(GetInboxItemLink,index,attachment),quantity=count,peer=sender},cod);return
  end
+ -- Taking an item attachment cannot claim a positive money attachment. After
+ -- native index shifts, the fallback cache may still describe an earlier sale.
+ if attachment then return end
  if type(money)~='number'or money<=0 then return end
- if invoice=='seller'then Intent('auction',1,{kind='sale',item=item,quantity=quantity,refund=m.deposit},money)
- elseif E.IsOwn(sender)then Intent('mail',1,{kind='transfer',peer=sender},money)
- else Intent('mail',1,{peer=sender,kind=invoice and'refund'or nil},money)end
+ local claim
+ if invoice=='seller'then claim=Intent('auction',1,{kind='sale',item=item,quantity=quantity,refund=m.deposit},money)
+ elseif E.IsOwn(sender)then claim=Intent('mail',1,{kind='transfer',peer=sender},money)
+ else claim=Intent('mail',1,{peer=sender,kind=invoice and'refund'or nil},money)end
+ if before and claim then mailAttempt.claim=claim;receivePrepared[index]=claim;Trace('mail receive pre-snapshot index='..index..' amount='..money)end
+end
+local function InstallReceiveSnapshot()
+ -- Read metadata before the native UI resets/removes a money attachment.
+ -- Neither the protected action nor the original OnClick script is replaced.
+ local button=OpenMailMoneyButton
+ if button and button.HookScript and not receiveHooked[button]then
+  receiveHooked[button]=true
+  button:HookScript('PreClick',Guard(function()
+   local index=InboxFrame and InboxFrame.openMailID
+   if type(index)=='number'and index>0 then Mail(index,nil,true)end
+  end))
+ end
+ local bulk=InboxFrame and InboxFrame.OpenAllMail
+ if bulk and type(bulk.AdvanceToNextItem)=='function'and not receiveHooked[bulk]then
+  receiveHooked[bulk]=true
+  -- Native AdvanceAndProcessNextItem selects the index first, then calls
+  -- ProcessNextItem/TakeInboxMoney. This post-hook observes that boundary.
+  hooksecurefunc(bulk,'AdvanceToNextItem',Guard(function(self)
+   if type(self.mailIndex)=='number'then Mail(self.mailIndex,nil,true)end
+  end))
+ end
+ for i=1,7 do
+  local row=_G['MailItem'..i..'Button']
+  if row and row.HookScript and not receiveHooked[row]then
+   receiveHooked[row]=true
+   row:HookScript('PreClick',Guard(function(self)
+    if IsModifiedClick and IsModifiedClick('MAILAUTOLOOTTOGGLE')and type(self.index)=='number'then Mail(self.index,nil,true)end
+   end))
+  end
+ end
 end
 local function CacheBuybacks()
  local fresh={};local count=math.min(12,Call(GetNumBuybackItems)or 0)
@@ -134,6 +186,7 @@ local function CacheBuybacks()
 end
 local function ArmSend(recipient,money,quote,origin)
  if not E.Active()or type(recipient)~='string'or recipient==''then return end
+ mailAttempt=nil
  money=type(money)=='number'and math.max(0,math.floor(money))or 0
  quote=type(quote)=='number'and quote>=0 and math.floor(quote)or nil
  for i=#tokens,1,-1 do if tokens[i].meta.sendPlan then table.remove(tokens,i)end end
@@ -184,8 +237,37 @@ local function Hooks()
   end
   HookAH('PostItem',Post);HookAH('ConfirmPostItem',Post)
   HookAH('PostCommodity',Post);HookAH('ConfirmPostCommodity',Post)
-  HookAH('PlaceBid',function(auctionID,amount)Intent('auction',-1,{kind='purchase'},type(amount)=='number'and amount or nil)end)
-  HookAH('ConfirmCommoditiesPurchase',function(itemID,quantity)Intent('auction',-1,{kind='purchase',itemID=itemID,quantity=quantity})end)
+  local function PurchaseMeta(info)
+   local meta={kind='purchase'}
+   if type(info)~='table'or(issecretvalue and issecretvalue(info))then return meta end
+   local key=info.itemKey
+   if type(key)=='table'and not(issecretvalue and issecretvalue(key))then
+    local id=key.itemID
+    if type(id)=='number'and not(issecretvalue and issecretvalue(id))and id>0 and id==math.floor(id)then meta.itemID=id end
+   end
+   local link=info.itemLink
+   if type(link)=='string'and not(issecretvalue and issecretvalue(link))then
+    local raw=link:match('(item:[^|]+)');local id=raw and tonumber(raw:match('^item:(%d+)'))
+    if id and id>0 and #raw<=256 and(not meta.itemID or meta.itemID==id)then meta.itemLink=raw;meta.itemID=id end
+   end
+   if meta.itemID then
+    local name=Call(C_Item and C_Item.GetItemInfo or GetItemInfo,meta.itemLink or meta.itemID)
+    if type(name)~='string'and type(key)=='table'and not(issecretvalue and issecretvalue(key))then
+     local detail=Call(C_AuctionHouse.GetItemKeyInfo,key)
+     if type(detail)=='table'and not(issecretvalue and issecretvalue(detail))then name=detail.itemName end
+    end
+    if type(name)=='string'and not(issecretvalue and issecretvalue(name))then meta.item=name end
+   end
+   return meta
+  end
+  HookAH('PlaceBid',function(auctionID,amount)
+   local meta=PurchaseMeta(Call(C_AuctionHouse.GetAuctionInfoByID,auctionID))
+   Intent('auction',-1,meta,type(amount)=='number'and amount or nil)
+  end)
+  HookAH('ConfirmCommoditiesPurchase',function(itemID,quantity)
+   local meta=PurchaseMeta({itemKey={itemID=itemID}});meta.quantity=quantity
+   Intent('auction',-1,meta)
+  end)
  end
 
  -- Current Classic auction UI posts through PostAuction; retain legacy support.
@@ -237,7 +319,7 @@ local function Changed()
  local delta=value-previous;Trace(('wallet=%d baseline=%d delta=%d active=%s'):format(value,previous,delta,tostring(E.Active())));if delta==0 then return end;local parts=Resolve(delta);E.Observe(value,parts)
 end
 local f=CreateFrame('Frame');E.sourceFrame=f
-for _,event in ipairs({'PLAYER_ENTERING_WORLD','PLAYER_MONEY','MERCHANT_SHOW','MERCHANT_UPDATE','MERCHANT_CLOSED','AUCTION_HOUSE_SHOW','AUCTION_HOUSE_CLOSED','MAIL_SHOW','MAIL_CLOSED','TRADE_SHOW','TRADE_CLOSED','TRADE_ACCEPT_UPDATE','TRADE_MONEY_CHANGED','PLAYER_TRADE_MONEY','TRADE_REQUEST_CANCEL','UI_INFO_MESSAGE','UI_ERROR_MESSAGE','TRAINER_SHOW','TRAINER_CLOSED','LOOT_OPENED','LOOT_CLOSED','CHAT_MSG_MONEY','QUEST_TURNED_IN','MAIL_FAILED','QUEST_COMPLETE','MAIL_INBOX_UPDATE'})do K.ForeverInventoryAdapter.RegisterEvent(f,event)end
+for _,event in ipairs({'PLAYER_ENTERING_WORLD','PLAYER_MONEY','MERCHANT_SHOW','MERCHANT_UPDATE','MERCHANT_CLOSED','AUCTION_HOUSE_SHOW','AUCTION_HOUSE_CLOSED','MAIL_SHOW','MAIL_CLOSED','TRADE_SHOW','TRADE_CLOSED','TRADE_ACCEPT_UPDATE','TRADE_MONEY_CHANGED','PLAYER_TRADE_MONEY','TRADE_REQUEST_CANCEL','UI_INFO_MESSAGE','UI_ERROR_MESSAGE','TRAINER_SHOW','TRAINER_CLOSED','LOOT_OPENED','LOOT_CLOSED','CHAT_MSG_MONEY','QUEST_TURNED_IN','MAIL_FAILED','QUEST_COMPLETE','MAIL_INBOX_UPDATE','ADDON_LOADED'})do K.ForeverInventoryAdapter.RegisterEvent(f,event)end
 f:SetScript('OnEvent',Guard(function(_,event,...)
  if event=='PLAYER_ENTERING_WORLD'then
   if not initQueued then initQueued=true;C_Timer.After(1,Guard(function()if not E.Ready()then E.Seed(GetMoney())end end))end
@@ -247,9 +329,9 @@ f:SetScript('OnEvent',Guard(function(_,event,...)
  elseif event=='MERCHANT_CLOSED'then Context('vendor',false);buybacks={}
  elseif event=='AUCTION_HOUSE_SHOW'then Context('auction',true)
  elseif event=='AUCTION_HOUSE_CLOSED'then Context('auction',false)
- elseif event=='MAIL_SHOW'then Context('mail',true);InstallSendSnapshot();CacheMail()
+ elseif event=='MAIL_SHOW'then Context('mail',true);InstallSendSnapshot();InstallReceiveSnapshot();CacheMail()
  elseif event=='MAIL_INBOX_UPDATE'then CacheMail()
- elseif event=='MAIL_CLOSED'then Context('mail',false);mailbox={};outgoing=0;outgoingCost=nil
+ elseif event=='MAIL_CLOSED'then Context('mail',false);receivePrepared={};mailbox={};outgoing=0;outgoingCost=nil
  elseif event=='TRADE_SHOW'then Context('trade',true);trade={sent=0,received=0};TradeSnapshot()
  elseif event=='TRADE_MONEY_CHANGED'or event=='PLAYER_TRADE_MONEY'then TradeSnapshot()
  elseif event=='TRADE_CLOSED'then
@@ -276,7 +358,17 @@ f:SetScript('OnEvent',Guard(function(_,event,...)
  elseif event=='QUEST_COMPLETE'then local money=Call(GetQuestMoneyToGet);if type(money)=='number'and money>0 then Intent('quest',1,{},money)end
  elseif event=='QUEST_TURNED_IN'then local _,_,money=...;if type(money)=='number'and money~=0 then Intent('quest',money>0 and 1 or -1,{},math.abs(money))end
  elseif event=='TRADE_ACCEPT_UPDATE'then local mine,theirs=...;Trace('trade accept '..tostring(mine)..'/'..tostring(theirs));TradeSnapshot();if trade then trade.accepted=mine==1 or theirs==1;if trade.accepted and trade.lastOffer then local p=trade.lastOffer;trade.lastAccepted={sent=p.sent,received=p.received,peer=p.peer};Trace('accepted snapshot saved')end end
- elseif event=='MAIL_FAILED'then tokens={};if sendPlan then sendPlan.cancelled=true end;Trace('mail failed: pending snapshot discarded')
+ elseif event=='ADDON_LOADED'then InstallReceiveSnapshot()
+ elseif event=='MAIL_FAILED'then
+  -- Native retrieval commands are serialized, but PLAYER_MONEY can arrive
+  -- later for earlier commands. A failed latest request cannot erase those.
+  local itemID=...;local attempt=mailAttempt;local failed=not itemID and attempt and attempt.claim;local kept=0
+  for i=#tokens,1,-1 do local t=tokens[i]
+   if attempt and attempt.expires>=Clock()and t~=failed and t.expires>=Clock()and t.sign==1 and(t.source=='mail'or t.source=='auction')and type(t.amount)=='number'and t.amount>0 then kept=kept+1
+   else table.remove(tokens,i)end
+  end
+  if sendPlan then sendPlan.cancelled=true end
+  Trace('mail failed: latest request discarded; earlier receipts kept='..kept)
  end
 end))
-Hooks();InstallSendSnapshot()
+Hooks();InstallSendSnapshot();InstallReceiveSnapshot()
