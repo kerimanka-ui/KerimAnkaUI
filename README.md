@@ -8,7 +8,7 @@ ready layouts for all nine classes, and a shared settings panel in nine language
 [Twitch](https://www.twitch.tv/kerimanka) ·
 [Changelog](CHANGELOG.md)
 
-Current version: **0.35.0**.
+Forever version: **0.40.4**. Classic Era remains **0.37.0**.
 [Download the latest release](https://github.com/kerimanka-ui/KerimAnkaUI/releases/latest)
 and choose the attached complete-suite ZIP.
 

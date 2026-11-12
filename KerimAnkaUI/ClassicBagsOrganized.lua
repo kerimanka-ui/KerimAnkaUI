@@ -405,19 +405,39 @@ function O.Release()
  for _,b in ipairs(c.frame.kaDesignButtons or{})do b:Show()end
  c.footer:Show();c.shelfToggle:Show();c.frame.kaGeometryKey=nil
 end
+local preparedRecentHolders,preparedRecentButtons,preparedFooterHolders,preparedFooterButtons={},{},{},{}
+function O.PrepareItemButtons(c)
+ if Combat()then return false end
+ for _,kind in ipairs({'recent','footer'})do
+  local holders,pools,prefix=preparedRecentHolders,preparedRecentButtons,'KAOrganizedRecentBag'
+  if kind=='footer'then holders,pools,prefix=preparedFooterHolders,preparedFooterButtons,'KAOrganizedDropBag'end
+  for bag=0,K.ForeverInventoryAdapter.LastBag()do
+   if not holders[bag]then
+    local h=CreateFrame('Frame',prefix..bag,c.body);h:SetID(bag);h:SetAllPoints(c.body);holders[bag]=h;pools[bag]={}
+   end
+   for slot=#pools[bag]+1,math.max(36,c.slots(bag))do c.acquire(holders[bag],pools[bag],slot)end
+  end
+ end
+ return true
+end
 local function ItemButton(s,entry,parent,x,y,size)
  local c=s.ctx;local bag,slot=entry.bag,entry.slot;local holder=c.holders[bag]
  local duplicate=entry.recent==true or entry.footer==true
- s.recentButtons=s.recentButtons or{};s.recentHolders=s.recentHolders or{}
+ s.recentButtons,s.recentHolders=preparedRecentButtons,preparedRecentHolders
+ s.footerButtons,s.footerHolders=preparedFooterButtons,preparedFooterHolders
  local pool=c.buttons[bag]
  if duplicate then
   local holders,pools,base,prefix=s.recentHolders,s.recentButtons,s.child,'KAOrganizedRecentBag'
   if entry.footer then s.footerHolders=s.footerHolders or{};s.footerButtons=s.footerButtons or{};holders,pools,base,prefix=s.footerHolders,s.footerButtons,s.surface,'KAOrganizedDropBag'end
-  if not holders[bag]then local h=CreateFrame('Frame',prefix..bag,base);h:SetID(bag);h:SetAllPoints(base);h:SetFrameLevel(base:GetFrameLevel()+4);holders[bag]=h;pools[bag]={}end
+  if not holders[bag]then
+   if Combat()then return end
+   local h=CreateFrame('Frame',prefix..bag,base);h:SetID(bag);holders[bag]=h;pools[bag]={}
+  end
+  local h=holders[bag];h:SetParent(base);h:ClearAllPoints();h:SetAllPoints(base);h:SetFrameLevel(base:GetFrameLevel()+4)
   holder=holders[bag];holder.size=c.holders[bag].size;pool=pools[bag]
  end
- local b=pool[slot]
- if not b then b=CreateFrame('ItemButton',holder:GetName()..'Item'..slot,holder,'ContainerFrameItemButtonTemplate');b:SetID(slot);pool[slot]=b end
+ local b=K.ClassicBags.AcquireInventoryButton(holder,pool,slot)
+ if not b then return end
  local scale=size/37
  b:SetFrameLevel(holder:GetFrameLevel()+1)
  if b.kaScale~=scale then b:SetSize(37,37);b:SetScale(scale);b.kaScale=scale end

@@ -1,3 +1,21 @@
+# KerimAnka UI 0.40.4 — Forever cursor and inventory fixes
+
+This update targets **WoW: Forever (1.60.1)**. The combined download preserves **Classic Era 0.37.0 unchanged**. Existing settings and recorded history are preserved.
+
+- Inventory: uses fixed physical bag/slot ownership instead of writing the native bag-ID field, preserving native item-click, drag and modified-click handlers.
+- Combat inventory: prepares item buttons outside combat for the standard layouts and Organized main/recent/footer views. Missing buttons and bank buttons are deferred until combat ends. Item removal, replacement, count, lock and readable-state updates continue on the existing slot.
+- Hunter ammunition: the user successfully changed arrow types during combat, including equipping a newly purchased different type. The change uses the common inventory path; it does not automatically choose ammunition or add item/class exceptions.
+- Mouse cursor: adds an optional cursor settings page with configurable shapes, color, size, opacity and visibility, GCD/cast/channel indicators, 2D trails and three built-in native effects (blue flow, blue electric and green electric). Camera initialization before model scaling preserves the latest test13 reload behavior. Native effects reuse game assets; extracted game assets are not distributed.
+
+**Gameplay evidence:** the user reported successful item use/weapon equip in the earlier identity fix and successful arrow changes with the button-preparation fix. The latest cursor test13 received a provisional positive report for all three effects and /reload. These tests used the same feature code with private observation overlays; exact in-memory reconstruction verifies the overlays are the only installed differences. The user subsequently installed clean 0.40.4, reloaded and reported that it works with no current problems and appears stable. The installed 511-file Forever payload was verified against the clean release. This is a basic gameplay/reload approval; it does not establish every combat scenario or long-session performance.
+
+**Hunter sound finding (no new code fix):** the existing six-file error-click mute remains unchanged. Installed Forever Dual Gathering 2.3 can unmute the shared file 567407. Disabling that addon and reloading appeared to restore the desired behavior for the user. This release does not implement a compatibility fix or change the macro; long-session confirmation remains open.
+
+**Limitations:** full restart, long-session and actual CPU/GPU/FPS measurements are pending. Not all classes, item families or the immediate last-arrow-exhaustion sequence were tested in game. Combat-first loading or capacity beyond the prepared reserve can defer missing slots until combat ends. Existing QuestJournal secret-aura/Edit Mode warnings and previously recorded intermittent bag-open/UNKNOWN and combat private-chat limitations remain open; this update does not claim to resolve every protected-action report.
+
+Private Diagnostic, Sound Probe, detailed BagBirth observers, cursor probes, personal SavedVariables and fake test data are excluded. The existing bounded public bag-status/actionlog commands are retained. All eight independent products remain separate, with their own sync/test status. CurseForge uses the existing suite webhook only; no duplicate manual ZIP upload.
+
+
 # KerimAnka UI 0.40.3 — Forever economy and inventory improvements
 
 This update targets **WoW: Forever (1.60.1)**. The combined download preserves **Classic Era 0.37.0 unchanged**. Existing settings and recorded economy history are preserved.

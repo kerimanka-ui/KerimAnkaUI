@@ -262,7 +262,7 @@ function M.Refresh()
    local b=items[bag][slot]
    if not b then
     if bag==-1 and BankSlotsFrame then b=BankSlotsFrame['Item'..slot];if b then Move(b,parent)end end
-    if not b then b=CreateFrame('ItemButton','KAForeverBank'..bag..'Item'..slot,parent,'ContainerFrameItemButtonTemplate');b:SetID(slot)end
+    if not b and not InCombatLockdown()then b=CreateFrame('ItemButton','KAForeverBank'..bag..'Item'..slot,parent,'ContainerFrameItemButtonTemplate');b:SetID(slot)end
     if b then items[bag][slot]=b;b.kaClassicBankItem=true end
    end
    if b then
@@ -359,7 +359,7 @@ QueueRefresh=function(open)
  elseif active then M.Refresh() end end)
 end
 local events=CreateFrame('Frame')
-for _,e in ipairs({'QUEST_LOG_UPDATE','BANKFRAME_OPENED','BANKFRAME_CLOSED','BAG_UPDATE_DELAYED','PLAYERBANKSLOTS_CHANGED','PLAYERBANKBAGSLOTS_CHANGED','BANK_TABS_CHANGED','BAG_CONTAINER_UPDATE','PLAYER_MONEY','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','ADDON_LOADED'}) do K.ForeverInventoryAdapter.RegisterEvent(events,e) end
+for _,e in ipairs({'QUEST_LOG_UPDATE','BANKFRAME_OPENED','BANKFRAME_CLOSED','BAG_UPDATE_DELAYED','PLAYERBANKSLOTS_CHANGED','PLAYERBANKBAGSLOTS_CHANGED','BANK_TABS_CHANGED','BAG_CONTAINER_UPDATE','PLAYER_MONEY','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','ADDON_LOADED','PLAYER_REGEN_ENABLED'}) do K.ForeverInventoryAdapter.RegisterEvent(events,e) end
 events:SetScript('OnEvent',function(_,event)
  if event=='BANKFRAME_OPENED' then QueueRefresh(true)
  elseif event=='BANKFRAME_CLOSED' then management=false;M.Close(false)

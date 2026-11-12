@@ -182,6 +182,7 @@ local function Box(parent,x,y,w,h,button)
     if frame.mbRowIcon then frame.mbRowIcon:Hide() end
     if frame.arSwatch then frame.arSwatch:Hide() end
     if frame.backingSwatch then frame.backingSwatch:Hide()end
+    if frame.cursorSwatch then frame.cursorSwatch:Hide()end
     if frame.xpColorChip then frame.xpColorChip:Hide() end
     frame.xpColorTag=nil
     if frame.choiceAccent then frame.choiceAccent:Hide() end
@@ -740,6 +741,7 @@ function K.Render()
     elseif section=="combat" then Combat()
     elseif section=="alerts" then Alerts()
     elseif section=="sounds" then Sounds()
+    elseif section=="cursor" and K.DrawCursorPage then K.DrawCursorPage(page,HomeWidgets(),HomeRefresh)
     end
     if K.reloadPrompt and K.reloadPrompt:IsShown() then
         if K.HasPendingModuleChanges() then K.ShowReloadPrompt() else K.reloadPrompt:Hide() end
@@ -1116,8 +1118,8 @@ function K.BuildWindow()
     profiles:ClearAllPoints();profiles:SetPoint("BOTTOMLEFT",10,61)
     profiles.key="profiles";StyleNavigationLabel(profiles);NavAccent(profiles);nav[#nav+1]=profiles
     introProfiles=profiles
-    for i,key in ipairs({"overview","combat","alerts","sounds"}) do
-        local tab=FixedButton(f,K.L(key),220+(i-1)*182,-77,174,32,function()
+    for i,key in ipairs({"overview","combat","alerts","sounds","cursor"}) do
+        local tab=FixedButton(f,K.L(key),220+(i-1)*149,-77,141,32,function()
             section=key; K.scroll:SetVerticalScroll(0); K.Render()
         end)
         tab.underline=tab:CreateTexture(nil,"OVERLAY"); tab.underline:SetPoint("BOTTOMLEFT",2,0); tab.underline:SetPoint("BOTTOMRIGHT",-2,0)

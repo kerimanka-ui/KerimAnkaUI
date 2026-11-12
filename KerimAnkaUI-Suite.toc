@@ -2,5 +2,5 @@
 ## Title: KerimAnka UI Suite packaging metadata
 ## Notes: Repository-only metadata for CurseForge. Install the ten addon folders, not this file.
 ## Author: Kerim Anka
-## Version: 0.40.3
+## Version: 0.40.4
 ## X-Curse-Project-ID: 1761131

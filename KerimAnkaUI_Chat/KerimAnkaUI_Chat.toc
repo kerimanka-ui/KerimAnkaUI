@@ -2,7 +2,7 @@
 ## Title: KerimAnka UI: Chat and Micro Menu
 ## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Dependencies: KerimAnkaUI
-## Version: 0.40.3
+## Version: 0.40.4
 Bootstrap.lua
 Chat\Geometry.lua
 Chat\Appearance.lua

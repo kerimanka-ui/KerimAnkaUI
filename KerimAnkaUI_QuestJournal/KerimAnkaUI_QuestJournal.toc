@@ -4,7 +4,7 @@
 ## IconTexture: Interface\AddOns\KerimAnkaUI\Media\Phoenix.tga
 ## Notes: Watched quests with zone grouping and scrolling. Configure in KerimAnka UI.
 ## Author: Kerim Anka
-## Version: 0.40.3
+## Version: 0.40.4
 ## Dependencies: KerimAnkaUI
 ## OptionalDeps: Blizzard_ObjectiveTracker, Questie
 ## SavedVariablesPerCharacter: ForeverQuestJournalDB

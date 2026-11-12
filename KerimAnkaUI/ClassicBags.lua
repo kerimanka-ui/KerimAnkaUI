@@ -14,6 +14,16 @@ local moneyTooltipRows,moneyListRows=7,10
 local moneyHit,moneyPanel,moneyRows,moneyOffset
 local keyState
 local function Combat() return InCombatLockdown and InCombatLockdown() end
+-- ItemButton scripts can taint native container dispatch when born in combat.
+-- Keep one button per physical slot; missing slots wait for the OOC prewarm.
+function M.AcquireInventoryButton(holder,pool,slot,name)
+ local button=pool[slot]
+ if button then return button end
+ if Combat() then return nil end
+ button=CreateFrame('ItemButton',name or(holder:GetName()..'Item'..slot),holder,'ContainerFrameItemButtonTemplate')
+ button:SetID(slot);pool[slot]=button
+ return button
+end
 local headerText={
  ["en"]={"%s's bags","Show bag icons","Hide bag icons","Bag settings"},
  ["tr"]={"%s - Çantası","Çanta ikonlarını göster","Çanta ikonlarını gizle","Çanta ayarları"},
@@ -500,9 +510,10 @@ function M.ActionLog(command)
 end
 
 local function Paint(button,bag,slot,info,provided)
- -- The native mixin routes bag identity through its attribute bridge to keep
- -- hardware item interactions out of the addon's parent-identity fallback.
- if button.SetBagID and not Combat()then button:SetBagID(bag)end
+ -- Every item button stays under a holder with its physical bag ID. Let the
+ -- native GetBagID use that parent fallback; addon SetBagID writes bagid and
+ -- taints the button's bagID field, contaminating protected item use.
+ -- Do not clear an existing field here: reload rebuilds clean item buttons.
  ObserveItemAction(button)
  if not provided then info=C_Container.GetContainerItemInfo(bag,slot)end
  if button.SetHasItem then button:SetHasItem(info~=nil)end
@@ -1157,6 +1168,16 @@ function M.RefreshCooldowns()
  if not frame or not frame:IsShown()then return end;Count('cooldown')
  for bag,group in pairs(buttons)do for slot,b in pairs(group)do if b:IsShown()then PaintCooldown(b,bag,slot,b.kaHasItem)end end end
 end
+function M.PrepareItemButtons()
+ if Combat()or not frame then return false end
+ local c={body=body,holders=holders,buttons=buttons,slots=Slots,acquire=M.AcquireInventoryButton}
+ for bag=0,K.ForeverInventoryAdapter.LastBag()do
+  local count=math.max(36,Slots(bag))
+  for slot=#buttons[bag]+1,count do M.AcquireInventoryButton(holders[bag],buttons[bag],slot)end
+ end
+ if K.ClassicBagsOrganized and K.ClassicBagsOrganized.PrepareItemButtons then K.ClassicBagsOrganized.PrepareItemButtons(c)end
+ return true
+end
 local function RefreshVisible()
  if not frame or not K.db or not frame:IsShown() then return end
  -- Optional presentation only: all native bag/slot item operations stay here.
@@ -1203,17 +1224,13 @@ local function RefreshVisible()
   total=total+count;local freeBag=0
   for slot=1,count do
    local info=C_Container.GetContainerItemInfo(bag,slot);if not info then free=free+1;freeBag=freeBag+1 elseif not info.iconFileID then waitingForItemInfo=true end
-   local button=buttons[bag][slot]
-   if not button then
-    button=CreateFrame('ItemButton',holder:GetName()..'Item'..slot,holder,'ContainerFrameItemButtonTemplate')
-    button:SetID(slot);buttons[bag][slot]=button
-   end
-   if (filterBag==nil or filterBag==bag) and M.Matches(info,query) then
+   local button=M.AcquireInventoryButton(holder,buttons[bag],slot)
+   if button and (filterBag==nil or filterBag==bag) and M.Matches(info,query) then
     local scale=size/37;local x,y=(gridLeft+(n%columns)*cell)/scale,(-itemTop-math.floor(n/columns)*cell)/scale
     if button.kaScale~=scale then button:SetSize(37,37);button:SetScale(scale);button.kaScale=scale end
     if button.kaX~=x or button.kaY~=y then button:ClearAllPoints();button:SetPoint('TOPLEFT',frame,'TOPLEFT',x,y);button.kaX,button.kaY=x,y end
     Paint(button,bag,slot,info,true);if not button:IsShown()then button:Show()end;n=n+1
-   else button:Hide() end
+   elseif button then button:Hide() end
   end
   bagSpaces[#bagSpaces+1]={bag=bag,free=freeBag,slots=count,family=K.ClassicBagsOrganized and K.ClassicBagsOrganized.SpaceFamily(bag)}
   for slot=count+1,#buttons[bag] do buttons[bag][slot]:Hide() end
@@ -1344,7 +1361,7 @@ QueueNativeHandoff=function() Schedule(false) end
 function M.PrepareBags()
  M.InstallSplitHook()
  M.InstallBagCallHooks();M.InstallNativeBagHooks()
- if M.Enabled() then Ensure() else M.RestoreNativeBagAlpha() end
+ if M.Enabled() then if Ensure()then M.PrepareItemButtons()end else M.RestoreNativeBagAlpha() end
 end
 local function Startup(initialLogin)
  startupGeneration=startupGeneration+1;local token=startupGeneration
@@ -1417,6 +1434,9 @@ events:SetScript('OnEvent',function(_,event,initialLogin,isReloadingUi)
  end
  if event=='ADDON_LOADED' then C_Timer.After(0,function() M.PrepareBags() end) end
  if event=='PLAYER_REGEN_DISABLED' then M.StopSort();if frame then frame:StopMovingOrSizing() end end
+ if event=='PLAYER_REGEN_ENABLED'or event=='BAG_UPDATE_DELAYED'or event=='PLAYER_EQUIPMENT_CHANGED'then
+  if not Combat()then M.PrepareBags()end
+ end
  if event=='ADDON_LOADED' and not M.Enabled() then if frame then frame:Hide() end;M.RestoreNativeBagAlpha();return end
  if frame and frame:IsShown() then
   if redrawQueued then pendingRefresh=true;return end
