@@ -120,14 +120,14 @@ schema.ForeverHunterArtCharacterDB=Shape(art)
 schema.ForeverMinimapArtDB=Shape(Fields("enabled hideBorder hunterMatte warlockObsidianInitialized shamanElementInitialized mageAstralInitialized priestHaloInitialized druidWildInitialized",{size={80,130},x={-40,40},y={-40,40}}))
 -- Keep legacy profile fields readable; petPanel* still stores the shared pet backing.
 schema.ForeverHunterHUDDB=Shape(Fields("enabled units center hideResource petPanelEnabled",{petPanelPadding={0,12},petPanelAlpha={0,1},edge={8,20},padding={0,6},centerPadding={2,12},alpha={.2,1}}))
-schema.ForeverQuestJournalDB=Shape(Fields("enabled showQuill scrollEnabled groupByZone",{opacity={.3,1},borderSize={4,12},scrollStep={12,120}}))
+schema.ForeverQuestJournalDB=Shape(Fields("enabled showQuill scrollEnabled groupByZone showAllQuests",{opacity={.3,1},borderSize={4,12},scrollStep={12,120}}))
 schema.ForeverQuestJournalDB.fields.collapsedZones={kind="iconExclusions"}
 schema.ForeverDetailsHunterDB=Shape(Fields("showTrim keepFonts",{trimAlpha={.1,1},edgeTop={-24,48},edgeBottom={-24,48},edgeLeft={-24,48},edgeRight={-24,48}}))
 schema.ForeverHunterRangeDB=Shape(Fields("enabled locked coloredText outline shadow",{width={150,420},height={28,60},fontSize={10,24},x={-2000,2000},y={-1200,1200}}))
 for _,mode in ipairs({"ranged","dead","melee","far","close","unknown"}) do schema.ForeverHunterRangeDB.fields[mode.."Text"]=S(400) end
 local threat=Fields("enabled locked autoColor raw showPercent bold outline shadow",{size={12,96},alpha={.2,1},x={-2000,2000},y={-1200,1200},r={0,1},g={0,1},b={0,1}});threat.font=S(160)
 schema.ForeverThreatDB=Shape(threat)
-schema.HunterAspectAlertCharacterDB=Shape({enabled=B,showText=B,cheetahGlow=B,locked=B,cheetahText=S(400),missingText=S(400),cheetahTextCustom=B,missingTextCustom=B,position={kind="anchor"}})
+schema.HunterAspectAlertCharacterDB=Shape({enabled=B,showText=B,cheetahGlow=B,hideWhileMounted=B,warnCheetah=B,warnPack=B,locked=B,cheetahText=S(400),packText=S(400),missingText=S(400),cheetahTextCustom=B,packTextCustom=B,missingTextCustom=B,position={kind="anchor"}})
 local moduleFor={ForeverBarBackdropCharacterDB="KerimAnkaUI_BarBackdrop",ForeverHunterArtCharacterDB="KerimAnkaUI_ClassArt",ForeverMinimapArtDB="KerimAnkaUI_ClassArt",ForeverHunterHUDDB="KerimAnkaUI_ClassArt",ForeverLeatherUnitsDB="KerimAnkaUI_UnitFrames",ForeverQuestJournalDB="KerimAnkaUI_QuestJournal",ForeverDetailsHunterDB="KerimAnkaUI_DetailsSkin",ForeverHunterRangeDB="KerimAnkaUI_HunterRange",ForeverThreatDB="KerimAnkaUI_Threat",HunterAspectAlertCharacterDB="KerimAnkaUI_AspectAlert"}
 local cvars={cameraDistanceMaxZoomFactor={1,2.6},SpellQueueWindow={0,1000},ffxDeath={0,1}}
 for _,option in ipairs(K.soundOptions) do cvars[option.cvar]={0,1} end

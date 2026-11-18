@@ -1,3 +1,21 @@
+# KerimAnka UI 0.40.5 — Action Tracker, quest journal and aspect alerts
+
+This update targets **WoW: Forever (1.60.1)**. The combined suite download preserves **Classic Era 0.37.0 unchanged**. Existing settings and recorded history are retained.
+
+- **Action Tracker:** an optional third tab in Damage Meters shows a short history of successfully used abilities. Choose 1–10 icons (default 5), four growth directions, size, spacing, opacity and a GCD sweep. Melee and ranged auto-attack history have separate switches; auto-attacks do not start a GCD sweep. The tracker is off by default, keeps a bounded history and uses account-wide settings.
+- **Layout editing:** Action Tracker is now available in Edit Positions, including disabled-item discovery, dragging, right-click quick settings and temporary sample icons. Save, Cancel, selected-item restore and interrupted-session recovery use the existing editor. Samples are not added to recorded action history.
+- **All journal quests:** the quest tracker can show all normal quests from the journal instead of only Blizzard-watched quests. The new option is on by default; turn it off to retain watched-only display. It does not add watches or expand native journal headers. The existing mouse-wheel scrolling option must be enabled. Zone grouping, collapsed sections and scroll position remain supported.
+- **Quest menu protection:** View Quest and Stop Tracking check combat again when their menu callbacks run, keeping those native operations out of combat.
+- **Aspect alerts:** an optional setting hides ordinary warnings while mounted and resumes them after dismounting. Cheetah and the player's own Pack aspect have separate combat warnings, text and previews. Where supported, combat warnings use the game's aura display. The aspect catalog shows localized names/icons, learned status and valid learning levels supplied by the game; unavailable levels are marked unverified.
+- **Settings and translations:** related controls, help and profile fields are updated in all nine supported panel languages. Existing explicit choices are preserved.
+
+**Gameplay verification:** the author confirmed the latest Action Tracker layout integration and all-journal quest display are tested and working, following earlier positive tracker and basic aspect-warning tests. The prepared feature code was compared with the installed files; private observation additions were isolated and excluded. This is not exhaustive coverage of every class, item, combat sequence or locale, and actual CPU/GPU/FPS and long-session measurements remain open.
+
+**Known limitations:** detecting that every aspect is absent during restricted combat remains unresolved; no warning is not proof that an aspect is inactive. Reported QuestJournal aura/Edit Mode taint and native damage-meter restricted-value/freeze issues remain under investigation. The quest-menu guard does not claim to fix their root cause. Previously documented intermittent bag-open/UNKNOWN and combat private-chat limitations also remain open.
+
+Bags, cursor and sound behavior are retained from 0.40.4. Independent editions, private diagnostics/trace/capture addons, personal SavedVariables and test fixtures are excluded from this suite release. CurseForge continues to use the existing automatic tagged-source packaging route; do not upload a duplicate manual ZIP.
+
+
 # KerimAnka UI 0.40.4 — Forever cursor and inventory fixes
 
 This update targets **WoW: Forever (1.60.1)**. The combined download preserves **Classic Era 0.37.0 unchanged**. Existing settings and recorded history are preserved.

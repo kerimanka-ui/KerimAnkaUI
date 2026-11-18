@@ -27,6 +27,11 @@ function K.DrawQuestPage(page)
  w.Text(box,K.L('qjScrollEnabled'),16,-20,550,14)
  w.Switch(box,db.scrollEnabled,620,-16,function(value) if api.Set('scrollEnabled',value) then K.Render() end end,not K.InCombat())
  y=y-82
+ local allQuests=w.Box(page,0,y,714,62)
+ w.Text(allQuests,K.L('qjShowAllQuests'),16,-20,550,14)
+ w.Switch(allQuests,db.showAllQuests~=false,620,-16,function(value) if api.Set('showAllQuests',value) then K.Render() end end,not K.InCombat())
+ y=y-82
+ w.Text(page,K.L('qjShowAllQuestsHelp'),8,y,690,13,{.65,.70,.62});y=y-105
  local grouping=w.Box(page,0,y,714,62)
  w.Text(grouping,K.L('qjGroupByZone'),16,-20,550,14)
  w.Switch(grouping,db.groupByZone,620,-16,function(value) if api.Set('groupByZone',value) then K.Render() end end,not K.InCombat())

@@ -267,14 +267,18 @@ local meterPage="blizzard"
 local meterContent
 function K.DrawDamageMetersPage(page)
  local w=K.UnitWidgets
- for i,item in ipairs({{"blizzard","dmBlizzard"},{"details","dmDetails"}}) do
+ for i,item in ipairs({{"blizzard","dmBlizzard"},{"details","dmDetails"},{"tracker","atTab"}}) do
   local code=item[1]
-  local b=w.Button(page,K.L(item[2]),(i-1)*365,0,349,34,function() meterPage=code;Refresh() end)
+  local b=w.Button(page,K.L(item[2]),(i-1)*244,0,226,34,function() meterPage=code;Refresh() end)
   w.Selected(b,meterPage==code)
  end
  if not meterContent then meterContent=CreateFrame("Frame",nil,page);meterContent:SetSize(734,400) end
  meterContent:ClearAllPoints();meterContent:SetPoint("TOPLEFT",page,"TOPLEFT",0,-58)
  meterContent:Show()
+ if meterPage=="tracker" and K.DrawActionTrackerPage then
+  K.DrawActionTrackerPage(meterContent);page:SetHeight(meterContent:GetHeight()+58)
+  return false
+ end
  if meterPage=="details" then
   if not K.DrawDetailsPage(meterContent) then
    w.Text(meterContent,K.L("dmDetailsMissing"),8,0,690,14);meterContent:SetHeight(80)

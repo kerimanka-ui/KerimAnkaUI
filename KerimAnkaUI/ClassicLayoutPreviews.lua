@@ -109,6 +109,7 @@ end
 function P.Update(entries,parent)
  if not running or not enabled then return end
  Native(K.ClassicCastBar);Native(K.ClassicSwingTimer);Native(ForeverThreatAPI)
+ Native(K.ActionTracker)
  Mode(ForeverHunterRangeAPI,'ranged');Mode(HunterAspectAlertAPI,'cheetah')
  for _,a in ipairs(entries)do
   if not a.disabled and(a.id:match('^unit%.')or a.id=='targetCast'or a.id:match('^aura%.'))then

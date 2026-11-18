@@ -48,6 +48,7 @@ function L.Entries()
  UnitFeature('targetCast','uf_targetCastEnabled','targetCastEnabled')
  API('fps','leFPS','fps',K.FPS,'enabled')
  API('experience','experience','experience',K.Experience,'enabled')
+ API('tracker','atTab','tracker',K.ActionTracker,'enabled')
  API('sound','soundShortcutTitle','sound',K.SoundShortcut,'enabled')
  API('bagShortcut','bsTitle','bagShortcut',K.BagShortcut,'enabled')
  local coords=K.MinimapCoordinates
@@ -174,6 +175,7 @@ local function Actor(e)
  local native={fps=_G.KerimAnkaUIFPS,sound=_G.KerimAnkaUISoundShortcut,bagShortcut=_G.KerimAnkaUIBagShortcut,coordinates=K.MinimapCoordinates and K.MinimapCoordinates.frame,drawer=_G.KerimAnkaUIIconDrawer,micro=_G.MicroMenuContainer,range=_G.ForeverHunterRangeBar,threat=_G.ForeverThreatDisplay,aspect=_G.HunterAspectAlertPanel,['unit.targettarget']=_G.ForeverLeatherUnit_targettarget,combo=_G.KerimAnkaUIClassicComboFrame}
  local f=native[id]
  if id=='cast'then f=K.ClassicCastBar.holder elseif id=='experience'then f=K.Experience.hud
+ elseif id=='tracker'then f=K.ActionTracker and K.ActionTracker.hud
  elseif id:match('^swing%.')then f=K.ClassicSwingTimer.Frames[id:sub(7)]
  elseif id=='targetCast'and ForeverUnitsCombatWidgets and ForeverUnitsCombatWidgets.GetLayoutElements then local _,cast=ForeverUnitsCombatWidgets.GetLayoutElements();f=cast end
  if f then return f end
@@ -185,6 +187,10 @@ local function Actor(e)
  elseif id=='drawer'then f:SetPoint('CENTER',Minimap,'CENTER',-80,-60);f:SetSize(36,36)
  elseif id=='fps'then f:SetPoint('RIGHT',UIParent,'RIGHT',K.FPS.Get('x'),K.FPS.Get('y'));f:SetSize(100,20)
  elseif id=='sound'or id=='bagShortcut'then local api=id=='sound'and K.SoundShortcut or K.BagShortcut;f:SetPoint('CENTER',UIParent,'BOTTOMLEFT',(api.Get('x')or .7)*UIParent:GetWidth(),(api.Get('y')or .8)*UIParent:GetHeight());f:SetSize(api.Get('size')or 36,api.Get('size')or 36)
+ elseif id=='tracker'then
+  local api=K.ActionTracker;local size,n,gap,dir=api.Get('size'),api.Get('count'),api.Get('gap'),api.Get('direction')
+  local span=n*size+(n-1)*gap;f:SetSize(dir<3 and span or size,dir<3 and size or span)
+  f:SetPoint('CENTER',UIParent,'CENTER',api.Get('x'),api.Get('y'))
  else f:SetPoint('CENTER',UIParent,'CENTER',d.x or 0,d.y or 250)end
  return f
 end
@@ -193,7 +199,7 @@ function L.AddDisabled(list)
  for _,e in ipairs(L.Entries())do
   local simple=not e.id:match('^unit%.')and not e.id:match('^aura%.')or e.id=='unit.targettarget'
   if simple and not found[e.id]and e.available and e.set and not e.get()then
-   local item=e;local a={id=e.id,label=e.label,frame=Actor(e),disabled=true,disabledReason=e.reason,page=e.group=='units'and'units'or e.id=='fps'and'home'or e.id=='sound'and'home'or e.id=='experience'and'experience'or e.id=='coordinates'and'minimap'or e.id=='drawer'and'minimap'or e.id=='micro'and'home'or e.id=='bagShortcut'and'inventory'or e.id=='range'and'range'or e.id=='threat'and'threat'or e.id=='aspect'and'aspect'or'home',section=e.id=='micro'and'imMicro'or e.id=='sound'and'sounds'or e.id=='fps'and'overview'or'combat'}
+   local item=e;local a={id=e.id,label=e.label,frame=Actor(e),disabled=true,disabledReason=e.reason,page=e.group=='units'and'units'or e.id=='fps'and'home'or e.id=='sound'and'home'or e.id=='experience'and'experience'or e.id=='tracker'and'details'or e.id=='coordinates'and'minimap'or e.id=='drawer'and'minimap'or e.id=='micro'and'home'or e.id=='bagShortcut'and'inventory'or e.id=='range'and'range'or e.id=='threat'and'threat'or e.id=='aspect'and'aspect'or'home',section=e.id=='micro'and'imMicro'or e.id=='sound'and'sounds'or e.id=='fps'and'overview'or'combat'}
    function a.Capture()local d,keys=PositionScope(item,false);local values={};for _,key in ipairs(keys)do values[key]=K.LayoutAdapters.Copy(d and d[key])end;return values end
    function a.Restore(values,quiet)local d,keys=PositionScope(item,true);if not d then return false end;for _,key in ipairs(keys)do d[key]=K.LayoutAdapters.Copy(values[key])end;if not quiet then if item.id=='aspect'and _G.HunterAspectAlertPanel then local f=HunterAspectAlertPanel;f:ClearAllPoints();local p=d.position;if p then f:SetPoint(p[1],UIParent,p[2],p[3],p[4])else f:SetPoint('CENTER',UIParent,'CENTER',0,100)end end;local g=K.LayoutQuickOptions.Group(item.group);if g and g.refresh then g.refresh()end end;return true end
    a.Base=function()return{x=0,y=0}end;a.Move=function()end

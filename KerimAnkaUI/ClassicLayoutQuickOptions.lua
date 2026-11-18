@@ -105,6 +105,14 @@ function Q.Group(name)
   api=K.ClassicMinimapControls;if not api then return end
   g=Group(name,function()return Root('minimapControls')end,api.Refresh)
   Number(g,api,'sunSize','mmSunSize',50,150,5);Flag(g,api,'clockLocked','mmClockLock')
+ elseif name=='tracker'then
+  api=K.ActionTracker;if not api then return end
+  g=Group(name,function()return api.Settings(true)end,api.Refresh)
+  g.keys.enabled=true
+  Number(g,api,'count','atCount',1,10,1);Number(g,api,'size','atSize',20,72,2)
+  Number(g,api,'gap','atGap',0,16,1);Number(g,api,'alpha','atAlpha',.2,1,.05)
+  g.API(api,'direction','atDirection',nil,nil,nil,{{1,'atRight'},{2,'atLeft'},{3,'atDown'},{4,'atUp'}})
+  Flag(g,api,'gcd','atGCD');Flag(g,api,'melee','atMelee');Flag(g,api,'ranged','atRanged');Flag(g,api,'locked','atLock')
  elseif name=='experience'then
   api=K.Experience;if not api then return end
   g=Group(name,function()return Root('experience')end,function()api.Set('width',api.Get('width'))end)

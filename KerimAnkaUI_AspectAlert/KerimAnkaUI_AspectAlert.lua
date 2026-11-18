@@ -6,7 +6,9 @@ local function Hint(key,fallback)
 end
 local function Text(key)
  local api=KerimAnkaUITextAPI
- return api and api.HunterText("aspect",key,db[key],db[key.."Custom"]) or db[key]
+ local value=api and api.HunterText("aspect",key,db[key],db[key.."Custom"]) or db[key]
+ if key=="packText" and value=="" then return Hint("hunterAspect_packText","Pack active: Switch aspect!") end
+ return value
 end
 local hubPreview=false
 function ns.GetSettings() return db end
@@ -43,7 +45,7 @@ AlertFont(title,"Ubuntu-B.ttf",16)
 AlertFont(hint,"Ubuntu-R.ttf",10)
 
 local icons = {}
-for i = 1, 3 do
+for i = 1, 8 do
     icons[i] = panel:CreateTexture(nil, "ARTWORK")
     icons[i]:SetSize(48, 48)
 end
@@ -67,9 +69,13 @@ panel:SetScript("OnHide", function() glow:Hide() end)
 ns.defaults = {
     enabled = false,
     cheetahText = "Geparden aktif: Aspekti değiştir!",
+    packText = "",
+    warnCheetah = true,
+    warnPack = true,
     missingText = "Bir aspekt seç!",
     showText = true,
     cheetahGlow = true,
+    hideWhileMounted = false,
 }
 
 local function InitializeSettings()
@@ -94,7 +100,7 @@ local function InitializeSettings()
     end
 end
 
-local names, textures = {}, {}
+local names, textures, spellNames, spellLevels = {}, {}, {}, {}
 local learned = {}
 local hasLearnedAspect
 local ids = {
@@ -106,6 +112,10 @@ local ids = {
     20043, -- Wild
     34074, -- Viper, if present
     61846, -- Dragonhawk, if present
+}
+local speedAspects = {
+    {id=5118,mode="cheetah",text="cheetahText",setting="warnCheetah",slot="KerimAnkaCheetah",filter="HELPFUL",icon=132242},
+    {id=13159,mode="pack",text="packText",setting="warnPack",slot="KerimAnkaPack",filter="HELPFUL|PLAYER",icon=134400},
 }
 
 local initialized, unlocked, preview
@@ -156,15 +166,29 @@ local function IsTravelling()
     return taxi or flying or false
 end
 
+local function MountedState()
+    if not IsMounted then return nil end
+    local ok, mounted = pcall(IsMounted)
+    if not ok or Secret(mounted) or type(mounted) ~= "boolean" then return nil end
+    return mounted
+end
+
 local function LoadSpells()
     names, textures = {}, {}
+    spellNames, spellLevels = {}, {}
     learned = {}
     local anyLearned, unknown = false, false
     for _, id in ipairs(ids) do
         local info = C_Spell.GetSpellInfo(id)
+        if Secret(info) then info=nil end
         if info and not Secret(info.name) and info.name then
             names[info.name] = id
-            textures[id] = info.iconID
+            spellNames[id] = info.name
+            if not Secret(info.iconID) and type(info.iconID)=="number" then textures[id] = info.iconID end
+        end
+        if C_Spell.GetSpellLevelLearned then
+            local ok,level=pcall(C_Spell.GetSpellLevelLearned,id)
+            if ok and not Secret(level) and type(level)=="number" and level>0 and level<math.huge and level%1==0 then spellLevels[id]=level end
         end
         local name = info and not Secret(info.name) and info.name or nil
         local known = KnowsAspect(id, name)
@@ -188,33 +212,32 @@ local function ShowWarning(mode)
         icon:ClearAllPoints()
     end
 
-    if mode == "cheetah" then
-        icons[1]:SetTexture(textures[5118] or 132242)
+    if mode == "cheetah" or mode == "pack" then
+        local spec=speedAspects[mode=="pack" and 2 or 1]
+        icons[1]:SetSize(48,48)
+        icons[1]:SetTexture(textures[spec.id] or spec.icon)
         icons[1]:SetPoint("TOP", panel, "TOP", 0, -10)
         icons[1]:Show()
-        title:SetText(Text("cheetahText"))
+        title:SetText(Text(spec.text))
     else
         local display = {}
         -- Explicit previews still demonstrate the layout on a level 1 character.
-        for _, id in ipairs({13165, 13163, 5118}) do
-            if learned[id] or preview or unlocked then
+        for i, id in ipairs(ids) do
+            if learned[id] or (i<=6 and (preview or unlocked)) then
                 display[#display + 1] = id
             end
         end
-        if #display == 0 then
-            for _, id in ipairs(ids) do
-                if learned[id] and #display < 3 then display[#display + 1] = id end
-            end
-        end
+        local size=math.min(48,(340-math.max(0,#display-1)*10)/math.max(1,#display))
         for i, id in ipairs(display) do
+            icons[i]:SetSize(size,size)
             icons[i]:SetTexture(textures[id] or 134400)
-            icons[i]:SetPoint("TOP", panel, "TOP", (i - (#display + 1) / 2) * 58, -10)
+            icons[i]:SetPoint("TOP", panel, "TOP", (i - (#display + 1) / 2) * (size+10), -10)
             icons[i]:Show()
         end
         title:SetText(Text("missingText"))
     end
     title:SetShown(db.showText)
-    glow:SetShown(mode == "cheetah" and db.cheetahGlow)
+    glow:SetShown((mode == "cheetah" or mode == "pack") and db.cheetahGlow)
 
     if unlocked then
         hint:SetText(Hint("hunterHintMove","Drag to move • Lock in settings"))
@@ -247,14 +270,120 @@ local function ReadAspect()
         else
             local id = names[aura.name]
             if id == 5118 then return "cheetah" end
-            if id then otherAspect = true end
+            if id == 13159 then
+                if Secret(aura.sourceUnit) or aura.sourceUnit==nil then unknown=true
+                elseif aura.sourceUnit=="player" then return "pack" end
+            elseif id then otherAspect = true end
         end
     end
     return otherAspect and "active" or "unknown"
 end
 
+-- Configure a native display outside restrictions. The game matches Cheetah and
+-- owns the slot's visibility; addon code never reads that managed state back.
+local nativeHost, nativeTitle, nativeGlow, nativeContainer
+local nativeAttempted = false
+local nativeVisualDirty = true
+local function PublicBoolean(func, ...)
+    if type(func) ~= "function" then return nil end
+    local ok, value = pcall(func, ...)
+    if not ok or Secret(value) or type(value) ~= "boolean" then return nil end
+    return value
+end
+local function CanConfigureNative()
+    return not combat and PublicBoolean(InCombatLockdown) == false
+        and C_Secrets and PublicBoolean(C_Secrets.ShouldAurasBeSecret) == false
+end
+local function NativeVisible(visible)
+    if nativeHost then nativeHost:SetAlpha(visible and 1 or 0) end
+end
+local function PrepareNative()
+    if nativeHost then return true end
+    if nativeAttempted or not CanConfigureNative() then return false end
+    nativeAttempted = true
+    local ready, host, nativeText, glowRegion, nativeOwner = pcall(function()
+        if C_AddOns and C_AddOns.LoadAddOn then
+            local loaded = C_AddOns.LoadAddOn("Blizzard_AuraContainer")
+            if Secret(loaded) or loaded ~= true then return end
+        end
+        local parent = CreateFrame("Frame", nil, UIParent)
+        parent:SetSize(340, 120)
+        parent:SetPoint("CENTER", panel, "CENTER")
+        parent:SetFrameStrata("HIGH")
+        parent:SetAlpha(0)
+        parent:Show()
+        local container = CreateFrame("AuraContainer", nil, parent, "CustomAuraContainerTemplate")
+        container:SetSize(340, 120)
+        container:SetPoint("CENTER", parent, "CENTER")
+        container:SetEnabled(false)
+        container:SetUnit("player")
+        local labels, borders = {}, {}
+        for _,spec in ipairs(speedAspects) do
+        local nativeLabel, nativeBorder, complete
+        container:AddAuraSlot(spec.slot, spec.filter, {
+            candidateFilters = {includeSpellIDs = {[spec.id] = true}},
+            initializeFrame = function(button)
+                button:SetSize(340, 120)
+                button:SetPoint("CENTER", container, "CENTER")
+                button:EnableMouse(false)
+                local icon = button:CreateTexture(nil, "ARTWORK")
+                icon:SetSize(48, 48)
+                icon:SetPoint("TOP", button, "TOP", 0, -10)
+                icon:SetTexture(textures[spec.id] or spec.icon)
+                nativeLabel = button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+                nativeLabel:SetPoint("BOTTOM", button, "BOTTOM", 0, 24)
+                nativeLabel:SetWidth(330)
+                nativeLabel:SetTextColor(1, 0.85, 0.3)
+                nativeLabel:SetShadowColor(0, 0, 0, 1)
+                nativeLabel:SetShadowOffset(1, -1)
+                AlertFont(nativeLabel, "Ubuntu-B.ttf", 16)
+                nativeLabel:SetText(Text(spec.text))
+                nativeLabel:SetShown(db.showText)
+                nativeBorder = button:CreateTexture(nil, "OVERLAY")
+                nativeBorder:SetSize(88, 88)
+                nativeBorder:SetPoint("CENTER", icon, "CENTER")
+                nativeBorder:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+                nativeBorder:SetBlendMode("ADD")
+                nativeBorder:SetVertexColor(1, 0.65, 0.15)
+                nativeBorder:SetShown(db.cheetahGlow)
+                local pulse = nativeBorder:CreateAnimationGroup()
+                pulse:SetLooping("BOUNCE")
+                local alpha = pulse:CreateAnimation("Alpha")
+                alpha:SetFromAlpha(0.25)
+                alpha:SetToAlpha(0.55)
+                alpha:SetDuration(0.75)
+                button:AddAuraShownAnimation(pulse)
+                complete = true
+            end,
+        })
+        if not complete then return end
+        labels[spec.mode],borders[spec.mode]=nativeLabel,nativeBorder
+        container:SetAuraSlotEnabled(spec.slot,db[spec.setting])
+        end
+        container:Show()
+        container:SetEnabled(true)
+        return parent, labels, borders, container
+    end)
+    if not ready or not host then return false end
+    nativeHost, nativeTitle, nativeGlow, nativeContainer = host, nativeText, glowRegion, nativeOwner
+    nativeVisualDirty = false
+    return true
+end
+local function SyncNativeVisual()
+    if not nativeHost or not nativeVisualDirty or not CanConfigureNative() then return end
+    for _,spec in ipairs(speedAspects) do
+        nativeTitle[spec.mode]:SetText(Text(spec.text))
+        nativeTitle[spec.mode]:SetShown(db.showText)
+        nativeGlow[spec.mode]:SetShown(db.cheetahGlow)
+        AlertFont(nativeTitle[spec.mode], "Ubuntu-B.ttf", 16)
+        nativeContainer:SetAuraSlotEnabled(spec.slot,db[spec.setting])
+    end
+    nativeVisualDirty = false
+end
+
 local function Update()
     if not initialized then return end
+    NativeVisible(false)
     if not db.enabled then panel:Hide(); return end
     local travelOK, travelling = pcall(IsTravelling)
     if not travelOK or travelling == nil or travelling then
@@ -265,6 +394,30 @@ local function Update()
     if preview or unlocked then
         ShowWarning(preview or "missing")
         return
+    end
+
+    if db.hideWhileMounted then
+        local mounted = MountedState()
+        if mounted == nil or mounted then
+            lastState = mounted == nil and "unknown" or "mounted"
+            panel:Hide()
+            return
+        end
+    end
+
+    PrepareNative()
+    SyncNativeVisual()
+    local nativeCombat = nativeHost and combat and hasLearnedAspect == true
+        and PublicBoolean(UnitIsDeadOrGhost, "player") == false
+    if nativeCombat then
+        NativeVisible(true)
+        -- Keep missing-aspect detection only where aura access is explicitly public.
+        -- Under restrictions the native Cheetah slot draws without Lua aura queries.
+        if PublicBoolean(C_Secrets and C_Secrets.ShouldAurasBeSecret) ~= false then
+            lastState = "native-combat"
+            panel:Hide()
+            return
+        end
     end
 
     local ok, state = pcall(function()
@@ -278,14 +431,15 @@ local function Update()
 
     if state == "unknown" then
         panel:Hide()
-        if not warned then
+        if not nativeCombat and not warned then
             Message(Hint("hunterAspectUnknown","Aspect information is unavailable or restricted. The alert is hidden to avoid an incorrect warning."))
             warned = true
         end
     elseif state == "missing" then
         ShowWarning("missing")
-    elseif state == "cheetah" and combat then
-        ShowWarning("cheetah")
+    elseif (state == "cheetah" or state == "pack") and combat then
+        local allowed=state=="pack" and db.warnPack or state=="cheetah" and db.warnCheetah
+        if nativeCombat or not allowed then panel:Hide() else ShowWarning(state) end
     else
         panel:Hide()
     end
@@ -357,12 +511,17 @@ addon:SetScript("OnEvent", function(self, event)
         self:RegisterEvent("SPELLS_CHANGED")
         self:RegisterEvent("PLAYER_CONTROL_LOST")
         self:RegisterEvent("PLAYER_CONTROL_GAINED")
+        self:RegisterEvent("PLAYER_MOUNT_DISPLAY_CHANGED")
         -- Flight starts/landings don't always send an aura or combat event.
         -- Poll only travel flags; scan auras only when the travel state changes.
         local lastTravel
         self.travelTicker = C_Timer.NewTicker(0.5, function()
             local ok, travelling = pcall(IsTravelling)
             local state = ok and travelling ~= nil and (travelling and "travel" or "ground") or "unknown"
+            if db.hideWhileMounted then
+                local mounted = MountedState()
+                state = state .. (mounted == nil and ":unknown" or mounted and ":mounted" or ":unmounted")
+            end
             if state ~= lastTravel then
                 lastTravel = state
                 Update()
@@ -394,6 +553,8 @@ SlashCmdList.HUNTERASPECTALERT = function(input)
         hubPreview=false; preview = "cheetah"
     elseif command == "test missing" then
         hubPreview=false; preview = "missing"
+    elseif command == "test pack" then
+        hubPreview=false; preview = "pack"
     elseif command == "off" or command == "lock" then
         ns.SetLocked(true)
     elseif command == "unlock" then
@@ -416,13 +577,29 @@ end
 
 HunterAspectAlertAPI={version=1}
 function HunterAspectAlertAPI.GetSettings() return db end
+function HunterAspectAlertAPI.GetAspectCatalog()
+    if not initialized then return {} end
+    local result={}
+    for i,id in ipairs(ids) do
+        if i<=6 or learned[id] then
+            result[#result+1]={id=id,name=spellNames[id] or tostring(id),iconID=textures[id],level=spellLevels[id],learned=learned[id]==true,
+                warning=id==5118 and "warnCheetah" or id==13159 and "warnPack" or nil}
+        end
+    end
+    return result
+end
+function HunterAspectAlertAPI.CanSetCombatWarnings()
+    return initialized and not InCombatLockdown() and (not nativeHost or CanConfigureNative()) or false
+end
 function HunterAspectAlertAPI.GetPreview() return preview end
 function HunterAspectAlertAPI.IsLocked() return ns.IsLocked() end
 function HunterAspectAlertAPI.Set(key,value)
     if not initialized or InCombatLockdown() then return false end
-    if (key=="enabled" or key=="showText" or key=="cheetahGlow") and type(value)=="boolean" then db[key]=value
-    elseif (key=="cheetahText" or key=="missingText") and type(value)=="string" and #value<=400 then db[key]=value;db[key.."Custom"]=value~=""
+    if (key=="warnCheetah" or key=="warnPack") and not HunterAspectAlertAPI.CanSetCombatWarnings() then return false end
+    if (key=="enabled" or key=="showText" or key=="cheetahGlow" or key=="hideWhileMounted" or key=="warnCheetah" or key=="warnPack") and type(value)=="boolean" then db[key]=value
+    elseif (key=="cheetahText" or key=="packText" or key=="missingText") and type(value)=="string" and #value<=400 then db[key]=value;db[key.."Custom"]=value~=""
     else return false end
+    nativeVisualDirty = true
     Update(); return true
 end
 function HunterAspectAlertAPI.SetLocked(value)
@@ -435,12 +612,13 @@ function HunterAspectAlertAPI.ResetPosition()
 end
 function HunterAspectAlertAPI.ResetTexts()
     if not initialized or InCombatLockdown() then return false end
-    db.cheetahText=""; db.missingText="";db.cheetahTextCustom=false;db.missingTextCustom=false
+    db.cheetahText=""; db.packText=""; db.missingText="";db.cheetahTextCustom=false;db.packTextCustom=false;db.missingTextCustom=false
+    nativeVisualDirty = true
     Update(); return true
 end
 function HunterAspectAlertAPI.SetPreview(mode)
     if not initialized or InCombatLockdown() then return false end
-    if mode~=nil and mode~="cheetah" and mode~="missing" then return false end
+    if mode~=nil and mode~="cheetah" and mode~="pack" and mode~="missing" then return false end
     preview=mode; hubPreview=mode~=nil; Update(); return true
 end
 function HunterAspectAlertAPI.EndPreview()
@@ -450,6 +628,7 @@ end
 function HunterAspectAlertAPI.GetText(key) if db then return Text(key) end end
 function HunterAspectAlertAPI.RefreshText()
  if not initialized then return end
+ nativeVisualDirty = true
  if KerimAnkaUITextAPI then KerimAnkaUITextAPI.Font(title,16,true,"");KerimAnkaUITextAPI.Font(hint,10,false,"") end
  Update()
 end

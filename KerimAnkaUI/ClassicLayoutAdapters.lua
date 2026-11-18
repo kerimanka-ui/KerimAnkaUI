@@ -45,6 +45,12 @@ function A.Build()
  Basic('fps','leFPS','home','overview','fps',K.FPS,_G.KerimAnkaUIFPS)
  Basic('bagShortcut','bsTitle','inventory',nil,'bagShortcut',K.BagShortcut,_G.KerimAnkaUIBagShortcut,true)
  Basic('experience','experience','experience',nil,'experience',K.Experience,K.Experience and K.Experience.hud)
+ local tracker=K.ActionTracker
+ if tracker and tracker.Get('enabled')and tracker.hud then
+  Add('tracker','atTab','details',nil,tracker.Settings,{'x','y'},tracker.hud,tracker.Refresh,
+   function()return{x=tracker.Get('x'),y=tracker.Get('y')}end,
+   function(dx,dy,start)tracker.SetPosition(start.x+dx,start.y+dy)end,true)
+ end
  local units=ForeverLeatherUnitsAPI;local u=units and units.GetSettings()
  if u then
   for _,unit in ipairs({'player','target','targettarget','pet'})do
@@ -169,6 +175,7 @@ function A.RestoreRecord(id,values)
  local d,fields
  if roots[id]then
   d=Root(roots[id],true);fields=id=='drawer'and{'angle'}or id=='minimap.clock'and{'clockX','clockY','clockCustom'}or id=='minimap.sun'and{'sunX','sunY','sunCustom'}or{'x','y'}
+ elseif id=='tracker'then d=K.ActionTracker and K.ActionTracker.Settings(true);fields={'x','y'}
  elseif id=='art'then
   -- Recover an unfinished session from older editor versions through the same
   -- provider-aware settings view used by the class-design page.
@@ -195,5 +202,6 @@ function A.RestoreRecord(id,values)
  if type(d)~='table'or not fields then return false end
  for _,key in ipairs(fields)do d[key]=Copy(values[key])end
  if id=='art'and ForeverClassArtLayoutAPI.Refresh then ForeverClassArtLayoutAPI.Refresh()end
+ if id=='tracker'and K.ActionTracker then K.ActionTracker.Refresh()end
  return true
 end

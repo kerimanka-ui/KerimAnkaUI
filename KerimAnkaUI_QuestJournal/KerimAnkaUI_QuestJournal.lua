@@ -14,6 +14,7 @@ local function DB()
  local d=ForeverQuestJournalDB
  if type(d.scrollEnabled)~='boolean' then d.scrollEnabled=false end
  if type(d.groupByZone)~='boolean' then d.groupByZone=true end
+ if type(d.showAllQuests)~='boolean' then d.showAllQuests=true end
  if type(d.scrollStep)~='number' or d.scrollStep~=d.scrollStep then d.scrollStep=48 end
  d.scrollStep=math.max(12,math.min(120,d.scrollStep))
  if type(d.collapsedZones)~='table' then d.collapsedZones={} end
@@ -81,18 +82,31 @@ local function Objectives(id,index)
 end
 local function Entries()
  local api=C_QuestLog
- if not (api and api.GetNumQuestWatches and api.GetQuestIDForQuestWatchIndex and api.GetLogIndexForQuestID and api.GetInfo) then return end
+ if not (api and api.GetInfo) then return end
  local groups,byKey={},{}
- for n=1,math.min(300,api.GetNumQuestWatches()) do
-  local id=api.GetQuestIDForQuestWatchIndex(n)
-  local index=id and api.GetLogIndexForQuestID(id)
-  local info=index and api.GetInfo(index)
-  if info and not info.isHeader and not info.isHidden and not info.isTask then
+ local function Add(id,index,info)
+  if id and id>0 and info and not info.isHeader and not info.isHidden and not info.isTask then
    local key,title,order=Category(id)
    if not db.groupByZone then key,title,order='all','',0 end
    local group=byKey[key]
    if not group then group={key=key,title=title,order=order,quests={}};byKey[key]=group;groups[#groups+1]=group end
    group.quests[#group.quests+1]={id=id,index=index,info=info,objectives=Objectives(id,index)}
+  end
+ end
+ -- Read the journal directly, including quests under collapsed native headers.
+ -- This is our presentation only; never add watches or expand native headers.
+ if db.showAllQuests and api.GetNumQuestLogEntries then
+  local count=api.GetNumQuestLogEntries()
+  for index=1,math.min(1000,count) do
+   local info=api.GetInfo(index)
+   if info then Add(info.questID,index,info) end
+  end
+ else
+  if not (api.GetNumQuestWatches and api.GetQuestIDForQuestWatchIndex and api.GetLogIndexForQuestID) then return end
+  for n=1,math.min(300,api.GetNumQuestWatches()) do
+   local id=api.GetQuestIDForQuestWatchIndex(n)
+   local index=id and api.GetLogIndexForQuestID(id)
+   Add(id,index,index and api.GetInfo(index))
   end
  end
  table.sort(groups,function(a,b) if a.order==b.order then return a.title<b.title end;return a.order<b.order end)
@@ -122,8 +136,8 @@ local function Click(self,button)
   if MenuUtil and MenuUtil.CreateContextMenu then
    MenuUtil.CreateContextMenu(self,function(_,root)
     root:CreateTitle(self.titleText or '')
-    root:CreateButton(OBJECTIVES_VIEW_IN_QUESTLOG or 'View quest',function() if QuestMapFrame_OpenToQuestDetails then QuestMapFrame_OpenToQuestDetails(self.questID) end end)
-    root:CreateButton(OBJECTIVES_STOP_TRACKING or 'Stop tracking',function() if C_QuestLog.RemoveQuestWatch then C_QuestLog.RemoveQuestWatch(self.questID) end end)
+    root:CreateButton(OBJECTIVES_VIEW_IN_QUESTLOG or 'View quest',function() if not Combat() and QuestMapFrame_OpenToQuestDetails then QuestMapFrame_OpenToQuestDetails(self.questID) end end)
+    root:CreateButton(OBJECTIVES_STOP_TRACKING or 'Stop tracking',function() if not Combat() and C_QuestLog.RemoveQuestWatch then C_QuestLog.RemoveQuestWatch(self.questID) end end)
    end)
   end
  elseif IsModifiedClick and IsModifiedClick('QUESTWATCHTOGGLE') then
@@ -280,7 +294,10 @@ local function Refresh()
  local q=QuestObjectiveTracker
  if not db.scrollEnabled or editing or OtherTracker() or not Safe(q) or not Safe(q.ContentsFrame) then Release();return end
  local c=q.ContentsFrame
- if not c:IsVisible() or c:GetHeight()<8 or (q.IsCollapsed and q:IsCollapsed()) then Release();return end
+ local all=db.showAllQuests and C_QuestLog and C_QuestLog.GetNumQuestLogEntries
+ local owner=q.parentContainer or ObjectiveTrackerFrame
+ local visible=c:IsVisible() or (all and Safe(owner) and owner:IsVisible())
+ if not visible or (not all and c:GetHeight()<8) or (q.IsCollapsed and q:IsCollapsed()) then Release();return end
  local groups=Entries();if not groups then Release();return end
  local width=math.max(80,c:GetWidth());local height=ViewportHeight(q,c)
  if height<8 then Release();return end
@@ -333,7 +350,7 @@ end
 function API.Set(key,value)
  if Combat() then return false end
  DB()
- if (key=='scrollEnabled' or key=='groupByZone') and type(value)=='boolean' then db[key]=value
+ if (key=='scrollEnabled' or key=='groupByZone' or key=='showAllQuests') and type(value)=='boolean' then db[key]=value
  elseif key=='scrollStep' and type(value)=='number' and value==value and math.abs(value)<math.huge then db[key]=math.max(12,math.min(120,math.floor(value+.5)))
  else return false end
  Queue();return true
