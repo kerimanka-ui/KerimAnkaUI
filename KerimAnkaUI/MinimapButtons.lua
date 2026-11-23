@@ -284,7 +284,7 @@ events:SetScript("OnEvent",function(_,event)
  if event=="PLAYER_LOGIN" then C_Timer.After(1,function() M.Queue() end) end
 end)
 
-function K.DrawMinimapButtons(page,w,y,grouped)
+function K.DrawMinimapButtons(page,w,y,grouped,anchor)
  local function Fold(id,label,at,draw)
   if grouped and K.MinimapSettingsFold then return K.MinimapSettingsFold(page,w,id,label,at,draw)end
   return draw(at)
@@ -296,6 +296,7 @@ function K.DrawMinimapButtons(page,w,y,grouped)
   for i,f in ipairs(fields)do
    local key,label,low,high=unpack(f)
    local card=w.Box(page,(i-1)%2*365,at-math.floor((i-1)/2)*96,349,86)
+   if anchor then anchor(label,card) end
    w.Text(card,K.L(label),14,-12,278,14)
    local help=w.Button(card,'?',311,-10,22,22,function()end);w.Tip(help,label,'mbHelp')
    local available=not InCombatLockdown()and(key=='enabled'and not M.IsBlocked()or key~='enabled'and active)
@@ -323,6 +324,7 @@ function K.DrawMinimapButtons(page,w,y,grouped)
  for i,key in ipairs({'mbRound','mbSquare'})do
   local style=i
   local choice=w.Button(page,K.L(key),(i-1)*365,y,349,50,function()if M.Set('buttonStyle',style)and K.Render then K.Render()end end)
+  if anchor then anchor(key,choice) end
   if not choice.mbRowIcon then choice.mbRowIcon=choice:CreateTexture(nil,'ARTWORK')end
   choice.mbRowIcon:SetTexture(M.ArtPath(style));choice.mbRowIcon:ClearAllPoints();choice.mbRowIcon:SetPoint('LEFT',14,0);choice.mbRowIcon:SetSize(36,36);choice.mbRowIcon:Show()
   w.Selected(choice,M.Get('buttonStyle')==style)

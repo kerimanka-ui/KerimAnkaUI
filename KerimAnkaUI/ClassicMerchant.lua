@@ -63,13 +63,20 @@ end
 local translations={
  en={merchantAutoJunk='Auto sell grey items',merchantAutoJunkHelp='When a vendor opens, sell only grey-quality items with a vendor value. Off by default. Also starts if enabled while the vendor is open.'},
  tr={merchantAutoJunk='Gri eşyaları otomatik sat',merchantAutoJunkHelp='Satıcı açıldığında yalnızca satış değeri olan gri eşyaları satar. Varsayılan olarak kapalıdır. Satıcı açıkken etkinleştirildiğinde de çalışır.'},
- de={merchantAutoJunk='Graue Gegenstände automatisch verkaufen',merchantAutoJunkHelp='Verkauft beim Händler nur graue Gegenstände mit Verkaufswert. Standardmäßig aus. Startet auch beim Einschalten am geöffneten Händler.'}
+ de={merchantAutoJunk='Graue Gegenstände automatisch verkaufen',merchantAutoJunkHelp='Verkauft beim Händler nur graue Gegenstände mit Verkaufswert. Standardmäßig aus. Startet auch beim Einschalten am geöffneten Händler.'},
+ zhCN={merchantAutoJunk='自动出售灰色物品',merchantAutoJunkHelp='打开商人窗口时，只出售有售价的灰色物品。默认关闭，在商人窗口已打开时启用也会开始出售。'},
+ frFR={merchantAutoJunk='Vendre automatiquement les objets gris',merchantAutoJunkHelp='Vend uniquement les objets gris ayant une valeur de revente. Désactivé par défaut. S’applique aussi si vous activez cette option devant un marchand déjà ouvert.'},
+ itIT={merchantAutoJunk='Vendi automaticamente gli oggetti grigi',merchantAutoJunkHelp='Vende solo gli oggetti grigi con un prezzo di vendita. Disattivato per impostazione predefinita. Funziona anche se attivato con la finestra del mercante già aperta.'},
+ esES={merchantAutoJunk='Vender automáticamente los objetos grises',merchantAutoJunkHelp='Vende solo objetos grises con valor de venta. Está desactivado de forma predeterminada. También funciona si lo activas con la ventana del vendedor ya abierta.'},
+ ptBR={merchantAutoJunk='Vender automaticamente itens cinza',merchantAutoJunkHelp='Vende apenas itens cinza com valor de venda. Desativado por padrão. Também funciona se ativado com a janela do vendedor já aberta.'},
+ ruRU={merchantAutoJunk='Автоматически продавать серые предметы',merchantAutoJunkHelp='Продаёт только серые предметы с ценой продажи. По умолчанию выключено. Срабатывает и при включении в уже открытом окне торговца.'},
 }
 if K.locales then for locale,values in pairs(translations) do
  K.locales[locale]=K.locales[locale] or {};for key,value in pairs(values) do K.locales[locale][key]=value end
 end end
-function M.DrawSettings(page,w,y)
+function M.DrawSettings(page,w,y,anchor)
  local box=w.Box(page,0,y,714,94)
+ if anchor then anchor('merchantAutoJunk',box) end
  w.Text(box,K.L('merchantAutoJunk'),16,-15,570,14)
  w.Text(box,K.L('merchantAutoJunkHelp'),16,-43,565,12,{.65,.70,.62})
  w.Switch(box,M.Enabled(),620,-15,function(value) if M.Set(value) and K.Render then K.Render() end end,not InCombatLockdown())

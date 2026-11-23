@@ -529,10 +529,14 @@ function C.VisibilityValue(object,alpha,mouse)
  if not C.visibilityAlphaHooks[object]then
   C.visibilityAlphaHooks[object]=true;hooksecurefunc(object,'SetAlpha',function(self,value)
    local state=C.visibilityState[self]
-   if state and state.wanted~=nil and value~=state.wanted and C.Enabled()then self:SetAlpha(state.wanted)end
+   if state and state.wanted~=nil and C.Enabled()then
+    local wanted=C.ResolveVisibilityAlpha and C.ResolveVisibilityAlpha(self,state.wanted)or state.wanted
+    if value~=wanted then self:SetAlpha(wanted)end
+   end
   end)
  end
- if object:GetAlpha()~=alpha then object:SetAlpha(alpha)end
+ local wanted=C.ResolveVisibilityAlpha and C.ResolveVisibilityAlpha(object,alpha)or alpha
+ if object:GetAlpha()~=wanted then object:SetAlpha(wanted)end
  if mouse~=nil and object.EnableMouse and object.IsMouseEnabled and not(object.IsProtected and object:IsProtected())then
   if saved.mouse==nil then saved.mouse=object:IsMouseEnabled()end
   local wanted=mouse and saved.mouse or false

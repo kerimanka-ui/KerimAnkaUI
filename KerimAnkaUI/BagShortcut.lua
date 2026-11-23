@@ -95,17 +95,19 @@ function M.ResetPosition()
  StopDrag(false);K.db.bagShortcut=K.db.bagShortcut or {}
  K.db.bagShortcut.x=nil;K.db.bagShortcut.y=nil;M.Refresh();return true
 end
-function M.Draw(page,w,y)
+function M.Draw(page,w,y,anchor)
  w.Text(page,K.L('bsTitle'),8,y,690,18,{.73,.62,.41});y=y-36
  w.Text(page,K.L('bsHelp'),8,y,690,13,{.65,.70,.62});y=y-94
  w.Text(page,M.BindingInfo(),8,y,690,13,{.83,.78,.60});y=y-60
  for _,entry in ipairs({{'enabled','bsEnabled'},{'locked','bsLocked'}}) do
   local key,label=unpack(entry);local card=w.Box(page,0,y,714,62)
+  if anchor then anchor(label,card) end
   w.Text(card,K.L(label),16,-20,550,14)
   w.Switch(card,M.Get(key),620,-16,function(value) M.Set(key,value);K.Render() end,not Combat())
   y=y-78
  end
  local card=w.Box(page,0,y,349,86)
+ if anchor then anchor('bsSize',card) end
  w.Text(card,K.L('bsSize'),14,-12,310,13)
  local value=w.Text(card,tostring(M.Get('size')),14,-54,150,15)
  for _,delta in ipairs({-1,1}) do

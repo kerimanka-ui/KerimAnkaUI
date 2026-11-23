@@ -11,6 +11,13 @@ local languageButton, languageMenu, languageDismiss
 local UpdateLanguageLabel
 local page, subtitle, heading, footer
 local selection, section = "home", "overview"
+local search = {active=false, position=0, targets={}}
+local appearanceFields={{"glowStrength",0,1,.05,.45},{"glowRadius",4,20,1,10},{"glowRed",0,1,.05,0,1},{"glowGreen",0,1,.05,0,2},{"glowBlue",0,1,.05,0,3},{"cardTone",.6,1.8,.05,1}}
+
+function search.Anchor(key, frame)
+    local entry=search.destination
+    if entry and (entry.key==key or entry.modeKey==key) then search.targets[key]=frame end
+end
 local function Backdrop(frame, r,g,b, edge)
     frame:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8", edgeFile="Interface\\Buttons\\WHITE8X8", edgeSize=1})
     frame:SetBackdropColor(r,g,b,1)
@@ -307,6 +314,7 @@ local function HomeSwitch(parent,value,x,y,callback,available)
 end
 local function HomeToggle(parent,key,x,y,width,value,callback,available)
  local c=Box(parent,x,y,width,64)
+ search.Anchor(key,c)
  local title=Text(c,K.L(key),13,-13,width-142,13,white);title:SetHeight(44)
  Help(c,key,width-124,-20);HomeSwitch(c,value,width-90,-19,callback,available)
  return c
@@ -321,6 +329,7 @@ local function HomeFold(id,title,y,draw)
 end
 local function HomeNumber(key,cvar,x,y,width,low,high,step,format)
  local c=Box(page,x,y,width,94);Text(c,K.L(key),13,-13,width-55,14,white);Help(c,key,width-35,-11)
+ search.Anchor(key,c)
  local current=tonumber(K.GetCVar(cvar))
  Text(c,current and string.format(format,current)or K.L('unavailable'),13,-51,width-117,22,white)
  for i,direction in ipairs({-1,1})do
@@ -375,13 +384,35 @@ local function Combat()
  page:SetHeight(200)
 end
 local function Alerts()
-    local y=K.DrawErrorOptions(page,HomeWidgets())
+    local widgets=HomeWidgets()
+    widgets.SearchAnchor=search.Anchor
+    local y=K.DrawErrorOptions(page,widgets)
     local death=K.GetCVar('ffxDeath')
     HomeToggle(page,'disableDeathEffect',0,y-24,714,death=='0',function(v)K.SetCVar('ffxDeath',v and 0 or 1)end,death~=nil)
     page:SetHeight(-y+120)
 end
 local idEdit
 local soundFeedbackKey,soundFeedbackId
+local soundShortcutSizeLabels={
+    en="Sound shortcut size",tr="Ses kısayolu boyutu",de="Größe der Tonverknüpfung",
+    frFR="Taille du raccourci audio",itIT="Dimensione scorciatoia audio",esES="Tamaño del acceso directo de sonido",
+    ptBR="Tamanho do atalho de som",ruRU="Размер ярлыка звука",zhCN="声音快捷按钮大小",
+}
+for language,label in pairs(soundShortcutSizeLabels) do K.locales[language].soundShortcutSize=label end
+local function DrawSoundShortcutSize(shortcut,y)
+    local card=Box(page,0,y,714,82)
+    search.Anchor("soundShortcutSize",card)
+    Text(card,K.L("soundShortcutSize"),14,-12,540,14)
+    local value=Text(card,tostring(shortcut.Get("size")),14,-48,170,16)
+    for i,delta in ipairs({-2,2}) do
+        local step=delta
+        local button=Button(card,step<0 and "−" or "+",610+(i-1)*43,-39,36,30,function()
+            if shortcut.Set("size",shortcut.Get("size")+step) then value:SetText(tostring(shortcut.Get("size"))) end
+        end)
+        if K.InCombat() then button:Disable() end
+    end
+    return y-96
+end
 local function RefreshSoundSettings()
     local offset=K.scroll:GetVerticalScroll()
     K.Render();K.scroll:SetVerticalScroll(offset)
@@ -403,12 +434,12 @@ local function Sounds()
             HomeToggle(page,'soundShortcutShow',0,at,349,shortcut.Get('enabled'),function(v)shortcut.Set('enabled',v)end,true)
             HomeToggle(page,'soundShortcutLock',365,at,349,shortcut.Get('locked'),function(v)shortcut.Set('locked',v)end,true)
             at=at-82
-            if K.DrawSoundShortcutSize then at=K.DrawSoundShortcutSize(page,{Box=Box,Text=Text,Button=Button},at)end
+            at=DrawSoundShortcutSize(shortcut,at)
             Button(page,K.L('soundShortcutReset'),0,at,714,34,function()shortcut.ResetPosition();HomeRefresh()end)
             return at-50
         end)
     end
-    if K.DrawSoundGroups then y=K.DrawSoundGroups(page,{Box=Box,Text=Text,Button=Button,Tip=Tip},y,RefreshSoundSettings)-12 end
+    if K.DrawSoundGroups then y=K.DrawSoundGroups(page,{Box=Box,Text=Text,Button=Button,Tip=Tip},y,RefreshSoundSettings,search.destination,search.Anchor)-12 end
     local customHeader=Button(page,'',0,y,714,42,function()homeOpen.custom=not homeOpen.custom;HomeRefresh()end)
     Text(customHeader,K.L('custom'),13,-12,650,15,gold);Text(customHeader,homeOpen.custom and'−'or'+',677,-10,24,18,white)
     y=y-54
@@ -465,6 +496,7 @@ end
 local function Interface()
     local value = KerimAnkaUIDB.scale or panelDefaults.scale
     local card=Box(page,0,0,714,128)
+    search.Anchor("scale",card)
     Text(card,K.L("scale"),16,-20,590,17); Help(card,"scale",676,-16)
     K.scaleValueText=Text(card,string.format("%.0f%%",value*100),16,-72,400,24)
     local function Scale(delta)
@@ -493,16 +525,17 @@ local function Interface()
             KerimAnkaUIDB.glowColor={unpack(preset[2])}; KerimAnkaUIDB.glowStrength=preset[3]
             KerimAnkaUIDB.cardGlow=true; K.Render()
         end)
+        search.Anchor(preset[1],presetButton)
         local color=KerimAnkaUIDB.glowColor or {0,0,0}
         local matches=KerimAnkaUIDB.cardGlow~=false and math.abs((KerimAnkaUIDB.glowStrength or .45)-preset[3])<.001
         for component=1,3 do if math.abs(color[component]-preset[2][component])>.001 then matches=false end end
         Selected(presetButton,matches)
     end
     y=y-52
-    local fields={{"glowStrength",0,1,.05,.45},{"glowRadius",4,20,1,10},{"glowRed",0,1,.05,0,1},{"glowGreen",0,1,.05,0,2},{"glowBlue",0,1,.05,0,3},{"cardTone",.6,1.8,.05,1}}
-    for i,field in ipairs(fields) do
+    for i,field in ipairs(appearanceFields) do
         local key,low,high,step,default,component=unpack(field)
         local c=Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*96,349,86)
+        search.Anchor(key,c)
         Text(c,K.L(key),14,-12,278,13)
         local tip=Button(c,"?",311,-10,22,22,function() end); Tip(tip,"glowStyle","glowStyleHelp")
         local function read()
@@ -524,7 +557,7 @@ local function Interface()
         Button(c,"−",251,-47,36,32,function() change(-1) end)
         Button(c,"+",297,-47,36,32,function() change(1) end)
     end
-    y=y-math.ceil(#fields/2)*96
+    y=y-math.ceil(#appearanceFields/2)*96
     Button(page,K.L("glowReset"),0,y,714,36,function()
         KerimAnkaUIDB.cardGlow=true; KerimAnkaUIDB.glowColor=nil; KerimAnkaUIDB.glowStrength=nil
         KerimAnkaUIDB.glowRadius=nil; KerimAnkaUIDB.cardTone=nil; K.Render()
@@ -551,20 +584,20 @@ local function AddonControls(module)
 end
 local function Module(module)
     if module.key=="details" and K.DrawDamageMetersPage then
-        if K.DrawDamageMetersPage(page) then AddonControls(module) end
+        if K.DrawDamageMetersPage(page,search.destination,search.Anchor) then AddonControls(module) end
         return
     end
     local exists, enabled, loaded=K.ModuleState(module)
     if loaded and K.ModuleApplicable(module) then
-        if (module.key=="backdrop" or module.key=="art") and K.DrawActionBarPage and K.DrawActionBarPage(page,module.key) then AddonControls(module); return end
+        if (module.key=="backdrop" or module.key=="art") and K.DrawActionBarPage and K.DrawActionBarPage(page,module.key,search.destination,search.Anchor) then AddonControls(module); return end
         if module.key=="units" and K.DrawUnitsPage and ForeverLeatherUnitsAPI and ForeverLeatherUnitsAPI.version>=2 and ForeverLeatherUnitsAPI.GetSettings() then
             K.DrawUnitsPage(page,function()if not K.UnitSettingsView then AddonControls(module)end end); return
         end
-        if module.key=="quests" and K.DrawQuestPage and K.DrawQuestPage(page) then AddonControls(module); return end
+        if module.key=="quests" and K.DrawQuestPage and K.DrawQuestPage(page,search.Anchor) then AddonControls(module); return end
         if module.key=="details" and K.DrawDetailsPage and K.DrawDetailsPage(page) then AddonControls(module); return end
-        if module.key=="range" and K.DrawRangePage and K.DrawRangePage(page) then AddonControls(module); return end
-        if module.key=="threat" and K.DrawThreatPage and K.DrawThreatPage(page) then AddonControls(module); return end
-        if module.key=="aspect" and K.DrawAspectPage and K.DrawAspectPage(page) then AddonControls(module); return end
+        if module.key=="range" and K.DrawRangePage and K.DrawRangePage(page,search.Anchor) then AddonControls(module); return end
+        if module.key=="threat" and K.DrawThreatPage and K.DrawThreatPage(page,search.destination,search.Anchor) then AddonControls(module); return end
+        if module.key=="aspect" and K.DrawAspectPage and K.DrawAspectPage(page,search.Anchor) then AddonControls(module); return end
     end
     local card=Box(page,0,0,714,110)
     Text(card,module.addon,18,-18,670,19,gold)
@@ -589,8 +622,9 @@ local function ChatPage()
  end
  local d=C.ManagedBounds()
  if not d then Text(page,K.L('unavailable'),12,-65,690,14,muted);page:SetHeight(140);return end
- local function Toggle(label,y,value,apply,help)
+ local function Toggle(label,y,value,apply,help,key)
   local box=Box(page,0,y,714,64)
+  search.Anchor(key,box)
   Text(box,label,13,-14,550,14,white):SetHeight(40)
   if help then
    local question=Button(box,'?',584,-19,22,26,function()end)
@@ -601,6 +635,7 @@ local function ChatPage()
  local function Number(key,label,x,y,step)
   local default=key=='microSize'and 32 or 4;local value=math.floor(d[key]or default)
   local box=Box(page,x,y,349,94);Text(box,label,13,-13,310,14,white)
+  search.Anchor(key,box)
   Text(box,tostring(value),13,-53,220,21,white)
   for i,delta in ipairs({-step,step})do
    local change=delta
@@ -616,13 +651,14 @@ local function ChatPage()
   for i,t in ipairs(C.themes)do
    local id=i;local selected=C.ThemeID()==id
    local card=Button(page,'',(i-1)*243,-140,228,148,function()if C.SetTheme(id)~=false then chatResetArmed=false;HomeRefresh()end end)
+   search.Anchor('chatTheme:'..t.en,card)
    Selected(card,selected)
    local preview=Box(card,12,-12,204,62);Rounded(preview,t.body[1],t.body[2],t.body[3],{.3,.33,.29,1},5,false)
    Text(card,C.Text(t.name,t.en),12,-85,204,14,white):SetHeight(30)
    if selected then Text(card,C.Text('Seçili','Selected'),12,-120,204,12,gold)end
   end
   Text(page,C.Text('Yazı boyutu, filtre ve kanallar için sekmeye sağ tıkla; bu işlemler Blizzard menüsünde kalır.','Right-click a tab for font size, filters and channels; these remain in the Blizzard menu.'),12,-308,690,13,muted):SetHeight(48)
-  Toggle(C.Text('Kanal türüne göre sekme renkleri: ','Tab colors by channel type: '):gsub(':%s*$',''),-372,d.channelColors,function(v)return C.SetChannelColors(v)end)
+  Toggle(C.Text('Kanal türüne göre sekme renkleri: ','Tab colors by channel type: '):gsub(':%s*$',''),-372,d.channelColors,function(v)return C.SetChannelColors(v)end,nil,'channelColors')
   Text(page,C.Text('Lonca yeşil, grup mavi, raid ve savaş kaydı sıcak tonlar. Karışık kanallar nötr kalır.','Guild is green, party blue, raid and combat log warm tones. Mixed channels stay neutral.'),12,-450,690,13,muted):SetHeight(44)
   local bottom=HomeFold('chatReset','csReset',-510,function(y)
    Text(page,C.Text('Chat görünümü, konumu ve boyutu sıfırlanacak. Mesajlar, kanallar ve filtreler korunur. Onaylamak için tekrar bas.','Chat appearance, position and size will reset. Messages, channels and filters are preserved. Press again to confirm.'),12,y,690,13,chatResetArmed and gold or muted):SetHeight(58)
@@ -639,12 +675,13 @@ local function ChatPage()
   local modes={{'Otomatik','Automatic'},{'Dikey','Vertical'},{'Yatay','Horizontal'}}
   for i,n in ipairs(modes)do local id=i
    local choice=Button(page,C.Text(n[1],n[2]),(i-1)*240,-101,232,34,function()C.SetLayout('controlMode',id);HomeRefresh()end)
+   search.Anchor('chatMode:'..n[2],choice)
    Selected(choice,(d.controlMode or 1)==id);if InCombatLockdown()then choice:Disable()end
   end
   Number('width',C.Text('Genişlik','Width'),0,-155,10);Number('height',C.Text('Yükseklik','Height'),365,-155,10)
   local edit=Button(page,C.Text('Konumu düzenle','Edit position'),0,-270,350,36,function()C.OpenEditor()end)
   if InCombatLockdown()then edit:Disable()end
-  Toggle(C.Text('Boyut tutamacı: ','Resize handle: '):gsub(':%s*$',''),-326,d.unlocked,function(v)return C.SetLayout('unlocked',v)end)
+  Toggle(C.Text('Boyut tutamacı: ','Resize handle: '):gsub(':%s*$',''),-326,d.unlocked,function(v)return C.SetLayout('unlocked',v)end,nil,'unlocked')
   Text(page,C.Text('Sol düğme aralıkları sabittir. Otomatik düzen kısa pencerede yataya geçer.','Side button spacing is fixed. Automatic layout turns horizontal in short windows.'),12,-411,690,13,muted):SetHeight(52)
   page:SetHeight(480)
  elseif chatSettingsTab=='visibility'then
@@ -653,6 +690,7 @@ local function ChatPage()
   local modes={{'Her zaman görünür','Always visible'},{'Yazılar görünür','Messages visible'},{'Tamamen gizle','Hide all'}}
   for i,n in ipairs(modes)do local id=i
    local choice=Button(page,C.Text(n[1],n[2]),(i-1)*240,-140,232,36,function()C.SetVisibilityMode(id);chatResetArmed=false;HomeRefresh()end)
+   search.Anchor('chatVisibility:'..n[2],choice)
    Selected(choice,(d.visibilityMode or 1)==id);if InCombatLockdown()then choice:Disable()end
   end
   local description=({'csAlwaysHelp','csMessagesHelp','csHideHelp'})[d.visibilityMode or 1]or'csAlwaysHelp'
@@ -661,17 +699,573 @@ local function ChatPage()
   page:SetHeight(378)
  else
   Text(page,K.L('csMicro'),12,-60,690,18,gold)
-  Toggle(C.Text('Mikro menü: ','Micro menu: '):gsub(':%s*$',''),-104,K.InventoryMenus.Get('microEnabled')==true,function(v)return K.InventoryMenus.Set('microEnabled',v)end)
+  Toggle(C.Text('Mikro menü: ','Micro menu: '):gsub(':%s*$',''),-104,K.InventoryMenus.Get('microEnabled')==true,function(v)return K.InventoryMenus.Set('microEnabled',v)end,nil,'microEnabled')
   Number('microSize',C.Text('Alt menü boyutu','Micro menu size'),0,-191,1)
   Number('microGap',C.Text('Alt menü aralığı','Micro menu spacing'),365,-191,1)
   page:SetHeight(312)
  end
+end
+-- Only these settings have verified routes and anchors in the prototype.
+local searchGroups = {
+    {"home","overview",nil,{"zoom","queue","errors","clicks","disableDeathEffect"}},
+    {"home","overview","fps",{"fpsShow","fpsLock","fpsShowMS"},"FPS"},
+    {"home","combat",nil,{"queue"}},
+    {"home","alerts",nil,{"disableDeathEffect","errorShowAll","errorImportantOnly","errorCustom"}},
+    {"home","sounds","audio",{"clicks"}},
+    {"home","sounds","shortcut",{"soundShortcutShow","soundShortcutLock"},"SoundShortcut"},
+    {"interface",nil,nil,{"scale","launcher","cardGlow","hideActionBarStatues"}},
+}
+local cursorSearch={
+    {"cursorHelp",{"cursorEnabled","cursorRing","cursorSquare","cursorPlus","cursorReticle","cursorLight",
+        "cursorSize","cursorAlpha","cursorColor","cursorAlways","cursorCombat","cursorPeace"}},
+    {"cursorCameraHelp",{"cursorCamera","cursorDotCamera"}},
+    {"cursorTimingHelp",{"cursorGCD","cursorCast","cursorGCDGap","cursorCastGap","cursorThickness","cursorCountdown"}},
+    {"cursorEffectsHelp",{"cursorDot","cursorTrail","cursorRibbon","cursorSparkles","cursorRibbonSparkles",
+        "cursorNativeBlueFlow","cursorNativeBlueArc","cursorNativeGreenArc"}},
+    {"cursorNativeHelp",{"cursorNativeScale","cursorNativeAlpha","cursorNativeX","cursorNativeY"}},
+    {"cursorNativePolicyHelp",{"cursorNativeCamera","cursorNativeFadeIdle"}},
+}
+local rangeSearch={
+    {"hrHelp",{"hr_enabled","hr_locked","hr_coloredText","hr_outline","hr_shadow",
+        "hr_width","hr_height","hr_fontSize","hr_x","hr_y"}},
+    {"hunterTextHelp",{"hunterRange_ranged","hunterRange_dead","hunterRange_melee","hunterRange_far","hunterRange_close","hunterRange_unknown"}},
+}
+local aspectSearch={
+    {"aaHelp",{"aaEnabled","aaLock","aaText","aaGlow"}},
+    {"aaHideMountedHelp",{"aaHideMounted"}},
+    {"hunterTextHelp",{"aaCheetah","aaPack","aaMissing"}},
+}
+local threatSearch={
+    {"general","ftGroupGeneral","ftHelp",{"ft_enabled","ft_locked","ft_raw","ft_showPercent"}},
+    {"appearance","ftGroupAppearance","ftHelp",{"ft_autoColor","ft_bold","ft_outline","ft_shadow","ft_size","ft_alpha"}},
+    {"appearance","ftGroupAppearance","ftFontHelp",{"ftFont"}},
+    {"appearance","ftGroupAppearance","ftColorHelp",{"ftGold","ftWhite","ftGreen","ftRed","ftBlue"}},
+    {"position","ftGroupPosition","ftHelp",{"ft_x","ft_y"}},
+}
+local meterSearch={
+    {"blizzard","dmBlizzard","dmHelp",{"dmEnabled","dmTrim","dmTrimAlpha","dmBackground","dmPadding"}},
+    {"blizzard","dmBlizzard","dmEdgeHelp",{"dmEdgeTop","dmEdgeBottom","dmEdgeLeft","dmEdgeRight"}},
+    {"details","dmDetails","dtHelp",{"dtTrim","dtFonts","dtAlpha"}},
+    {"details","dmDetails","dmEdgeHelp",{"dmEdgeTop","dmEdgeBottom","dmEdgeLeft","dmEdgeRight"}},
+    {"details","dmDetails","dtSelection",{"dtWindows"}},
+    {"tracker","atTab","atHelp",{"atEnable","atGCD","atMelee","atRanged","atCount","atSize","atGap","atAlpha","atLock"}},
+    {"tracker","atTab","atHelp",{"atRight","atLeft","atDown","atUp"},"atDirection"},
+}
+local function MeterResultAvailable(entry)
+    if not K.DrawDamageMetersPage then return false end
+    if entry.tab=="blizzard" then return K.NativeMeter~=nil end
+    if entry.tab=="tracker" then return K.DrawActionTrackerPage~=nil end
+    local api=ForeverDetailsHunterAPI
+    return api and api.version>=1 and api.GetSettings()~=nil and
+        (entry.key~="details:dtWindows" or #api.GetWindows()>0)
+end
+local function ThreatResultAvailable()
+    return K.DrawThreatPage and ForeverThreatAPI and ForeverThreatAPI.GetSettings()~=nil
+end
+local questSearch={
+    {"qjQuestieTracker","qjQuestieHelp"},{"qjScrollEnabled","qjNativeHelp"},
+    {"qjShowAllQuests","qjShowAllQuestsHelp"},{"qjGroupByZone","qjZoneHelp"},{"qjScrollStep","qjNativeHelp"},
+}
+local function SearchModuleLoaded(category)
+    for _,module in ipairs(K.modules) do
+        if module.key==category then
+            local _,_,loaded=K.ModuleState(module)
+            return loaded and K.ModuleApplicable(module)
+        end
+    end
+    return false
+end
+local function QuestResultAvailable(entry)
+    return K.DrawQuestPage and K.QuestSettingVisible and SearchModuleLoaded(entry.category) and K.QuestSettingVisible(entry.key)
+end
+local backdropSearch={
+    {"appearance","bdAppearance","abHelp",{"abShow","abShade","abBorder","abSlot"}},
+    {"appearance","bdAppearance","bdSharedColorHelp",{"backingColorTitle"}},
+    {"labels","bdLabels","hideNativeHotkeysHelp",{"hideNativeHotkeys"}},
+    {"labels","bdLabels","hideNativeMacroNamesHelp",{"hideNativeMacroNames"}},
+    {"labels","bdLabels","arHelp",{"arEnabled","arColor"}},
+    {"bars","bdBars","bdScopeHelp",{"bdStyledBars"}},
+}
+local function BackdropResultAvailable(entry)
+    return K.DrawActionBarPage and K.BackdropSettingVisible and SearchModuleLoaded(entry.category) and K.BackdropSettingVisible(entry.key)
+end
+local classArtSearch={
+    {"design","artPageDesign","abArtHelp",{"abArt"}},
+    {"design","artPageDesign","hideActionBarStatuesHelp",{"hideActionBarStatues"}},
+    {"design","artPageDesign","artSkinHelp",{"artSkins"}},
+    {"design","artPageDesign","art_artExtraHelp",{"artSelectedDetails"},"details"},
+    {"design","artPageDesign","artPetHelp",{"artPetGroup"},"pet"},
+    {"design","artPageDesign","bdSharedColorHelp",{"backingColorTitle"},"color"},
+    {"layout","artPageLayout","abArtHelp",{"abLock","abFollow","abWidth","abHeight","abX","abY","abAlpha","abGap"}},
+    {"bars","artPageBars","barsSourceHelp",{"barsSource"}},
+    {"bars","artPageBars","artScopeHelp",{"artDecoratedBars"}},
+}
+local function ClassArtResultAvailable(entry)
+    return K.DrawActionBarPage and K.ClassArtSettingVisible and SearchModuleLoaded(entry.category) and K.ClassArtSettingVisible(entry.key)
+end
+local function HunterResultAvailable(entry)
+    if select(2,UnitClass("player"))~="HUNTER" then return false end
+    local api
+    if entry.category=="range" then
+        api=ForeverHunterRangeAPI
+        if not api or api.version<1 or not K.DrawRangePage then return false end
+    else
+        api=HunterAspectAlertAPI
+        if not api or not K.DrawAspectPage then return false end
+    end
+    local settings=api.GetSettings()
+    if not settings then return false end
+    if entry.key=="hr_showNumericRange" then
+        return settings.showNumericRange~=nil or settings.showEstimatedRange~=nil
+    elseif entry.key=="hr_showEstimatedRange" then
+        return settings.showEstimatedRange~=nil
+    elseif entry.groupLabel=="hunterTextTitle" and entry.category=="range" then
+        return api.GetText and api.SetText
+    end
+    return true
+end
+local commonSearchAliases = {
+    zoom="zoom",queue="spellqueue spellqueuewindow",fpsShow="fps",fpsLock="fps",
+    fpsShowMS="fps ping ms",launcher="minimap",scale="ui scale",
+}
+local localeSearchAliases = {
+    en={zoom="camera",fpsShow="frame rate framerate",fpsShowMS="lag",
+        hideActionBarStatues="gryphon griffon wyvern"},
+    tr={zoom="yakınlaştırma",queue="büyü kuyruğu",fpsShow="kare hızı",fpsShowMS="gecikme",
+        launcher="mini harita simge",scale="ölçek arayüz boyutu",music="müzik",disableDeathEffect="ölüm hayalet",
+        hideActionBarStatues="grifon"},
+    de={fpsShow="bilder pro sekunde",scale="skalierung",disableDeathEffect="graustufen",
+        hideActionBarStatues="greif wyvern"},
+    ruRU={zoom="зум",fpsShow="частота кадров",fpsShowMS="пинг"},
+    zhCN={zoom="镜头 缩放",queue="法术队列",launcher="小地图",fpsShowMS="延迟"},
+}
+local chatSearch = {
+    {"appearance","csAppearance","channelColors","Tab colors by channel type: ","Guild is green, party blue, raid and combat log warm tones. Mixed channels stay neutral."},
+    {"layout","csLayout","width","Width","Open appearance, layout and micro menu settings."},
+    {"layout","csLayout","height","Height","Open appearance, layout and micro menu settings."},
+    {"layout","csLayout","unlocked","Resize handle: ","Hold and drag to resize."},
+    {"micro","csMicro","microEnabled","Micro menu: ","Open appearance, layout and micro menu settings."},
+    {"micro","csMicro","microSize","Micro menu size","Open appearance, layout and micro menu settings."},
+    {"micro","csMicro","microGap","Micro menu spacing","Open appearance, layout and micro menu settings."},
+}
+local experienceSearch = {
+    {"general","xpPageGeneral",nil,{"xpEnabled","xpLocked","xpHideNative","xpWidth"}},
+    {"content","xpPageContent",nil,{"xpShowRep","xpShowPet","xpShowTime","xpShowRate","xpShowQuest","xpShowRested"}},
+    {"appearance","xpPageAppearance",nil,{"xpTrim","xpShowBackground","xpClassColor","xpTexturedBars",
+        "xpPanelSpace","xpFrameSize","xpBackgroundAlpha","xpHeight","xpSubHeight"}},
+    {"appearance","xpPageAppearance","colors",{"xpColorMain","xpColorQuest","xpColorRested","xpColorRep","xpColorPet"}},
+    {"text","xpPageText",nil,{"xpLabelVisible","xpTextX","xpTextY","xpTextSize"}},
+    {"text","xpPageText","textColor",{"xpTextColor"}},
+}
+local experienceHelp={xpTexturedBars="xpTexturedBarsHelp",xpShowBackground="xpShowBackgroundHelp"}
+local minimapSearch = {
+    {"appearance","mmPageAppearance","art_artExtraHelp",nil,{"art_enabled","art_size","art_x","art_y","art_hideBorder","art_hunterMatte"}},
+    {"details","mmPageDetails","mcHelp",nil,{"mcEnabled","mcX","mcY","mcSize","mcOutline","xpFontGame","xpFontRegular","xpFontBold"}},
+    {"addons","mbTitle","mbHelp",nil,{"mbEnabled","mbLocked","mbRound","mbSquare"}},
+    {"addons","mbTitle","mbHelp","panel",{"mbShowTooltip","mbColumns","mbSize"}},
+    {"addons","mbTitle","mbHelp","position",{"mbButtonSize","mbAngle","mbRadius"}},
+}
+local minimapHelp={art_hideBorder="art_hideBorderHelp"}
+local inventorySearch={
+    {"settings","bgAppearance","imCombinedBags","imCombinedBagsHelp"},
+    {"settings","bgAppearance","imBagDesign1","imBagDesignHelp1"},
+    {"settings","bgAppearance","imBagDesign2","imBagDesignHelp2"},
+    {"settings","bgAppearance","imBagDesign3","imBagDesignHelp3"},
+    {"settings","bgAppearance","bgOrganized","bgOrganizedHelp",nil,"ClassicBagsOrganized"},
+    {"settings","bgAppearance","imJunk","imItemLooksHelp","looks"},
+    {"settings","bgAppearance","imQuality","imItemLooksHelp","looks"},
+    {"settings","bgAppearance","imQuestItems","imQuestItemsHelp","looks"},
+    {"settings","bgAppearance","imEmptySlots","imEmptySlotsHelp","looks"},
+    {"settings","bgAppearance","imItemGap","imItemLooksHelp","looks"},
+    {"settings","bgAppearance","imBagSize","imBagHelp","looks"},
+    {"shortcut","bgShortcut","bsEnabled","bsHelp",nil,"BagShortcut"},
+    {"shortcut","bgShortcut","bsLocked","bsHelp",nil,"BagShortcut"},
+    {"shortcut","bgShortcut","bsSize","bsHelp",nil,"BagShortcut"},
+    {"shortcut","bgShortcut","imBagBackground","imBagAppearanceHelp","strip"},
+    {"shortcut","bgShortcut","imBagFrame","imBagAppearanceHelp","strip"},
+    {"shortcut","bgShortcut","imHideNativeBar","imHideNativeBarHelp","strip"},
+    {"shortcut","bgShortcut","imBagShortcutGap","imBagShortcutGapHelp","strip"},
+    {"sorting","bgSorting","bagSortDaily","bagSortHelp",nil,"ClassicInventoryStyle"},
+    {"sorting","bgSorting","bagSortLegacy","bagSortHelp",nil,"ClassicInventoryStyle"},
+    {"sorting","bgSorting","bagSortCustom","bagSortHelp",nil,"ClassicInventoryStyle"},
+    {"sorting","bgSorting","bagSortHearth","bagSortHelp",nil,"ClassicInventoryStyle"},
+    {"sorting","bgSorting","bagSortOrder","bagSortHelp",nil,"ClassicInventoryStyle"},
+    {"sorting","bgSorting","merchantAutoJunk","merchantAutoJunkHelp",nil,"ClassicMerchant"},
+    {"sorting","bgSorting","lsTitle","lsHelp",nil,"LootSpace"},
+}
+local inventoryFoldLabels={looks="bgItemLooks",strip="bgStrip"}
+local function MinimapResultAvailable(entry)
+    if entry.tab=="appearance" then
+        return ForeverClassArtMinimap and (entry.key~="art_hunterMatte" or select(2,UnitClass("player"))=="HUNTER")
+    end
+    if entry.tab=="details" then return K.DrawMinimapCoordinates end
+    return K.DrawMinimapButtons
+end
+local unitSearchTabs={general="usGeneral",auras="usAuras",indicators="usIndicators",position="usPosition",class="usClass"}
+local unitSearchContexts={{"player","upPlayer"},{"target","upTarget"},{"pet","upPet"},{"targettarget","usToT"}}
+local function UnitSearchAvailable()
+    local api=ForeverLeatherUnitsAPI
+    return api and api.version>=2 and K.UnitSettingsModel and K.UnitSettingsView and api.GetSettings()~=nil
+end
+local alertFilters = {"error_target","error_movement","error_range","error_direction","error_cooldown","error_resources"}
+local alertModeHelp = {errorShowAll="errorShowHelp",errorImportantOnly="errorImportantHelp",errorCustom="errorCustomHelp"}
+local characterFold = {}
+for equivalent, variants in pairs({
+    a="àáâãäåÀÁÂÃÄÅ", c="çÇ", e="èéêëÈÉÊË", g="ğĞ",
+    i="ìíîïİıÌÍÎÏ", n="ñÑ", o="òóôõöøÒÓÔÕÖØ", s="şŞ",
+    u="ùúûüÙÚÛÜ", y="ýÿÝŸ", ss="ßẞ", ae="æÆ", oe="œŒ",
+}) do
+    for variant in variants:gmatch("[\194-\244][\128-\191]+") do characterFold[variant]=equivalent end
+end
+do
+    local lower = "абвгдежзийклмнопрстуфхцчшщъыьэюяе"
+    local at = 1
+    for upper in ("АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯЁ"):gmatch("[\194-\244][\128-\191]+") do
+        characterFold[upper]=lower:sub(at,at+1)
+        at=at+2
+    end
+    characterFold["ё"]="е"
+    -- Ignore decomposed Latin accent marks (U+0300 through U+036F).
+    for byte=128,191 do characterFold[string.char(204,byte)]="" end
+    for byte=128,175 do characterFold[string.char(205,byte)]="" end
+    for _,space in ipairs({" "," ","　","（","）","·","，","。","、","：","’","‘","ʼ","–","—","«","»"}) do characterFold[space]=" " end
+end
+local germanFold={["ä"]="ae",["Ä"]="ae",["ö"]="oe",["Ö"]="oe",["ü"]="ue",["Ü"]="ue"}
+function search.Normalize(value, german)
+    if german then
+        value=value:gsub("([aAoOuU])̈",function(letter) return letter:lower().."e" end)
+        value=value:gsub("[\194-\244][\128-\191]+",germanFold)
+    end
+    -- Fullwidth Latin letters and digits occur in Chinese keyboard input.
+    value=value:gsub("［"," "):gsub("］"," "):gsub("\239[\188\189][\128-\191]",function(char)
+        local _,middle,last=char:byte(1,3)
+        local offset=(middle-188)*64+last-128
+        if (offset>=16 and offset<=25) or (offset>=33 and offset<=58) or (offset>=65 and offset<=90) then
+            return string.char(offset+32)
+        end
+        return char
+    end)
+    return (value:gsub("[\194-\244][\128-\191]+",characterFold):lower()
+        :gsub("[%p%c]", " "):gsub("%s+", " "):gsub("^ ", ""):gsub(" $", ""))
+end
+function search.Path(entry, translate)
+    local path=translate(entry.category)
+    local tab=entry.section or entry.tabLabel
+    if tab then path=path.." › "..translate(tab) end
+    if entry.modeKey then path=path.." › "..translate(entry.modeKey) end
+    if entry.groupLabel then path=path.." › "..translate(entry.groupLabel) end
+    if entry.unitLabel then path=path.." › "..translate(entry.unitLabel) end
+    if entry.cardLabel and entry.cardLabel~=entry.unitLabel and entry.cardLabel~=entry.key then
+        path=path.." › "..translate(entry.cardLabel)
+    end
+    return path
+end
+function search.Name(entry,translate)
+    return (translate(entry.label or entry.key):gsub(":%s*$",""):gsub("：%s*$",""))
+end
+function search.Index()
+    local language=KerimAnkaUIDB.language or "en"
+    local unitsAvailable=not not UnitSearchAvailable()
+    local chatThemes=K.Chat and K.Chat.themes
+    local soundGroups=K.SoundGroups and K.SoundGroups.groups
+    if search.indexLanguage==language and search.indexUnits==unitsAvailable and
+        search.indexChatThemes==chatThemes and search.indexSoundGroups==soundGroups then return search.index end
+    local index={}
+    local aliases=localeSearchAliases[language] or {}
+    local function Add(entry)
+        local key=entry.key
+        entry.help=entry.help or key.."Help"
+        local name=search.Name(entry,K.L)
+        local terms=table.concat({name,search.Path(entry,K.L),commonSearchAliases[key] or "",aliases[key] or ""}," ")
+        entry.name=" "..search.Normalize(name)
+        entry.terms=" "..search.Normalize(terms)
+        if language=="de" then
+            entry.alternateName=" "..search.Normalize(name,true)
+            entry.alternateTerms=" "..search.Normalize(terms,true)
+        end
+        index[#index+1]=entry
+    end
+    for _,group in ipairs(searchGroups) do
+        for _,key in ipairs(group[4]) do
+            Add({category=group[1],section=group[2],fold=group[3],key=key,feature=group[5],help=alertModeHelp[key]})
+        end
+    end
+    Add({category="home",section="alerts",key="keepImportantErrors",modeKey="errorImportantOnly",mode=2})
+    for _,key in ipairs(alertFilters) do
+        Add({category="home",section="alerts",key=key,modeKey="errorCustom",mode=3,help="errorCustomHelp"})
+    end
+    for _,option in ipairs(K.soundOptions) do Add({category="home",section="sounds",fold="audio",key=option.key}) end
+    Add({category="home",section="sounds",fold="shortcut",key="soundShortcutSize",
+        help="soundShortcutShowHelp",feature="SoundShortcut"})
+    for _,group in ipairs(soundGroups or {}) do
+        Add({category="home",section="sounds",key=group.title,help=group.help,feature="DrawSoundGroups"})
+    end
+    for _,field in ipairs(appearanceFields) do Add({category="interface",key=field[1],help="glowStyleHelp"}) end
+    for _,key in ipairs({"shadowPreset","lightPreset","goldPreset"}) do
+        Add({category="interface",key=key,help="glowStyleHelp"})
+    end
+    for _,field in ipairs(chatSearch) do
+        Add({category="chat",tab=field[1],tabLabel=field[2],key=field[3],label=field[4],help=field[5],feature="Chat"})
+    end
+    for _,theme in ipairs(chatThemes or {}) do
+        Add({category="chat",tab="appearance",tabLabel="csAppearance",key="chatTheme:"..theme.en,label=theme.en,
+            help="The theme applies to all chat windows. Free color selection is disabled.",feature="Chat"})
+    end
+    for _,label in ipairs({"Automatic","Vertical","Horizontal"}) do
+        Add({category="chat",tab="layout",tabLabel="csLayout",key="chatMode:"..label,label=label,
+            help="Side button spacing is fixed. Automatic layout turns horizontal in short windows.",feature="Chat"})
+    end
+    for i,label in ipairs({"Always visible","Messages visible","Hide all"}) do
+        Add({category="chat",tab="visibility",tabLabel="csVisibility",key="chatVisibility:"..label,label=label,
+            help=({"csAlwaysHelp","csMessagesHelp","csHideHelp"})[i],feature="Chat"})
+    end
+    for _,group in ipairs(experienceSearch) do
+        for _,key in ipairs(group[4]) do
+            Add({category="experience",tab=group[1],tabLabel=group[2],optionsFold=group[3],
+                key=key,help=experienceHelp[key] or "xpHelp",feature="Experience"})
+        end
+    end
+    for _,group in ipairs(minimapSearch) do
+        for _,key in ipairs(group[5]) do
+            Add({category="minimap",tab=group[1],tabLabel=group[2],optionsFold=group[4],
+                key=key,help=minimapHelp[key] or group[3],available=MinimapResultAvailable})
+        end
+    end
+    for _,field in ipairs(inventorySearch) do
+        Add({category="inventory",tab=field[1],tabLabel=field[2],key=field[3],help=field[4],
+            optionsFold=field[5],groupLabel=field[2]=="bgSorting" and field[3]=="bagSortOrder" and "bagSortCustom" or inventoryFoldLabels[field[5]],
+            feature=field[6] or "InventoryMenus"})
+    end
+    for _,group in ipairs(cursorSearch) do
+        for _,key in ipairs(group[2]) do
+            Add({category="home",section="cursor",key=key,help=group[1],feature="DrawCursorPage"})
+        end
+    end
+    for _,group in ipairs(rangeSearch) do
+        for _,key in ipairs(group[2]) do
+            Add({category="range",key=key,help=group[1],available=HunterResultAvailable,
+                groupLabel=group[1]=="hunterTextHelp" and "hunterTextTitle" or nil})
+        end
+    end
+    for _,key in ipairs({"hr_showNumericRange","hr_showEstimatedRange"}) do
+        Add({category="range",key=key,available=HunterResultAvailable})
+    end
+    for _,group in ipairs(aspectSearch) do
+        for _,key in ipairs(group[2]) do
+            Add({category="aspect",key=key,help=group[1],available=HunterResultAvailable})
+        end
+    end
+    for _,group in ipairs(threatSearch) do
+        for _,key in ipairs(group[4]) do
+            Add({category="threat",key=key,help=group[3],optionsFold=group[1],groupLabel=group[2],
+                available=ThreatResultAvailable})
+        end
+    end
+    for _,group in ipairs(meterSearch) do
+        for _,label in ipairs(group[4]) do
+            Add({category="details",tab=group[1],tabLabel=group[2],key=group[1]..":"..label,
+                label=label,help=group[3],groupLabel=group[5],available=MeterResultAvailable})
+        end
+    end
+    for _,field in ipairs(questSearch) do
+        Add({category="quests",key=field[1],help=field[2],available=QuestResultAvailable})
+    end
+    for _,group in ipairs(backdropSearch) do
+        for _,key in ipairs(group[4]) do
+            Add({category="backdrop",tab=group[1],tabLabel=group[2],key=key,help=group[3],available=BackdropResultAvailable})
+        end
+    end
+    for _,group in ipairs(classArtSearch) do
+        for _,key in ipairs(group[4]) do
+            Add({category="art",tab=group[1],tabLabel=group[2],key=key,help=group[3],optionsFold=group[5],
+                available=ClassArtResultAvailable})
+        end
+    end
+    if unitsAvailable then
+        local model=K.UnitSettingsModel
+        for _,context in ipairs(unitSearchContexts) do
+            local unit,unitLabel=context[1],context[2]
+            if unit~="pet" or model.Facts().pet then
+                for _,card in ipairs(model.Cards(unit)) do
+                    local global=card.tab=="general" or card.id=="auraCommon" or card.id=="tot"
+                    local first=card.id=="tot" and unit=="targettarget" or card.id~="tot" and unit=="player"
+                    if (not global or first) and model.CardVisible(card,unit) then
+                        for _,key in ipairs(model.Keys(card,unit)) do
+                            Add({category="units",tab=card.tab,tabLabel=unitSearchTabs[card.tab],key="uf_"..key,
+                                unit=unit,unitOption=key,unitLabel=not global and unitLabel or nil,
+                                card=card.id,cardLabel=card.title,help=card.tab=="auras" and "usAuraFlowHelp" or "ufHelp"})
+                        end
+                    end
+                end
+            end
+        end
+    end
+    search.index,search.indexLanguage,search.indexUnits=index,language,unitsAvailable
+    search.indexChatThemes,search.indexSoundGroups=chatThemes,soundGroups
+    return index
+end
+function search.Find(query, category)
+    local phrase=search.Normalize(query)
+    if phrase=="" then return {} end
+    local language=KerimAnkaUIDB.language
+    local function Prefix(value)
+        -- Chinese labels do not normally delimit words with spaces.
+        return language=="zhCN" and value:find("[\128-\255]") and value or " "..value
+    end
+    local words,alternateWords={},{}
+    for word in phrase:gmatch("%S+") do words[#words+1]=Prefix(word) end
+    local alternatePhrase
+    if language=="de" then
+        alternatePhrase=" "..search.Normalize(query,true)
+        for word in alternatePhrase:gmatch("%S+") do alternateWords[#alternateWords+1]=" "..word end
+    end
+    local preferred={queue="combat",disableDeathEffect="alerts",clicks="sounds"}
+    local best, order = {}, {}
+    for _,entry in ipairs(search.Index()) do
+        if (not category or category==entry.category) and (not entry.feature or K[entry.feature]) then
+            local matches=true
+            for i,word in ipairs(words) do
+                if not entry.terms:find(word,1,true) and
+                    not (entry.alternateTerms and entry.alternateTerms:find(alternateWords[i],1,true)) then
+                    matches=false; break
+                end
+            end
+            if matches and (not entry.available or entry.available(entry)) then
+                local nameMatch=entry.name:find(Prefix(phrase),1,true)~=nil or
+                    (entry.alternateName and entry.alternateName:find(alternatePhrase,1,true)~=nil)
+                local score=(nameMatch and 2 or 0)+(preferred[entry.key]==entry.section and 1 or 0)
+                local previous=best[entry.key]
+                if not previous then order[#order+1]=entry.key end
+                if not previous or score>previous.score then
+                    best[entry.key]={entry=entry,score=score,nameMatch=nameMatch}
+                end
+            end
+        end
+    end
+    local names, other = {}, {}
+    for _,key in ipairs(order) do
+        local match=best[key]
+        local results=match.nameMatch and names or other
+        results[#results+1]=match.entry
+    end
+    for _,entry in ipairs(other) do names[#names+1]=entry end
+    return names
+end
+local searchText = {
+    en={"Search settings","All categories","This category","Back to results","No matching settings.","Open the setting after combat.","This setting is unavailable."},
+    de={"Einstellungen suchen","Alle Kategorien","Diese Kategorie","Zurück zu den Ergebnissen","Keine passenden Einstellungen.","Öffne die Einstellung nach dem Kampf.","Diese Einstellung ist nicht verfügbar."},
+    tr={"Ayar ara","Tüm kategoriler","Bu kategori","Sonuçlara dön","Eşleşen ayar bulunamadı.","Ayarı savaş bittikten sonra aç.","Bu ayar kullanılamıyor."},
+    zhCN={"搜索设置","所有类别","当前类别","返回搜索结果","没有匹配的设置。","请在战斗结束后打开设置。","此设置不可用。"},
+    frFR={"Rechercher un réglage","Toutes les catégories","Cette catégorie","Retour aux résultats","Aucun réglage correspondant.","Ouvrez le réglage après le combat.","Ce réglage est indisponible."},
+    itIT={"Cerca impostazioni","Tutte le categorie","Questa categoria","Torna ai risultati","Nessuna impostazione trovata.","Apri l’impostazione dopo il combattimento.","Questa impostazione non è disponibile."},
+    esES={"Buscar ajustes","Todas las categorías","Esta categoría","Volver a los resultados","No se encontraron ajustes.","Abre el ajuste después del combate.","Este ajuste no está disponible."},
+    ptBR={"Buscar configurações","Todas as categorias","Esta categoria","Voltar aos resultados","Nenhuma configuração encontrada.","Abra a configuração após o combate.","Esta configuração está indisponível."},
+    ruRU={"Поиск настроек","Все категории","Эта категория","К результатам","Подходящих настроек нет.","Откройте настройку после боя.","Эта настройка недоступна."},
+}
+function search.Text(index)
+    return (searchText[KerimAnkaUIDB.language] or searchText.en)[index]
+end
+local selectAlertMode = {
+    en="Select the highlighted mode.", de="Markierten Modus auswählen.", tr="Vurgulanan modu seç.",
+    zhCN="请选择高亮的模式。", frFR="Sélectionnez le mode indiqué.", itIT="Seleziona la modalità evidenziata.",
+    esES="Selecciona el modo resaltado.", ptBR="Selecione o modo destacado.", ruRU="Выберите выделенный режим.",
+}
+function search.Scroll(position)
+    K.scroll:UpdateScrollChildRect()
+    K.scroll:SetVerticalScroll(math.max(0,math.min(position,K.scroll:GetVerticalScrollRange())))
+end
+function search.Leave(keepFocus)
+    search.arrival=nil
+    if not search.active then return end
+    search.position=K.scroll:GetVerticalScroll()
+    search.active=false
+    if not keepFocus then search.input:ClearFocus() end
+end
+function search.Open(restore)
+    search.arrival=nil
+    local showingResults=search.active
+    if not search.active then
+        search.originScroll=K.scroll:GetVerticalScroll()
+        if not restore then search.category=selection end
+    end
+    if not restore then search.position=0 end
+    search.active=true
+    K.HideTooltip()
+    if showingResults then
+        search.ResetCards()
+        search.UpdateControls()
+        search.Draw()
+        if K.QueuePanelTextFit then K.QueuePanelTextFit() end
+    else K.Render() end
+    search.Scroll(search.position)
+end
+function search.Jump(entry)
+    if K.InCombat() then subtitle:SetText(search.Text(6)); return end
+    if K.LayoutEditor and K.LayoutEditor.IsActive() then return end
+    search.Leave()
+    K.HideTooltip()
+    if entry.fold then homeOpen[entry.fold]=true end
+    if entry.category=="chat" then chatSettingsTab=entry.tab end
+    search.destination=entry
+    K.ShowPage(entry.category,entry.section)
+    search.destination=nil
+    if entry.unitOption then
+        if K.JumpToUnitOption(entry.unitOption,entry) then
+            search.arrival=entry
+            search.UpdateControls()
+        else subtitle:SetText(search.Text(7)) end
+        return
+    end
+    local target=search.targets[entry.key] or (entry.modeKey and search.targets[entry.modeKey])
+    search.targets[entry.key]=nil
+    if entry.modeKey then search.targets[entry.modeKey]=nil end
+    if not target then subtitle:SetText(search.Text(7)); return end
+    search.arrival=entry
+    search.UpdateControls()
+    local serial=search.renderSerial
+    C_Timer.After(0,function()
+        if search.renderSerial~=serial or search.arrival~=entry or not target:IsVisible() then return end
+        local top,pageTop=target:GetTop(),page:GetTop()
+        if not top or not pageTop then subtitle:SetText(search.Text(7)); return end
+        local centerOffset=math.max(0,(K.scroll:GetHeight()-target:GetHeight())/2)
+        search.Scroll(pageTop-top-centerOffset)
+        local outline=search.outline
+        outline:ClearAllPoints()
+        outline:SetAllPoints(target)
+        outline:SetFrameLevel(target:GetFrameLevel()+6)
+        outline:Show()
+        outline.pulse:Play()
+        C_Timer.After(3.6,function() if search.renderSerial==serial then outline:Hide() end end)
+    end)
+end
+function search.Draw()
+    local results=search.Find(search.input:GetText(),search.scoped and search.category)
+    for i,entry in ipairs(results) do
+        local row=Button(page,"",0,-(i-1)*94,714,86,function() search.Jump(entry) end)
+        local title=search.Name(entry,K.L)
+        local path=search.Path(entry,K.L)
+        local help=K.L(entry.help)
+        local summary=help:match("^(.-%.)%s") or help:match("^(.-。)") or help
+        local label=Text(row,title,13,-7,688,15,white); label:SetHeight(21); label:SetWordWrap(false)
+        label=Text(row,path,13,-29,688,12,gold); label:SetHeight(17); label:SetWordWrap(false)
+        Text(row,summary,13,-49,688,12,muted):SetHeight(32)
+        row:SetScript("OnEnter",function(self) K.ShowTooltip(self,title,path.."\n"..help) end)
+        row:SetScript("OnLeave",K.HideTooltip)
+    end
+    if #results==0 then Text(page,search.Text(5),12,-14,690,14,muted) end
+    page:SetHeight(math.max(80,#results*94))
+end
+function search.ResetCards()
+    for _,frame in pairs(pool) do frame:Hide() end
+    for _,label in pairs(labels) do label:Hide() end
+    used, labelUsed=0,0
 end
 function K.ShowPage(key,homeSection)
     if K.LayoutEditor and K.LayoutEditor.IsActive() then K.LayoutEditor.Finish(true) end
     if key=="home" and homeSection=="imMicro" then key="chat";homeSection=nil end
     if homeSection then section=homeSection=="camera"and"overview"or homeSection end
     if not K.window then return end
+    search.Leave()
     for _,module in ipairs(K.modules) do
         if key==module.key and not K.ModuleApplicable(module) then key="home"; break end
     end
@@ -680,9 +1274,12 @@ function K.ShowPage(key,homeSection)
     K.scroll:SetVerticalScroll(0); K.openingPage=true; K.window:Show(); K.openingPage=nil; K.Render()
 end
 function K.Render()
-    if K.UnitSettingsView and (selection~='units' or not ForeverLeatherUnitsAPI or not ForeverLeatherUnitsAPI.GetSettings())then K.UnitSettingsView.Hide()end
-    K.economySettingsVisible=selection=='economy'
-    if K.ClassicEconomyView and selection~='economy' then K.ClassicEconomyView.Hide() end
+    local view=search.active and "search" or selection
+    local searchScroll=(search.active or search.arrival) and K.scroll:GetVerticalScroll()
+    if search.outline then search.outline:Hide(); search.renderSerial=(search.renderSerial or 0)+1 end
+    if K.UnitSettingsView and (view~='units' or not ForeverLeatherUnitsAPI or not ForeverLeatherUnitsAPI.GetSettings())then K.UnitSettingsView.Hide()end
+    K.economySettingsVisible=view=='economy'
+    if K.ClassicEconomyView and view~='economy' then K.ClassicEconomyView.Hide() end
     if selection~="chat" then chatResetArmed=false end
     if K.CancelUnitPageBuild then K.CancelUnitPageBuild() end
     if K.layoutEditButton then K.layoutEditButton.label:SetText(K.L('leTitle')) end
@@ -692,19 +1289,17 @@ function K.Render()
     if K.HideAspectInputs then K.HideAspectInputs() end; if K.HideRangeInputs then K.HideRangeInputs() end
     if K.HideProfileInputs then K.HideProfileInputs() end
     if K.HideExperienceInputs then K.HideExperienceInputs() end
-    if selection~="profiles" and K.EndProfileSession then K.EndProfileSession() end
-    if selection~="aspect" and K.EndAspectPreview then K.EndAspectPreview() end
+    if view~="profiles" and K.EndProfileSession then K.EndProfileSession() end
+    if view~="aspect" and K.EndAspectPreview then K.EndAspectPreview() end
     if K.HideThreatFontMenu then K.HideThreatFontMenu() end
-    if selection~="range" and K.EndRangePreview then K.EndRangePreview() end
+    if view~="range" and K.EndRangePreview then K.EndRangePreview() end
     if K.ConfigureUnitPreview then
-        K.ConfigureUnitPreview(selection=="units" and ForeverLeatherUnitsAPI and ForeverLeatherUnitsAPI.version>=2 and ForeverLeatherUnitsAPI.GetSettings()~=nil)
+        K.ConfigureUnitPreview(view=="units" and ForeverLeatherUnitsAPI and ForeverLeatherUnitsAPI.version>=2 and ForeverLeatherUnitsAPI.GetSettings()~=nil)
     end
-    if K.ConfigureExperiencePreview then K.ConfigureExperiencePreview(selection=="experience") end
+    if K.ConfigureExperiencePreview then K.ConfigureExperiencePreview(view=="experience") end
     K.scaleValueText=nil
-    for _,v in pairs(pool) do v:Hide() end
-    for _,v in pairs(labels) do v:Hide() end
+    search.ResetCards()
     if idEdit then idEdit:Hide() end
-    used, labelUsed=0,0
     for _,v in ipairs(nav) do
         v.label:SetText(v.key=="chat" and K.Chat and K.L("chat")or K.L(v.key))
         local selected=v.key==selection
@@ -725,14 +1320,16 @@ function K.Render()
     if languageButton then UpdateLanguageLabel() end
     heading:SetText(selection=="chat" and K.Chat and K.L("chat")or K.L(selection=="home" and (section=="overview" and "quick" or section) or selection))
     subtitle:SetText(K.L(selection=="home" and "welcome" or "saved"))
+    search.UpdateControls()
     footer:SetText(K.HasPendingModuleChanges() and K.L("communityReloadWaiting") or "")
     footer:SetTextColor(unpack(K.HasPendingModuleChanges() and gold or muted))
     K.window.reload.label:SetText(K.L("reload"))
-    if selection=="profiles" then K.DrawProfilesPage()
+    if search.active then search.Draw()
+    elseif selection=="profiles" then K.DrawProfilesPage()
     elseif selection=="interface" then Interface()
-    elseif selection=="experience" then K.DrawExperiencePage(page)
-    elseif selection=="minimap" then K.DrawMinimapPage(page)
-    elseif selection=="inventory" then K.DrawInventoryPage(page)
+    elseif selection=="experience" then K.DrawExperiencePage(page,search.destination,search.Anchor)
+    elseif selection=="minimap" then K.DrawMinimapPage(page,search.destination,search.Anchor)
+    elseif selection=="inventory" then K.DrawInventoryPage(page,search.destination,search.Anchor)
     elseif selection=="economy" then K.DrawEconomyPage(page)
     elseif selection=="chat" and K.Chat then ChatPage()
     elseif selection~="home" then
@@ -741,7 +1338,7 @@ function K.Render()
     elseif section=="combat" then Combat()
     elseif section=="alerts" then Alerts()
     elseif section=="sounds" then Sounds()
-    elseif section=="cursor" and K.DrawCursorPage then K.DrawCursorPage(page,HomeWidgets(),HomeRefresh)
+    elseif section=="cursor" and K.DrawCursorPage then K.DrawCursorPage(page,HomeWidgets(),HomeRefresh,search.Anchor)
     end
     if K.reloadPrompt and K.reloadPrompt:IsShown() then
         if K.HasPendingModuleChanges() then K.ShowReloadPrompt() else K.reloadPrompt:Hide() end
@@ -749,6 +1346,7 @@ function K.Render()
     for i,button in ipairs(textSizeButtons)do Selected(button,K.PanelTextSize()==i)end
     if K.QueuePanelTextFit then K.QueuePanelTextFit()end
     if K.UpdateIntro then K.UpdateIntro() end
+    if searchScroll then search.Scroll(searchScroll) end
     -- Do not reset scroll while a user is editing a long sound list.
 end
 -- Separate inherited native text from Latin/Cyrillic text. A region created
@@ -768,6 +1366,123 @@ local function FixedButton(parent,value,x,y,w,h,click,nativeFont)
     b:SetScript("OnClick",click)
     ControlGlyph(b,value)
     return b
+end
+function search.UpdateControls()
+    local hasQuery=search.Normalize(search.input:GetText())~=""
+    search.hint:SetText(search.Text(1))
+    search.hint:SetShown(search.input:GetText()=="" and not search.input:HasFocus())
+    search.clear:SetShown(search.input:GetText()~="")
+    search.back:SetShown(hasQuery and not search.active)
+    search.back.label:SetText(search.Text(4))
+    search.scope:SetShown(search.active)
+    search.scope.label:SetText(search.Text(search.scoped and 3 or 2))
+    Selected(search.scope,search.scoped)
+    subtitle:SetWidth(hasQuery and 486 or 730)
+    if search.active then
+        heading:SetText(search.Text(1))
+        subtitle:SetText(search.scoped and K.L(search.category) or "")
+    elseif search.arrival and (not hasQuery or search.arrival.category~=selection or
+        (search.arrival.section and search.arrival.section~=section) or
+        (search.arrival.category=="chat" and search.arrival.tab~=chatSettingsTab) or
+        (search.arrival.category=="experience" and search.arrival.tab~=K.GetExperienceSettingsTab()) or
+        (search.arrival.category=="minimap" and search.arrival.tab~=K.GetMinimapSettingsTab()) or
+        (search.arrival.category=="inventory" and search.arrival.tab~=K.GetInventorySettingsTab()) or
+        (search.arrival.category=="details" and search.arrival.tab~=K.GetDamageMeterSettingsTab())) then
+        search.arrival=nil
+        search.outline:Hide()
+        subtitle:SetText(K.L(selection=="home" and "welcome" or "saved"))
+    elseif search.arrival then
+        local entry=search.arrival
+        local detail=search.Name(entry,K.L)
+        if entry.mode and K.ErrorMode()~=entry.mode then
+            detail=detail.." · "..(selectAlertMode[KerimAnkaUIDB.language] or selectAlertMode.en)
+        end
+        subtitle:SetText(search.Path(entry,K.L).."\n"..detail)
+    end
+end
+function search.CloseResults(keepFocus)
+    if not search.active then
+        if not keepFocus then search.input:ClearFocus() end
+        return
+    end
+    search.Leave(keepFocus)
+    K.HideTooltip()
+    K.Render()
+    search.Scroll(search.originScroll)
+end
+function K.ClearUnitSearchArrival()
+    if search.arrival and search.arrival.category=="units" then
+        search.arrival=nil
+        subtitle:SetText(K.L("saved"))
+    end
+end
+function search.Build(parent)
+    local field=CreateFrame("Frame",nil,parent,"BackdropTemplate")
+    field:SetPoint("TOPLEFT",304,-20); field:SetSize(184,30)
+    local function StyleField(focused)
+        Rounded(field,.095,.105,.10,focused and gold or {.37,.40,.35,1},5,false)
+    end
+    StyleField(false)
+    local input=CreateFrame("EditBox",nil,field)
+    input:SetPoint("TOPLEFT",9,0); input:SetSize(144,30); input:SetAutoFocus(false)
+    input:SetTextColor(unpack(white)); input:SetMaxLetters(96)
+    K.ApplyTextFont(input,13,false,"")
+    search.input=input
+    search.lastText=input:GetText()
+    search.hint=input:CreateFontString(nil,"OVERLAY")
+    search.hint:SetPoint("LEFT",0,0); search.hint:SetWidth(144)
+    search.hint:SetWordWrap(false)
+    search.hint:SetJustifyH("LEFT"); search.hint:SetTextColor(unpack(muted))
+    K.ApplyTextFont(search.hint,13,false,"")
+    local clear=CreateFrame("Button",nil,field)
+    clear:SetPoint("RIGHT",-4,0); clear:SetSize(26,28)
+    clear:SetFrameLevel(input:GetFrameLevel()+1)
+    local icon=clear:CreateTexture(nil,"ARTWORK")
+    icon:SetSize(12,12); icon:SetPoint("CENTER")
+    icon:SetTexture("Interface\\AddOns\\KerimAnkaUI\\Media\\Close.tga")
+    icon:SetVertexColor(unpack(muted))
+    clear:SetScript("OnEnter",function() icon:SetVertexColor(unpack(white)) end)
+    clear:SetScript("OnLeave",function() icon:SetVertexColor(unpack(muted)) end)
+    clear:SetScript("OnClick",function()
+        input:SetText("")
+        input:SetFocus()
+    end)
+    search.clear=clear
+    search.back=FixedButton(parent,"",721,-164,236,28,function() search.Open(true) end)
+    search.scope=FixedButton(parent,"",721,-164,236,28,function()
+        search.scoped=not search.scoped
+        search.Open(false)
+    end)
+    local outline=CreateFrame("Frame",nil,page,"BackdropTemplate")
+    local pixel="Interface\\Buttons\\WHITE8X8"
+    outline:SetBackdrop({bgFile=pixel,edgeFile=pixel,edgeSize=3})
+    outline:SetBackdropColor(.96,.73,.32,.18)
+    outline:SetBackdropBorderColor(1,.84,.45,1)
+    outline:EnableMouse(false); outline:Hide()
+    outline.pulse=outline:CreateAnimationGroup()
+    outline.pulse:SetLooping("BOUNCE")
+    local fade=outline.pulse:CreateAnimation("Alpha")
+    fade:SetFromAlpha(1); fade:SetToAlpha(.53); fade:SetDuration(.6)
+    outline:SetScript("OnHide",function() outline.pulse:Stop() end)
+    search.outline=outline
+    input:SetScript("OnEditFocusGained",function() StyleField(true); search.hint:Hide() end)
+    input:SetScript("OnEditFocusLost",function(self) StyleField(false); search.hint:SetShown(self:GetText()=="") end)
+    input:SetScript("OnEscapePressed",function() search.CloseResults() end)
+    input:SetScript("OnEnterPressed",function(self)
+        if not search.active and search.Normalize(self:GetText())~="" then search.Open(false) end
+        self:ClearFocus()
+    end)
+    input:SetScript("OnTextChanged",function(self)
+        local text=self:GetText()
+        if text==search.lastText then return end
+        search.lastText=text
+        if search.Normalize(text)~="" then search.Open(false)
+        else
+            search.CloseResults(true)
+            search.UpdateControls()
+        end
+    end)
+    search.UpdateControls()
 end
 -- One visible first-open guide per character. Never apply a layout automatically.
 local introStep,introCard,introOutline,introProfiles,introShade
@@ -948,9 +1663,11 @@ function K.StopResize()
     end
     if f:IsShown() then
         -- Scaling this fixed-width page changes its viewport, not its option cards.
-        if selection=="units" and K.UnitOptionPositions and not K.unitPageBuilding then
-            if K.UpdateUnitPreview then K.UpdateUnitPreview()end
-        else K.Render()end
+        if not search.active and not search.arrival then
+            if selection=="units" and K.UnitOptionPositions and not K.unitPageBuilding then
+                if K.UpdateUnitPreview then K.UpdateUnitPreview()end
+            else K.Render()end
+        end
         RefreshScaleViewport();if K.ClassicEconomyView then K.ClassicEconomyView.Reflow() end
     end
 end
@@ -1022,7 +1739,7 @@ function K.BuildWindow()
         f:SetPoint("CENTER",UIParent,"CENTER",p.x,p.y)
     else f:SetPoint("CENTER") end
     f:Hide(); UISpecialFrames[#UISpecialFrames+1]="KerimAnkaUIWindow"
-    local title=CreateFrame("Frame",nil,f); title:SetPoint("TOPLEFT",1,-1); title:SetSize(450,60)
+    local title=CreateFrame("Frame",nil,f); title:SetPoint("TOPLEFT",1,-1); title:SetSize(291,60)
     title:EnableMouse(true); title:RegisterForDrag("LeftButton")
     local function SavePosition()
         K.StopResize()
@@ -1038,10 +1755,15 @@ function K.BuildWindow()
     local header=f:CreateTexture(nil,"BACKGROUND",nil,1); header:SetPoint("TOPLEFT",1,-1); header:SetSize(998,63); header:SetColorTexture(0.15,0.16,0.145,1)
     local emblem=f:CreateTexture(nil,"ARTWORK"); emblem:SetPoint("TOPLEFT",17,-8); emblem:SetSize(48,48)
     emblem:SetTexture("Interface\\AddOns\\KerimAnkaUI\\Media\\Phoenix.tga","CLAMP","CLAMP","TRILINEAR")
-    local brand=f:CreateFontString(nil,"OVERLAY"); K.ApplyTextFont(brand,25,true,""); brand:SetTextColor(0.79,0.69,0.49); brand:SetPoint("TOPLEFT",78,-16); brand:SetText("KerimAnka UI")
+    local brand=f:CreateFontString(nil,"OVERLAY")
+    brand.panelTextFixed=true
+    K.ApplyTextFont(brand,25,true,"")
+    brand:SetTextColor(0.79,0.69,0.49)
+    brand:SetPoint("TOPLEFT",78,-16); brand:SetWidth(214); brand:SetWordWrap(false)
+    brand:SetJustifyH("LEFT"); brand:SetText("KerimAnka UI")
     local ver=f:CreateFontString(nil,"OVERLAY"); K.ApplyTextFont(ver,10,false,""); ver:SetTextColor(unpack(muted)); ver:SetPoint("TOPLEFT",80,-46); ver:SetText(K.version)
     local rule=f:CreateTexture(nil,"ARTWORK"); rule:SetPoint("TOPLEFT",1,-64); rule:SetSize(998,1); rule:SetColorTexture(0.55,0.48,0.34,0.65)
-    local layoutButton=FixedButton(f,K.L('leTitle'),470,-20,292,30,function()if K.LayoutEditor then K.LayoutEditor.Toggle()end end)
+    local layoutButton=FixedButton(f,K.L('leTitle'),504,-20,258,30,function()if K.LayoutEditor then K.LayoutEditor.Toggle()end end)
     layoutButton:SetFrameLevel(title:GetFrameLevel()+2); layoutButton:EnableMouse(true)
     K.layoutEditButton=layoutButton
     languageButton=FixedButton(f,K.LanguageName(),782,-20,152,30,function()
@@ -1099,7 +1821,7 @@ function K.BuildWindow()
 
     for i,key in ipairs(keys) do
         local b=FixedButton(sidebar,K.L(key),10,-12-(i-1)*45,178,39,function()
-            selection=key; K.scroll:SetVerticalScroll(0); K.Render()
+            search.Leave(); selection=key; K.scroll:SetVerticalScroll(0); K.Render()
         end)
         b.key=key
         for _,module in ipairs(K.modules) do
@@ -1109,18 +1831,18 @@ function K.BuildWindow()
         end
         StyleNavigationLabel(b); NavAccent(b); nav[#nav+1]=b
     end
-    local b=FixedButton(sidebar,K.L("interface"),10,-513,178,39,function() selection="interface"; K.scroll:SetVerticalScroll(0); K.Render() end)
+    local b=FixedButton(sidebar,K.L("interface"),10,-513,178,39,function() search.Leave(); selection="interface"; K.scroll:SetVerticalScroll(0); K.Render() end)
     b:ClearAllPoints(); b:SetPoint("BOTTOMLEFT",10,14)
     b.key="interface"; StyleNavigationLabel(b); NavAccent(b); nav[#nav+1]=b
     local profiles=FixedButton(sidebar,K.L("profiles"),10,-466,178,39,function()
-        selection="profiles"; K.scroll:SetVerticalScroll(0); K.Render()
+        search.Leave(); selection="profiles"; K.scroll:SetVerticalScroll(0); K.Render()
     end)
     profiles:ClearAllPoints();profiles:SetPoint("BOTTOMLEFT",10,61)
     profiles.key="profiles";StyleNavigationLabel(profiles);NavAccent(profiles);nav[#nav+1]=profiles
     introProfiles=profiles
     for i,key in ipairs({"overview","combat","alerts","sounds","cursor"}) do
         local tab=FixedButton(f,K.L(key),220+(i-1)*149,-77,141,32,function()
-            section=key; K.scroll:SetVerticalScroll(0); K.Render()
+            search.Leave(); section=key; K.scroll:SetVerticalScroll(0); K.Render()
         end)
         tab.underline=tab:CreateTexture(nil,"OVERLAY"); tab.underline:SetPoint("BOTTOMLEFT",2,0); tab.underline:SetPoint("BOTTOMRIGHT",-2,0)
         tab.underline:SetHeight(3); tab.underline:SetColorTexture(0.52,0.72,0.43,1)
@@ -1142,6 +1864,7 @@ function K.BuildWindow()
     local content=CreateFrame("Frame",nil,scroll); content:SetSize(734,435); scroll:SetScrollChild(content)
     page=CreateFrame("Frame",nil,content); page:SetPoint("TOPLEFT",10,-10); page:SetSize(714,415)
     page:SetScript("OnSizeChanged",function(_,_,height) content:SetHeight(math.max(415,height+20)) end)
+    search.Build(f)
     footer=f:CreateFontString(nil,"OVERLAY"); K.ApplyTextFont(footer,11,false,""); footer:SetTextColor(unpack(muted)); footer:SetPoint("BOTTOMLEFT",300,20); footer:SetWidth(435); footer:SetJustifyH("LEFT")
     f.reload=FixedButton(f,K.L("reload"),754,-637,222,30,function() K.Reload() end); Tip(f.reload,"reload","reloadHelp")
     K.BuildCommunity(f,FixedButton,Backdrop,Tip,Selected)

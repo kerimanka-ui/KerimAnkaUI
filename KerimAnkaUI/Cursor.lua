@@ -689,19 +689,22 @@ events:SetScript('OnEvent',function(_,event,unit,castGUID,spellID)
  else M.Refresh()end
 end)
 
-function K.DrawCursorPage(page,w,refresh)
+function K.DrawCursorPage(page,w,refresh,anchor)
  w.Text(page,K.L('cursorHelp'),0,0,714,13,{.65,.70,.62}):SetHeight(64)
  local box=w.Box(page,0,-76,714,64)
+ if anchor then anchor('cursorEnabled',box) end
  w.Text(box,K.L('cursorEnabled'),13,-18,570,14)
  w.Switch(box,M.Get('enabled'),620,-19,function(v)M.Set('enabled',v)end,true)
  w.Text(page,K.L('cursorShape'),0,-156,714,15)
  for i,key in ipairs({'cursorRing','cursorSquare','cursorPlus','cursorReticle','cursorLight'})do
   local choice=i
   local b=w.Button(page,K.L(key),(i-1)*145,-184,134,34,function()M.Set('shape',choice);refresh()end)
+  if anchor then anchor(key,b) end
   w.Selected(b,M.Get('shape')==i)
  end
  local function NumberControl(key,title,x,y,step,format)
   local c=w.Box(page,x,y,349,90);w.Text(c,K.L(title),13,-12,322,14)
+  if anchor then anchor(title,c) end
   local value=M.Get(key);local percent=key=='alpha'or key=='nativeAlpha'or key=='nativeScale'
   w.Text(c,string.format(format,percent and value*100 or value),13,-48,225,20)
   for i,direction in ipairs({-1,1})do
@@ -718,6 +721,7 @@ function K.DrawCursorPage(page,w,refresh)
    swatchFunc=function()M.SetColor(picker:GetColorRGB())end,
    cancelFunc=function()M.SetColor(r,g,b)end})
  end)
+ if anchor then anchor('cursorColor',color) end
  if not color.cursorSwatch then color.cursorSwatch=color:CreateTexture(nil,'ARTWORK')end
  color.cursorSwatch:SetSize(20,20);color.cursorSwatch:ClearAllPoints();color.cursorSwatch:SetPoint('RIGHT',-12,0)
  color.cursorSwatch:SetColorTexture(M.Get('red'),M.Get('green'),M.Get('blue'),1);color.cursorSwatch:Show()
@@ -725,16 +729,20 @@ function K.DrawCursorPage(page,w,refresh)
  for i,key in ipairs({'cursorAlways','cursorCombat','cursorPeace'})do
   local choice=i
   local b=w.Button(page,K.L(key),(i-1)*242,-428,230,38,function()M.Set('visibility',choice);refresh()end)
+  if anchor then anchor(key,b) end
   w.Selected(b,M.Get('visibility')==i)
  end
  local c=w.Box(page,0,-484,714,64)
+ if anchor then anchor('cursorCamera',c) end
  w.Text(c,K.L('cursorCamera'),13,-12,570,14):SetHeight(44)
  w.Switch(c,M.Get('keepCamera'),620,-19,function(v)M.Set('keepCamera',v)end,true)
  w.Text(page,K.L('cursorCameraHelp'),0,-564,714,13,{.65,.70,.62}):SetHeight(60)
  local timing=w.Box(page,0,-640,714,64)
+ if anchor then anchor('cursorGCD',timing) end
  w.Text(timing,K.L('cursorGCD'),13,-12,570,14):SetHeight(44)
  w.Switch(timing,M.Get('gcd'),620,-19,function(v)M.Set('gcd',v)end,true)
  local casting=w.Box(page,0,-724,714,64)
+ if anchor then anchor('cursorCast',casting) end
  w.Text(casting,K.L('cursorCast'),13,-12,570,14):SetHeight(44)
  w.Switch(casting,M.Get('cast'),620,-19,function(v)M.Set('cast',v)end,true)
  w.Text(page,K.L('cursorTimingHelp'),0,-808,714,13,{.65,.70,.62}):SetHeight(90)
@@ -743,6 +751,7 @@ function K.DrawCursorPage(page,w,refresh)
  NumberControl('thickness','cursorThickness',0,-1030,1,'%.0f / 8')
  local function ExtraToggle(key,label,y)
   local box=w.Box(page,0,y,714,64)
+  if anchor then anchor(label,box) end
   w.Text(box,K.L(label),13,-12,570,14):SetHeight(44)
   w.Switch(box,M.Get(key),620,-19,function(v)M.Set(key,v)end,true)
  end
@@ -754,6 +763,7 @@ function K.DrawCursorPage(page,w,refresh)
  for i,key in ipairs({'cursorRibbon','cursorSparkles','cursorRibbonSparkles','cursorNativeBlueFlow','cursorNativeBlueArc','cursorNativeGreenArc'})do
   local style=i
   local b=w.Button(page,K.L(key),((i-1)%3)*242,-1494-math.floor((i-1)/3)*46,230,38,function()M.Set('trailStyle',style);refresh()end)
+  if anchor then anchor(key,b) end
   w.Selected(b,M.Get('trailStyle')==i)
  end
  local effectHelp=nativeFailedStyle==M.Get('trailStyle')and'cursorNativeFallbackStatus'or'cursorEffectsHelp'

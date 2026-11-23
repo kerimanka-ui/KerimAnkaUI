@@ -24,7 +24,7 @@ local function FinishDrag()
  C_Timer.After(0,function() button.previewDragged=nil end)
  local api=ForeverLeatherUnitsAPI
  if api then api.Apply() end
- if K.RefreshUnitOptionValues then K.RefreshUnitOptionValues(button.xKey,button.yKey,button.sizeKey)end
+ if K.RefreshUnitOptionValues then K.RefreshUnitOptionValues(button.xKey,button.yKey,button.sizeKey,button.sharedAuraY)end
  K.UpdateUnitPreview()
 end
 local paintingLayout=false
@@ -38,14 +38,17 @@ local function Editable(button,xKey,yKey,sizeKey,low,high,invertX,coordinateFact
  button:SetScript("OnClick",function(self)
   if not self.previewDragged and K.JumpToUnitOption then K.JumpToUnitOption(self.optionKey) end
  end)
- button:SetScript("OnEnter",function(self) K.ShowTooltip(self,K.L("upControl"),K.L("upControlHelp")) end)
+ button:SetScript("OnEnter",function(self) if not drag then K.ShowTooltip(self,K.L("upControl"),K.L("upControlHelp")) end end)
  button:SetScript("OnLeave",K.HideTooltip)
  button:SetScript("OnDragStart",function(self)
   if K.InCombat() then return end
   local db=Settings(); if not db or not self.xKey then return end
   local x,y=GetCursorPosition()
+  local direction=K.UnitAuraYDirection(db,self.yKey or "")
+  local baseY=self.previewAuraY or db[self.yKey]
+  if direction then baseY=direction*math.max(0,direction*baseY) end
   self.previewDragged=true
-  drag={button=self,x=x,y=y,baseX=db[self.xKey],baseY=db[self.yKey],scale=model:GetEffectiveScale()*self.coordinateFactor,modelScale=model:GetScale()}
+  drag={button=self,x=x,y=y,baseX=db[self.xKey],baseY=baseY,scale=model:GetEffectiveScale()*self.coordinateFactor,modelScale=model:GetScale()}
   K.HideTooltip()
   local function UpdateDrag(force)
    if not drag or InCombatLockdown()then return end
@@ -57,8 +60,11 @@ local function Editable(button,xKey,yKey,sizeKey,low,high,invertX,coordinateFact
        or self.sizeKey=="happinessSize" and {-100,100,-60,60} or self.sizeKey=="castHeight" and {-400,400,-250,250} or {-300,300,-250,250}
    local nx=math.max(bounds[1],math.min(bounds[2],math.floor(drag.baseX+(cx-drag.x)/drag.scale*(self.invertX and -1 or 1)+.5)))
    local ny=math.max(bounds[3],math.min(bounds[4],math.floor(drag.baseY+(cy-drag.y)/drag.scale+.5)))
+   if direction and ny*direction<0 then ny=0 end
    if nx==db[self.xKey]and ny==db[self.yKey]then return end
-   db[self.xKey],db[self.yKey]=nx,ny;drag.nextPaint=now+1/30
+   db[self.xKey],db[self.yKey]=nx,ny
+   if self.sharedAuraY then db[self.sharedAuraY]=ny end
+   drag.nextPaint=now+1/30
    K.UpdateUnitPreview()
   end
   drag.flush=function()UpdateDrag(true)end
@@ -126,22 +132,12 @@ local function CreatePreviewModel(parent)
  model.combat.icon:SetTexture("Interface\\CharacterFrame\\UI-StateIcon");model.combat.icon:SetTexCoord(.5,1,0,.484375)
  model.feedback=Label(model.decoration,24);model.feedback:SetPoint('CENTER',model.portrait,'CENTER');model.feedback:SetTextColor(1,.2,.1)
  model.happiness.icon:SetTexture(PATH.."PetHappiness.tga"); model.happiness.icon:SetTexCoord(.5,.75,0,1)
- model.auras={}
- model.auraLabel=Label(model.decoration,11)
+ model.auras={Buff={},Debuff={}}
  model.questie=CreateFrame("Button",nil,model.decoration);model.questie.icon=model.questie:CreateTexture(nil,"ARTWORK");model.questie.icon:SetAllPoints()
  model.summons={}
  for i=1,4 do
   local b=SampleIcon(model.decoration,132158)
   b.count:Hide();b.duration=Label(b,11);b.duration:SetPoint("TOP",b,"BOTTOM",0,-2);b.duration:SetText(i==1 and "7 s" or "13 s");model.summons[i]=b
- end
- local icons={"Spell_Nature_Rejuvenation","Spell_Holy_WordFortitude","Ability_Hunter_AspectOfTheHawk","Spell_Nature_Thorns","Spell_Shadow_ShadowWordPain","Ability_Rogue_DualWeild","Ability_Hunter_SniperShot","Spell_Fire_FlameBolt"}
- for i=1,4 do
-  model.auras[i]=SampleIcon(model.decoration,"Interface\\Icons\\"..icons[(i-1)%#icons+1])
-  local b=model.auras[i]
-  b.cd=CreateFrame("Cooldown",nil,b,"CooldownFrameTemplate"); b.cd:SetAllPoints()
-    b.cd:SetHideCountdownNumbers(true); b.cd.noCooldownCount=true
-  local carrier=CreateFrame("Frame",nil,b); carrier:SetAllPoints(); carrier:SetFrameLevel(b.cd:GetFrameLevel()+1)
-  b.count:SetParent(carrier)
  end
  model.cast=SampleIcon(model.decoration,"Interface\\Icons\\Spell_Fire_FlameBolt")
  model.cast.icon:Hide()
@@ -173,14 +169,34 @@ local function CreateCompact(parent)
  f.nameHit=CreateFrame('Button',nil,text);f.nameHit:SetAllPoints(f.name);f.nameHit:SetScript('OnClick',function()K.JumpToUnitOption('totNameScale')end)
  return f
 end
+local auraSamples={
+ Buff={"Spell_Holy_WordFortitude","Spell_Nature_Rejuvenation","Ability_Hunter_AspectOfTheHawk","Spell_Nature_Thorns"},
+ Debuff={"Spell_Shadow_ShadowWordPain","Spell_Nature_CorrosiveBreath","Ability_Hunter_SniperShot","Spell_Fire_FlameBolt"},
+}
+local function SampleAura(model,kind,index)
+ local buttons=model.auras[kind]
+ if not buttons[index] then
+  local icons=auraSamples[kind]
+  local b=SampleIcon(model.auraLayers[-1],"Interface\\Icons\\"..icons[(index-1)%#icons+1])
+  b.cd=CreateFrame("Cooldown",nil,b,"CooldownFrameTemplate");b.cd:SetAllPoints()
+  b.cd:SetHideCountdownNumbers(true);b.cd.noCooldownCount=true
+  local carrier=CreateFrame("Frame",nil,b);carrier:SetAllPoints();carrier:SetFrameLevel(b.cd:GetFrameLevel()+1)
+  b.count:SetParent(carrier)
+  b:SetBackdropBorderColor(kind=="Buff" and .35 or .75,kind=="Buff" and .6 or .25,.2,1)
+  buttons[index]=b
+ end
+ return buttons[index]
+end
+
 local function PaintCompact()
  local db=Settings();compact:SetScale(db.scale*(db.totScale or 1));compact:ClearAllPoints();compact:SetPoint('CENTER',stage,'CENTER')
- compact:SetAlpha(db.showToT and 1 or .45);compact:Show();model:Hide()
+ compact:SetAlpha(db.showToT and 1 or .45);compact:Show();model:Hide();for _,layer in pairs(model.auraLayers)do layer:GetParent():Hide()end
  K.ApplyUnitNameFont(compact.name,13*(db.totNameScale or db.textScale or 1),false,font);compact.name:SetText(K.L('usToT'))
  K.ApplyTextFont(compact.hp,10*(db.healthTextScale or 1),false,'OUTLINE');compact.hp:SetText('720 / 1000')
  panel.title:SetText(K.L('upTitle'));panel.note:SetText(K.L('upNote'));panel.note:SetTextColor(.63,.69,.61,1);panel.examples.text:SetText(K.L('upExamples'))
  for _,b in ipairs(panel.buttons)do b.label:SetText(K.L(unitLabels[b.unit]));b.label:SetTextColor(b.unit=='targettarget'and .88 or .90,b.unit=='targettarget'and .77 or .92,b.unit=='targettarget'and .44 or .86,1);b:SetBackdropColor(b.unit=='targettarget'and .22 or .10,b.unit=='targettarget'and .29 or .12,.12,1)end
  panel.examples:SetChecked(state.examples)
+ panel.density:Hide()
  for _,b in ipairs(panel.kinds)do b.label:SetText(K.L(b.kind=='Buffs'and'upBuffs'or'upDebuffs'));b.label:SetTextColor(.50,.55,.49,1);b:Disable()end
 end
 local function Build()
@@ -211,15 +227,45 @@ local function Build()
   local b=CreateFrame("Button",nil,panel,"BackdropTemplate"); b:SetPoint("TOPLEFT",440+(i-1)*64,-5); b:SetSize(60,26)
   b:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
   b.label=Label(b,11); b.label:SetPoint("CENTER"); b.kind=kind
-  b:SetScript("OnClick",function() state.kind=kind; K.UpdateUnitPreview(); if K.JumpToUnitOption then K.JumpToUnitOption(state.unit..kind) end end)
+  b:SetScript("OnClick",function() FinishDrag(); state.kind=kind; state.revealAura=true; K.UpdateUnitPreview(); if K.JumpToUnitOption then K.JumpToUnitOption(state.unit..kind) end end)
   panel.kinds[i]=b
  end
  local examples=CreateFrame("CheckButton",nil,panel,"UICheckButtonTemplate"); examples:SetPoint("TOPLEFT",577,-3)
  K.ApplyTextFont(examples.text,11,false,"");examples.text:SetTextColor(.90,.92,.86,1); examples:SetScript("OnClick",function(self) state.examples=self:GetChecked() and true or false; K.UpdateUnitPreview() end)
  panel.examples=examples
- panel.note=Label(panel,10); panel.note:SetPoint("BOTTOMLEFT",9,5); panel.note:SetWidth(714); panel.note:SetJustifyH("LEFT")
+ panel.note=Label(panel,10); panel.note:SetPoint("BOTTOMLEFT",9,5); panel.note:SetWidth(525); panel.note:SetJustifyH("LEFT")
+ local density=CreateFrame("Button",nil,panel,"UIPanelButtonTemplate")
+ density:SetSize(180,20);density:SetPoint("BOTTOMRIGHT",-8,2)
+ density:SetScript("OnClick",function()
+  FinishDrag();state.dense=not state.dense;state.revealAura=true;K.UpdateUnitPreview()
+ end)
+ panel.density=density
  stage=CreateFrame("Frame",nil,panel); stage:SetPoint("TOPLEFT",8,-36); stage:SetSize(718,143); stage:SetClipsChildren(true)
  model=CreatePreviewModel(stage);compact=CreateCompact(stage);model.panelTextExclude=true;compact.panelTextExclude=true;compact:Hide()
+ model.auraLayers={}
+ local function Scroll(delta,direction)
+  if drag then return end
+  direction=direction or state.auraDirection
+  if not direction then return end
+  local layer=model.auraLayers[direction]
+  if IsShiftKeyDown and IsShiftKeyDown() then
+   layer.panX=(layer.panX or 0)+delta*48
+  else
+   layer.panY=(layer.panY or 0)-delta*36
+  end
+  K.UpdateUnitPreview()
+ end
+ for _,direction in ipairs({-1,1}) do
+  local viewport=CreateFrame("Frame",nil,stage)
+  viewport:SetClipsChildren(true)
+  viewport:EnableMouseWheel(true)
+  viewport:SetScript("OnMouseWheel",function(_,delta) Scroll(delta,direction) end)
+  local layer=CreateFrame("Frame",nil,viewport)
+  layer:SetFrameLevel(model.decoration:GetFrameLevel()+1)
+  model.auraLayers[direction]=layer
+ end
+ stage:EnableMouseWheel(true)
+ stage:SetScript("OnMouseWheel",function(_,delta) Scroll(delta) end)
  panel:SetScript("OnHide",FinishDrag)
 end
 function K.ConfigureUnitPreview(available)
@@ -263,7 +309,7 @@ local function PaintModel(model,stage,state,changedKey,screen)
  if not screen and state.unit=="pet" and not petSupported then state.unit="player" end
  local unit=state.unit; local mirrored=unit=="target"
  if not screen then
- panel.title:SetText(K.L("upTitle")); panel.note:SetText(K.L("upNote"));panel.note:SetTextColor(.63,.69,.61,1); panel.examples.text:SetText(K.L("upExamples")); panel.examples:SetChecked(state.examples)
+ panel.title:SetText(K.L("upTitle")); panel.note:SetText(K.L("upAuraPreviewNote"));panel.note:SetTextColor(.63,.69,.61,1); panel.examples.text:SetText(K.L("upExamples")); panel.examples:SetChecked(state.examples)
  local function SelectStyle(b,selected)
   b.label:SetTextColor(selected and .88 or .90,selected and .77 or .92,selected and .44 or .86,1)
   b:SetBackdropColor(selected and .22 or .10,selected and .29 or .12,selected and .18 or .10,1)
@@ -447,45 +493,67 @@ local function PaintModel(model,stage,state,changedKey,screen)
    minX=math.min(minX,x);maxX=math.max(maxX,x+size);minY=math.min(minY,-H+y-size-18);maxY=math.max(maxY,-H+y)
   end
  end
- local viewMinX,viewMaxX,viewMinY,viewMaxY=0,W,-H,0
- local auraMinX,auraMaxX,auraMinY,auraMaxY
- local size,gap=db[unit.."AuraSize"],db[unit.."AuraGap"]
- local count=math.min(4,db[unit.."AuraColumns"],db[unit.."AuraMax"])
- local kind=state.kind=="Buffs" and "Buff" or "Debuff"
- local shown=not screen and (state.examples or db[unit..state.kind])
- local below=db[unit.."AuraBelow"]
- local xKey,yKey=unit..kind.."X",unit..kind.."Y"
- for i,b in ipairs(model.auras) do
-  b:SetShown(shown and i<=count)
-  if shown and i<=count then
-   local x=(db[xKey] or db[unit.."AuraX"])+(i-1)*(size+gap)
-   local y=db[yKey] or db[unit.."AuraY"]
-   local samples=kind=="Buff" and {"Spell_Holy_WordFortitude","Spell_Nature_Rejuvenation","Ability_Hunter_AspectOfTheHawk","Spell_Nature_Thorns"}
-       or {"Spell_Shadow_ShadowWordPain","Spell_Nature_CorrosiveBreath","Ability_Hunter_SniperShot","Spell_Fire_FlameBolt"}
-   b.icon:SetTexture("Interface\\Icons\\"..samples[i])
-   b:SetSize(size,size); b:ClearAllPoints()
-   b:SetPoint(below and "TOPLEFT" or "BOTTOMLEFT",model,below and "BOTTOMLEFT" or "TOPLEFT",x,y)
-   b:SetBackdropBorderColor(kind=="Buff" and .35 or .75,kind=="Buff" and .6 or .25,.2,1)
-   b.count:SetText(db.auraStacks and i==3 and "3" or "")
-   b.cd:SetShown(db.auraCooldown); if db.auraCooldown then b.cd:SetCooldown(GetTime()-4,12) end
-   b:SetAlpha(db[unit..state.kind] and 1 or .45)
-   Editable(b,xKey,yKey,unit.."AuraSize",12,48)
-   local bottom=below and (-H+y-size) or y
-   minX=math.min(minX,x); maxX=math.max(maxX,x+size)
-   minY=math.min(minY,bottom-18); maxY=math.max(maxY,bottom+size+18)
-   viewMinX=math.min(viewMinX,x-4);viewMaxX=math.max(viewMaxX,x+size+4)
-   viewMinY=math.min(viewMinY,bottom-18);viewMaxY=math.max(viewMaxY,bottom+size+18)
-   auraMinX=math.min(auraMinX or x,x-4);auraMaxX=math.max(auraMaxX or x,x+size+4)
-   auraMinY=math.min(auraMinY or bottom,bottom-18);auraMaxY=math.max(auraMaxY or bottom,bottom+size+18)
+ local bounds={[-1]={},[1]={}}
+ local widgets=ForeverUnitsCombatWidgets
+ local lowerRail=widgets and unit~="pet" and widgets.AuraRailInset(H,geometry,-1) or 0
+ local upperRail=widgets and unit~="pet" and widgets.AuraRailInset(H,geometry,1) or 0
+ if not screen and widgets then
+  local buffs=state.examples or db[unit.."Buffs"]
+  local debuffs=state.examples or db[unit.."Debuffs"]
+  local requested=state.dense and 32 or 4
+  local layouts=widgets.AuraLayout(db,unit,buffs,debuffs,{Buff=buffs and requested or 0,Debuff=debuffs and requested or 0})
+  local selected=state.kind=="Buffs" and "Buff" or "Debuff"
+  local counts={}
+  for _,kind in ipairs({"Buff","Debuff"}) do
+   local layout=layouts[kind]
+   local direction=layout.direction
+   local below=direction<0
+   local inset=below and lowerRail or upperRail
+   local layer=model.auraLayers[direction]
+   local view=bounds[direction]
+   if kind==selected then state.auraDirection=direction end
+   local buttons=model.auras[kind]
+   local active=(kind=="Buff" and buffs) or (kind=="Debuff" and debuffs)
+   local count=active and (state.dense and layout.maximum or math.min(4,layout.maximum)) or 0
+   counts[kind]=count
+   for i=count+1,#buttons do buttons[i]:Hide() end
+   for i=1,count do
+    local b=SampleAura(model,kind,i)
+    local offsetX,offsetY,size=widgets.AuraOffset(layout,i)
+    local x,y=layout.x+offsetX,layout.y+offsetY+inset
+    if b:GetParent()~=layer then b:SetParent(layer) end
+    b:SetSize(size,size);b:ClearAllPoints()
+    b:SetPoint(layout.point,layer,layout.edge,x,y)
+    b.count:SetText(db.auraStacks and i==3 and "3" or "")
+    b.cd:SetShown(db.auraCooldown)
+    if db.auraCooldown then b.cd:SetCooldown(GetTime()-4,12) end
+    b:SetAlpha(db[unit..kind.."s"] and 1 or .45)
+    Editable(b,unit..kind.."X",unit..kind.."Y",unit.."AuraSize",12,48)
+    b:Show()
+    if unit~="pet" and not db[unit.."AuraSplit"] and buffs and debuffs then
+     local first=layout.after or kind
+     b.yKey=unit..first.."Y"
+     b.sharedAuraY=unit..(first=="Buff" and "Debuff" or "Buff").."Y"
+     b.previewAuraY=layouts[first].y
+    else
+     b.sharedAuraY,b.previewAuraY=nil,nil
+    end
+    local bottom=layout.direction<0 and -H+y-size or y
+    view.minX=math.min(view.minX or x,x)
+    view.maxX=math.max(view.maxX or x+size,x+size)
+    view.minY=math.min(view.minY or bottom,bottom)
+    view.maxY=math.max(view.maxY or bottom+size,bottom+size)
+    if i==1 and kind==selected then view.selectedNear=below and bottom+size or bottom end
+   end
+  end
+  panel.density:SetText(K.L(state.dense and "upAuraMaxSample" or "upAuraFourSample"):format(counts.Buff,counts.Debuff))
+  panel.density:Show()
+ else
+  for _,buttons in pairs(model.auras) do
+   for _,button in ipairs(buttons) do button:Hide() end
   end
  end
- model.auraLabel:SetShown(shown)
- if shown then
-  model.auraLabel:ClearAllPoints()
-  model.auraLabel:SetPoint(below and "TOPLEFT" or "BOTTOMLEFT",model.auras[1],below and "BOTTOMLEFT" or "TOPLEFT",0,below and -3 or 3)
-  model.auraLabel:SetText(K.L(state.kind=="Buffs" and "upBuffs" or "upDebuffs").." · 1")
- end
- local castShown=not screen and unit=="target" and (state.examples or db.targetCastEnabled)
+ local castShown=not screen and unit=="target" and (db.targetCastEnabled or (state.examples and state.focus and (state.focus=="targetCastEnabled" or state.focus:match("^cast"))))
  model.cast:SetShown(castShown)
  if castShown then
   model.cast:SetSize(db.castWidth,db.castHeight); model.cast:ClearAllPoints(); model.cast:SetPoint("TOP",model,"BOTTOM",db.castX,db.castY)
@@ -498,33 +566,64 @@ local function PaintModel(model,stage,state,changedKey,screen)
  end
  if screen then return end
  local unitScale=db.scale*(unit=="pet" and db.petScale or 1)
- -- Fit the body plus the selected aura row; never write preview coordinates to settings.
- local fit=math.min(1,(stage:GetWidth()-20)/((viewMaxX-viewMinX+24)*unitScale),(stage:GetHeight()-10)/((viewMaxY-viewMinY+24)*unitScale))
- local scale=unitScale*fit
+ -- The unit model stays still. Only the aura layer can pan or be clipped.
+ local scale=math.min(unitScale,(stage:GetWidth()-20)/(W+24),(stage:GetHeight()-10)/(H*1.6+24))
  if drag then scale=drag.modelScale end
+ local cx,cy=W/2,-H/2
+ model.previewCenterX,model.previewCenterY=cx,cy
  model:SetScale(scale)
- local cx,cy=(viewMinX+viewMaxX)/2,(viewMinY+viewMaxY)/2
- if drag then
-  -- Keep zoom steady during drag. Pan only enough to retain the selected row.
-  cx,cy=model.previewCenterX or W/2,model.previewCenterY or -H/2
-  if auraMinX then
-   local hw=(stage:GetWidth()-20)/(2*scale);local hh=(stage:GetHeight()-10)/(2*scale)
-   cx=math.max(auraMaxX-hw,math.min(auraMinX+hw,cx))
-   cy=math.max(auraMaxY-hh,math.min(auraMinY+hh,cy))
+ model:ClearAllPoints();model:SetPoint("TOPLEFT",stage,"CENTER",-cx,-cy)
+
+ for direction,auraLayer in pairs(model.auraLayers) do
+  local below=direction<0
+  local view=bounds[direction]
+  local viewport=auraLayer:GetParent()
+  viewport:SetShown(view.minY~=nil)
+  if view.minY then
+   local half=(stage:GetHeight()/2-3)/scale
+   local near=below and -H+lowerRail or upperRail
+   local far=below and cy-half or cy+half
+   local room=math.abs(near-far)
+   local endOfRows=below and view.minY or view.maxY
+   local maxPan=math.max(0,direction*(endOfRows-near)-room)
+   if auraLayer.panUnit~=unit then auraLayer.panX,auraLayer.panY=0,0 end
+   auraLayer.panUnit=unit
+   if state.revealAura and view.selectedNear then auraLayer.panY=near-view.selectedNear end
+   local pan=math.max(0,-direction*(auraLayer.panY or 0))
+   if not drag then pan=math.min(maxPan,pan) end
+   auraLayer.panY=-direction*pan
+   local halfWidth=(stage:GetWidth()/2-3)/scale
+   if not drag then
+    local left=math.min(0,cx+halfWidth-view.maxX)
+    local right=math.max(0,cx-halfWidth-view.minX)
+    auraLayer.panX=math.max(left,math.min(right,auraLayer.panX or 0))
+   end
+   viewport:ClearAllPoints()
+   if below then
+    viewport:SetPoint("TOPLEFT",stage,"LEFT",0,(near-cy)*scale)
+    viewport:SetPoint("BOTTOMRIGHT",stage,"BOTTOMRIGHT",0,3)
+   else
+    viewport:SetPoint("TOPLEFT",stage,"TOPLEFT",0,-3)
+    viewport:SetPoint("BOTTOMRIGHT",stage,"RIGHT",0,(near-cy)*scale)
+   end
+   auraLayer:SetSize(W,H);auraLayer:SetScale(scale)
+   auraLayer:ClearAllPoints();auraLayer:SetPoint("TOPLEFT",model,"TOPLEFT",auraLayer.panX or 0,auraLayer.panY)
+  else
+   auraLayer.panX,auraLayer.panY=0,0
   end
  end
- model.previewCenterX,model.previewCenterY=cx,cy
- model:ClearAllPoints();model:SetPoint('TOPLEFT',stage,'CENTER',-cx,-cy)
+ state.revealAura=nil
 
 end
 
 function K.FocusUnitPreview(key)
  if not panel or not panel:IsShown()then return end
  state.focus=key;K.UpdateUnitPreview(key)
- local owner,last
+ local owner
  if state.unit=='targettarget'then owner=key=='totNameScale'and compact.name or compact
  elseif key:find('Buff',1,true)or key:find('Debuff',1,true)or key:find('Aura',1,true)or key=='auraStacks'or key=='auraCooldown'then
-  for _,b in ipairs(model.auras)do if b:IsShown()then owner=owner or b;last=b end end
+  local kind=state.kind=="Buffs" and "Buff" or "Debuff"
+  for _,b in ipairs(model.auras[kind])do if b:IsShown()then owner=b;break end end
  elseif key=='healthTextScale'then owner=model.health
  elseif key=='powerTextScale'or key=='classicEnergyTickMode'or key=='classicManaTickMode'then owner=model.power
  elseif key:match('^portraitCombat')then owner=model.portrait
@@ -541,7 +640,9 @@ function K.FocusUnitPreview(key)
  else owner=model end
  if not owner or not owner:IsShown()then return end
  if not focusRing then focusRing=CreateFrame('Frame',nil,stage,'BackdropTemplate');focusRing:EnableMouse(false);focusRing:SetFrameLevel(model.decoration:GetFrameLevel()+10);focusRing:SetBackdrop({edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=1.5});focusRing:SetBackdropBorderColor(1,.86,.36,1)end
- focusRing:ClearAllPoints();focusRing:SetPoint('TOPLEFT',owner,'TOPLEFT',-3,3);focusRing:SetPoint('BOTTOMRIGHT',last or owner,'BOTTOMRIGHT',3,-3);focusRing:Show()
+ local parent=owner:GetParent()
+ focusRing:SetParent((parent==model.auraLayers[-1] or parent==model.auraLayers[1]) and parent:GetParent() or stage)
+ focusRing:ClearAllPoints();focusRing:SetPoint('TOPLEFT',owner,'TOPLEFT',-3,3);focusRing:SetPoint('BOTTOMRIGHT',owner,'BOTTOMRIGHT',3,-3);focusRing:Show()
  focusSerial=focusSerial+1;local serial=focusSerial
  if focusTimer then focusTimer:Cancel();focusTimer=nil end
  local function HideFocus()if serial==focusSerial then focusRing:Hide()end end

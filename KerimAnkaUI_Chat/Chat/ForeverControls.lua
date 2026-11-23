@@ -4,6 +4,14 @@ local owned=setmetatable({},{__mode='k'})
 local maskHooks=setmetatable({},{__mode='k'})
 local alphaHooks=setmetatable({},{__mode='k'})
 
+-- Inactive conversation rails must stay hidden even when hover/editing makes
+-- the overall chat visible. Every alpha owner uses this same priority rule.
+function C.ResolveVisibilityAlpha(frame,requested)
+ local r=C.records[frame]
+ if r and r.railInactive then return 0 end
+ return requested~=nil and requested or 1
+end
+
 local function KeepControlAlpha(frame)
  local r=C.Remember(frame);r.foreverControlAlpha=true
  if not alphaHooks[frame]then
@@ -12,12 +20,12 @@ local function KeepControlAlpha(frame)
    local saved=C.records[self]
    if not C.Enabled()or not(saved and saved.foreverControlAlpha)then return end
    local visibility=C.visibilityState and C.visibilityState[self]
-   local wanted=saved.railInactive and 0 or(visibility and visibility.wanted or 1)
+   local wanted=C.ResolveVisibilityAlpha(self,visibility and visibility.wanted)
    if value~=wanted then self:SetAlpha(wanted)end
   end)
  end
  local visibility=C.visibilityState and C.visibilityState[frame]
- frame:SetAlpha(r.railInactive and 0 or(visibility and visibility.wanted or 1))
+ frame:SetAlpha(C.ResolveVisibilityAlpha(frame,visibility and visibility.wanted))
 end
 
 function C.IsFriendControl(button)

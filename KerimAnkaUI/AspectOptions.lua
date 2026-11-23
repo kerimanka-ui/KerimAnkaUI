@@ -30,7 +30,7 @@ local function Input(parent,key,api)
  K.UnitWidgets.Rounded(edit,.10,.12,.10,{.30,.36,.28,1},5,false)
  edit:SetText(api.GetText and api.GetText(key) or api.GetSettings()[key]); edit:Show()
 end
-function K.DrawAspectPage(page)
+function K.DrawAspectPage(page,anchor)
  local api=HunterAspectAlertAPI
  local db=api and api.GetSettings()
  if not db then return false end
@@ -50,6 +50,7 @@ function K.DrawAspectPage(page)
  for i,field in ipairs({{"enabled","aaEnabled"},{"locked","aaLock"},{"showText","aaText"},{"cheetahGlow","aaGlow"},{"hideWhileMounted","aaHideMounted"}}) do
   local key=field[1]
   local c=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*96,349,86)
+  if anchor then anchor(field[2],c) end
   w.Text(c,K.L(field[2]),14,-12,278,13)
   local help=w.Button(c,"?",311,-10,22,22,function() end); w.Tip(help,field[2],key=="hideWhileMounted" and "aaHideMountedHelp" or "aaHelp")
   local value=db[key]; if key=="locked" then value=api.IsLocked() end
@@ -84,6 +85,7 @@ function K.DrawAspectPage(page)
  y=y-12
  for _,field in ipairs({{"cheetahText","aaCheetah"},{"packText","aaPack"},{"missingText","aaMissing"}}) do
   local c=w.Box(page,0,y,714,102)
+  if anchor then anchor(field[2],c) end
   w.Text(c,K.L(field[2]),16,-16,620,15)
   local help=w.Button(c,"?",676,-13,22,22,function() end); w.Tip(help,field[2],"hunterTextHelp")
   Input(c,field[1],api); y=y-120

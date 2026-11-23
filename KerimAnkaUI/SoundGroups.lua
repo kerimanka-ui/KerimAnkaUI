@@ -53,7 +53,8 @@ local feedback,feedbackName,feedbackError
 local function Result(key,name,failed)
  feedback=key;feedbackName=name;feedbackError=failed
 end
-function K.DrawSoundGroups(page,w,y,refresh)
+function K.DrawSoundGroups(page,w,y,refresh,destination,anchor)
+ if destination and destination.feature=='DrawSoundGroups' then open=true end
  local top=w.Button(page,K.L('sgTitle')..(open and '  ▴' or '  ▾'),0,y,714,36,function()
   open=not open;refresh()
  end)
@@ -70,6 +71,7 @@ function K.DrawSoundGroups(page,w,y,refresh)
   local g=group
   local state,count,total=M.State(g.id)
   local card=w.Box(page,0,y,714,214)
+  if anchor then anchor(g.title,card) end
   w.Text(card,K.L(g.title),16,-14,680,16)
   w.Text(card,K.L(g.verified and 'sgVerified' or 'sgPending'),16,-42,680,12,g.verified and {.55,.90,.55} or {.83,.70,.42})
   w.Text(card,K.L(g.help),16,-65,680,13,{.65,.70,.62})

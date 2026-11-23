@@ -4,9 +4,11 @@ local API={version=5};ForeverQuestJournalAPI=API
 local db,view,scroll,content,nativeContent,originalAlpha
 local active,editing,queued=false,false,false
 local rows,headers={},{}
+local categoryOrder,nextCategoryOrder={},0
 local stats={layouts=0,repairs=0,scans=0}
 local watched=setmetatable({},{__mode='k'})
 local Queue
+local ClearRowClick
 local function Combat() return InCombatLockdown and InCombatLockdown() end
 local function Safe(f) return f and not (f.IsForbidden and f:IsForbidden()) end
 local function DB()
@@ -34,10 +36,13 @@ local function Offset(value)
  scroll:SetVerticalScroll(math.max(0,math.min(maximum,value)))
 end
 local function Wheel(_,delta)
- if active and not Combat() then Offset(scroll:GetVerticalScroll()-delta*db.scrollStep) end
+ if active and not Combat() then
+  Offset(scroll:GetVerticalScroll()-delta*db.scrollStep)
+ end
 end
 local function Release()
  if Combat() then return end
+ for _,row in ipairs(rows) do ClearRowClick(row) end
  if nativeContent and Safe(nativeContent) then nativeContent:SetAlpha(originalAlpha or 1) end
  nativeContent,originalAlpha=nil,nil;active=false
  if view then view:Hide() end
@@ -109,7 +114,25 @@ local function Entries()
    Add(id,index,index and api.GetInfo(index))
   end
  end
- table.sort(groups,function(a,b) if a.order==b.order then return a.title<b.title end;return a.order<b.order end)
+ -- Blizzard reorders quest-log indices for the current map. Keep existing
+ -- Mini Quest categories in the order in which the tracker first showed them.
+ table.sort(groups,function(a,b)
+  if a.key=='other' then return false end
+  if b.key=='other' then return true end
+  local left,right=categoryOrder[a.key] or math.huge,categoryOrder[b.key] or math.huge
+  if left~=right then return left<right end
+  if a.order~=b.order then return a.order<b.order end
+  if a.title~=b.title then return a.title<b.title end
+  return a.key<b.key
+ end)
+ if db.groupByZone then
+  for _,group in ipairs(groups) do
+   if group.key~='other' and not categoryOrder[group.key] then
+    nextCategoryOrder=nextCategoryOrder+1
+    categoryOrder[group.key]=nextCategoryOrder
+   end
+  end
+ end
  stats.scans=stats.scans+1;return groups
 end
 local function Header(index,width,y,g)
@@ -130,22 +153,127 @@ local function Header(index,width,y,g)
  h.icon:SetAtlas(db.collapsedZones[g.key] and 'ui-questtrackerbutton-secondary-expand' or 'ui-questtrackerbutton-secondary-collapse')
  h:Show();return y+28
 end
+local function OpenLegacyQuestMap(id)
+ if Combat() or type(QuestMapFrame_OpenToQuestDetails)~='function' then return end
+ QuestMapFrame_OpenToQuestDetails(id)
+end
 local function Click(self,button)
  if Combat() or not self.questID then return end
+ local bound=self.nativeClick
+ if bound and bound:IsShown() and bound.questID==self.questID then return end
  if button=='RightButton' then
   if MenuUtil and MenuUtil.CreateContextMenu then
    MenuUtil.CreateContextMenu(self,function(_,root)
+    local id=self.questID
     root:CreateTitle(self.titleText or '')
-    root:CreateButton(OBJECTIVES_VIEW_IN_QUESTLOG or 'View quest',function() if not Combat() and QuestMapFrame_OpenToQuestDetails then QuestMapFrame_OpenToQuestDetails(self.questID) end end)
-    root:CreateButton(OBJECTIVES_STOP_TRACKING or 'Stop tracking',function() if not Combat() and C_QuestLog.RemoveQuestWatch then C_QuestLog.RemoveQuestWatch(self.questID) end end)
+    if C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID and C_SuperTrack.SetSuperTrackedQuestID then
+     local focused=C_SuperTrack.GetSuperTrackedQuestID()==id
+     local label=focused and (STOP_SUPER_TRACK_QUEST or 'Clear focus') or (SUPER_TRACK_QUEST or 'Focus')
+     root:CreateButton(label,function()
+      if Combat() then return end
+      if focused and C_SuperTrack.GetSuperTrackedQuestID()~=id then return end
+      C_SuperTrack.SetSuperTrackedQuestID(focused and 0 or id)
+     end)
+    end
+    if QuestUtil and QuestUtil.OpenQuestDetails then
+     local showing=QuestUtil.IsShowingQuestDetails and QuestUtil.IsShowingQuestDetails(id)
+     local label=showing and (OBJECTIVES_HIDE_VIEW_IN_QUESTLOG or 'Close quest details') or (OBJECTIVES_VIEW_IN_QUESTLOG or 'Open quest details')
+     root:CreateButton(label,function()
+      if Combat() then return end
+      QuestUtil.OpenQuestDetails(id)
+     end)
+    end
+    if QuestMapFrame_OpenToQuestDetails then
+     root:CreateButton(OBJECTIVES_SHOW_QUEST_MAP or 'Open quest map',function() OpenLegacyQuestMap(id) end)
+    end
+    if C_QuestLog.RemoveQuestWatch and (not QuestUtil or not QuestUtil.CanRemoveQuestWatch or QuestUtil.CanRemoveQuestWatch()) then
+     root:CreateButton(OBJECTIVES_STOP_TRACKING or 'Stop tracking',function()
+      if not Combat() and (not QuestUtil or not QuestUtil.CanRemoveQuestWatch or QuestUtil.CanRemoveQuestWatch()) then C_QuestLog.RemoveQuestWatch(id) end
+     end)
+    end
+    if QuestMapQuestOptions_AbandonQuest and C_QuestLog.CanAbandonQuest and C_QuestLog.CanAbandonQuest(id) then
+     root:CreateButton(ABANDON_QUEST_ABBREV or ABANDON_QUEST or 'Abandon quest',function()
+      if not Combat() and C_QuestLog.CanAbandonQuest(id) then QuestMapQuestOptions_AbandonQuest(id) end
+     end)
+    end
    end)
   end
  elseif IsModifiedClick and IsModifiedClick('QUESTWATCHTOGGLE') then
   if C_QuestLog.RemoveQuestWatch then C_QuestLog.RemoveQuestWatch(self.questID) end
- else
-  if C_SuperTrack and C_SuperTrack.SetSuperTrackedQuestID then C_SuperTrack.SetSuperTrackedQuestID(self.questID) end
-  if QuestMapFrame_OpenToQuestDetails then QuestMapFrame_OpenToQuestDetails(self.questID) end
+ elseif button=='LeftButton' then
+  -- Keep full reading for entries for which the game has no usable header.
+  -- This compatibility path can still taint Blizzard map pins.
+  OpenLegacyQuestMap(self.questID)
  end
+end
+local function PublicQuestID(id)
+ return not (issecretvalue and issecretvalue(id))
+  and type(id)=='number' and id>0 and id<1e9 and id%1==0
+end
+local function GetNativeQuestHeader(id)
+ if not PublicQuestID(id) then return end
+ for _,trackerName in ipairs({'QuestObjectiveTracker','CampaignQuestObjectiveTracker'}) do
+  local tracker=_G[trackerName]
+  if Safe(tracker) and tracker.GetExistingBlock then
+   local block=tracker:GetExistingBlock(id)
+   if Safe(block) and PublicQuestID(block.id) and block.id==id then
+    local button=block.HeaderButton
+    if Safe(button)
+     and not (button.HasAccessConstraints and button:HasAccessConstraints())
+     and not (button.HasAnyForbiddenAspects and Enum and Enum.ForbiddenAspect
+      and button:HasAnyForbiddenAspects(Enum.ForbiddenAspect.ScriptedInput)) then
+     return button
+    end
+   end
+  end
+ end
+end
+ClearRowClick=function(row)
+ local button=row.nativeClick
+ if not button or Combat() then return end
+ button.questID,button.target=nil,nil
+ button:SetAttribute('clickbutton1',nil)
+ button:SetAttribute('clickbutton2',nil)
+ button:Hide()
+end
+local function BindRowClick(row,itemWidth)
+ local target=GetNativeQuestHeader(row.questID)
+ if not target or type(RegisterStateDriver)~='function' then ClearRowClick(row);return end
+ local button=row.nativeClick
+ if not button then
+  button=CreateFrame('Button',nil,row,'SecureActionButtonTemplate,SecureHandlerStateTemplate')
+  row.nativeClick=button
+  button:EnableMouse(true)
+  button:EnableMouseWheel(true)
+  button:SetFrameLevel(row:GetFrameLevel()+1)
+  button:RegisterForClicks('LeftButtonUp','RightButtonUp')
+  button:SetAttribute('useOnKeyDown',false)
+  button:SetAttribute('type1','click')
+  button:SetAttribute('type2','click')
+  button:SetAttribute('_onstate-kaquestcombat',[[
+   if newstate == "combat" then
+    self:SetAttribute("clickbutton1",nil)
+    self:SetAttribute("clickbutton2",nil)
+    self:Hide()
+   end
+  ]])
+  RegisterStateDriver(button,'kaquestcombat','[combat] combat; safe')
+  button:SetScript('OnMouseWheel',Wheel)
+  button:SetScript('PreClick',function(self)
+   if Combat() then return end
+   if not active or not row:IsVisible() or self.questID~=row.questID
+    or GetNativeQuestHeader(row.questID)~=self.target then
+    ClearRowClick(row)
+   end
+  end)
+ end
+ button:ClearAllPoints()
+ button:SetPoint('TOPLEFT',row,'TOPLEFT',40,0)
+ button:SetPoint('BOTTOMRIGHT',row,'BOTTOMRIGHT',-itemWidth,0)
+ button.questID,button.target=row.questID,target
+ button:SetAttribute('clickbutton1',target)
+ button:SetAttribute('clickbutton2',target)
+ button:Show()
 end
 -- Read geometry only: the native module shrinks to its current rows, while
 -- its owning container keeps the height selected in Edit Mode.
@@ -286,7 +414,9 @@ local function Row(index,width,y,entry)
   end
   r.item.link=link;r.item:SetAttribute('item',link);r.item.icon:SetTexture(icon);r.item:Show();height=math.max(30,height)
  elseif r.item then r.item:SetAttribute('item',nil);r.item:Hide() end
- r:SetHeight(height+rowSpacing);r:Show();return y+height+rowSpacing
+ r:SetHeight(height+rowSpacing);r:Show()
+ BindRowClick(r,itemWidth)
+ return y+height+rowSpacing
 end
 local function Refresh()
  if Combat() then return end
@@ -311,6 +441,7 @@ local function Refresh()
  local x=(left*ratio-(UIParent:GetLeft()or 0))/scale-22
  local y=(top*ratio-(UIParent:GetBottom()or 0))/scale
  MakeView()
+ if nativeContent~=c then Release();nativeContent=c;originalAlpha=c:GetAlpha() end
  view:SetScale(scale);view:SetFrameStrata(q:GetFrameStrata())
  view:ClearAllPoints();view:SetPoint('TOPLEFT',UIParent,'BOTTOMLEFT',x,y);view:SetSize(width+22,height)
  view:SetFrameLevel(c:GetFrameLevel()+50);scroll:SetSize(width+22,height);content:SetWidth(width+22)
@@ -321,11 +452,10 @@ local function Refresh()
    for _,entry in ipairs(g.quests) do rowIndex=rowIndex+1;y=Row(rowIndex,width+22,y,entry) end
   end
  end
- for n=rowIndex+1,#rows do rows[n]:Hide() end
+ for n=rowIndex+1,#rows do ClearRowClick(rows[n]);rows[n]:Hide() end
  for n=headerIndex+1,#headers do headers[n]:Hide() end
  if rowIndex==0 and headerIndex==0 then Release();return end
  content:SetHeight(math.max(1,y));Offset(scroll:GetVerticalScroll())
- if nativeContent~=c then Release();nativeContent=c;originalAlpha=c:GetAlpha() end
  -- Cosmetic C property only. Keep native Header, parents, methods, module
  -- membership, dirty flags, layout sizes and native quest rows untouched.
  c:SetAlpha(0);active=true;view:Show();stats.layouts=stats.layouts+1

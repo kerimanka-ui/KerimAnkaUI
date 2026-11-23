@@ -449,6 +449,13 @@ local priorityLabels={
  ruRU={'Порядок сортировки','Повседневный','Прежний порядок','Свой','Камень возвращения первым','Предметы заданий','Зелья / Бинты','Еда / Напитки','Экипировка','Ремёсла','Прочее','Раньше','Позже','Хлам и пустые ячейки в конце. Ограничения специальных сумок сохраняются.','Инвентарь персонажей','Записанные сумки и банк · Только чтение','ВКЛ','ВЫКЛ'},
  zhCN={'排序方式','日常使用','原有顺序','自定义','炉石优先','任务物品','药水 / 绷带','食物 / 饮料','装备','专业','其他','提前','延后','杂物和空格放在最后。专用背包仍遵守物品限制。','角色物品栏','已记录的背包和银行 · 只读','开启','关闭'},
 }
+local sortModeLabels={daily='bagSortDaily',legacy='bagSortLegacy',custom='bagSortCustom'}
+for language,labels in pairs(priorityLabels)do
+ local locale=K.locales[language]
+ locale.bagSortDaily,locale.bagSortLegacy,locale.bagSortCustom=labels[2],labels[3],labels[4]
+ locale.bagSortHearth,locale.bagSortHelp=labels[5],labels[14]
+ locale.bagSortOrder=labels[1]
+end
 function M.PriorityText(index)
  local lang=KerimAnkaUIDB and KerimAnkaUIDB.language or'en'
  return(priorityLabels[lang]or priorityLabels.en)[index]
@@ -496,16 +503,19 @@ function M.MoveSortGroup(index,delta)
  local saved={};for i,key in ipairs(priorityKeys)do saved[key]=order[i]end
  K.db.classicBags.sortOrder=saved;return true
 end
-function M.DrawSortSettings(page,w,y)
+function M.DrawSortSettings(page,w,y,anchor)
  local text=M.PriorityText;local mode=M.SortMode();local enabled=CanChangePriorities()
  w.Text(page,text(1),8,y,690,14,{.73,.62,.41});y=y-27
  for i,id in ipairs({'daily','legacy','custom'})do
   local value=id;local b=w.Button(page,text(i+1),(i-1)*240,y,234,32,function()if M.SetSortMode(value)then K.Render()end end)
+  if anchor then anchor(sortModeLabels[id],b) end
+  if anchor and id=='custom' and mode~='custom' then anchor('bagSortOrder',b) end
   w.Selected(b,id==mode);if not enabled then b:Disable()end
  end
  y=y-43
  local first=mode~='legacy'and PriorityConfig().sortHearthFirst~=false
  local b=w.Button(page,text(5)..': '..text(first and 17 or 18),0,y,714,30,function()if M.SetHearthFirst(not first)then K.Render()end end)
+ if anchor then anchor('bagSortHearth',b) end
  w.Selected(b,first and mode~='legacy');if not enabled or mode=='legacy'then b:Disable()end;y=y-40
  local order=mode=='custom'and M.SortOrder()or priorityGroups
  for i,id in ipairs(mode~='legacy'and order or{})do
@@ -514,6 +524,7 @@ function M.DrawSortSettings(page,w,y)
   if mode=='custom'then
    for j,delta in ipairs({-1,1})do
     local direction=delta;local button=w.Button(page,text(j+11),418+(j-1)*148,y,140,27,function()if M.MoveSortGroup(number,direction)then K.Render()end end)
+    if anchor and i==1 and j==2 then anchor('bagSortOrder',button) end
     if not enabled or i+delta<1 or i+delta>6 then button:Disable()end
    end
   end

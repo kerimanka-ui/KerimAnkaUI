@@ -73,28 +73,62 @@ local function Hit(key,x,y,width)
  f:SetScript('OnEnter',function()if K.ShowTooltip then K.ShowTooltip(f,L('uf_'..key),L(HelpKey(key)))end end);f:SetScript('OnLeave',K.HideTooltip)
 end
 local function Numeric(key,x,y,width)
- local f=M.fields[key];local label='uf_'..key;local value=tonumber(M.Read(key))or f[5]
- Text(L(label),x,y+4,width-112,13);Hit(key,x,y,width-114)
+ local f=M.fields[key];local label='uf_'..key
+ local direction=K.UnitAuraYDirection(ForeverLeatherUnitsAPI.GetSettings(),key)
+ local minimum=direction and 0 or f[5]
+ local function Read()
+  local value=tonumber(M.Read(key)) or f[5]
+  return direction and math.max(0,value*direction) or value
+ end
+ local enabled=M.Enabled(key,unit)
+ Text(L(label),x,y+4,width-112,13,enabled and ink or muted);Hit(key,x,y,width-114)
  local format=f[7]<1 and'%.2f'or'%.0f'
- local text=Text(format:format(value),x+width-78,y+4,48,14);text:SetHeight(27);text:SetJustifyH('CENTER');text:SetJustifyV('MIDDLE')
- values[key]=function()text:SetText(format:format(tonumber(M.Read(key))or value))end
+ local function Refresh()
+  K.RefreshUnitOptionValues(key,unit..'BuffY',unit..'DebuffY')
+  Preview(key)
+ end
+ local text,reset
+ if key:match('BuffY$') or key:match('DebuffY$') then
+  reset=Button('',x+width-78,y+4,48,27,function()
+   if K.SetUnitOption(key,0)then Refresh()end
+  end)
+  reset:SetScript('OnEnter',function()if K.ShowTooltip then K.ShowTooltip(reset,L('usAuraResetY'),L('uf_'..key))end end)
+  reset:SetScript('OnLeave',K.HideTooltip)
+  text=reset.label
+ else
+  text=Text('',x+width-78,y+4,48,14)
+  text:SetHeight(27);text:SetJustifyH('CENTER');text:SetJustifyV('MIDDLE')
+ end
+ local controls={}
  for i,delta in ipairs({-1,1})do
   local b=Button(delta<0 and'−'or'+',x+width-110+(i-1)*82,y+4,28,27,function()
-   local current=tonumber(M.Read(key))or value
-   if K.SetUnitOption(key,math.max(f[5],math.min(f[6],math.floor((current+delta*f[7])/f[7]+.5)*f[7])))then
-    if values[key]then values[key]()end;Preview(key)
-   end
+   local current=Read()
+   local nextValue=math.max(minimum,math.min(f[6],math.floor((current+delta*f[7])/f[7]+.5)*f[7]))
+   if (not direction or nextValue~=current) and K.SetUnitOption(key,nextValue*(direction or 1))then Refresh()end
   end)
-  b.unitSettingKey=key;b.unitSettingDelta=delta
-  if key:match('AuraColumns$')and M.Read(unit..'AuraSingleRow')then b:Disable()end
+  controls[i]=b;b.unitSettingKey=key;b.unitSettingDelta=delta
  end
+ local function SetAvailable(button,available)
+  if available then button:Enable()else button:Disable()end
+  button:SetAlpha(available and 1 or .45)
+ end
+ values[key]=function()
+  local value=Read()
+  text:SetText(format:format(value))
+  SetAvailable(controls[1],enabled and (not direction or value>minimum))
+  SetAvailable(controls[2],enabled and (not direction or value<f[6]))
+  if direction then SetAvailable(reset,enabled and value>0) end
+ end
+ values[key]()
 end
 local function Toggle(key,x,y,width,title,cardId)
- Text(title or L('uf_'..key),x,y+4,width-90,13);Hit(key,x,y,width-92)
- Switch(x+width-70,y+3,M.Read(key)==true,function()
+ local enabled=M.Enabled(key,unit)
+ Text(title or L('uf_'..key),x,y+4,width-90,13,enabled and ink or muted);Hit(key,x,y,width-92)
+ local control=Switch(x+width-70,y+3,M.Read(key)==true,function()
   local value=not M.Read(key)
   if K.SetUnitOption(key,value)then if cardId then open[cardId]=value end;Changed()end
  end,title or L('uf_'..key))
+ if not enabled then control:Disable();control:SetAlpha(.45)end
 end
 local function DrawCard(c,keys,x,y,width)
  local expanded=open[c.id]==true;local n=0;for _,key in ipairs(keys)do if key~=c.enable then n=n+1 end end
@@ -183,7 +217,7 @@ local function Build()
  for i,key in ipairs(M.tabs)do
   local b=CreateFrame('Button',nil,root,'BackdropTemplate');b.key=key;b:SetPoint('TOPLEFT',(i-1)*144,0);b:SetSize(138,33)
   b.label=b:CreateFontString(nil,'OVERLAY','GameFontNormal');b.label:SetPoint('CENTER');b.label:SetWidth(130);b.label:SetHeight(29);K.ApplyTextFont(b.label,11,false,'')
-  b:SetScript('OnClick',function()Save();tab=key;if unit=='targettarget'and(tab=='auras'or tab=='indicators'or tab=='class')then unit='target';if K.SetUnitPreviewContext then K.SetUnitPreviewContext(unit)end end;offset=offsets[tab..':'..unit]or 0;V.Render()end);tabs[i]=b
+  b:SetScript('OnClick',function()if K.ClearUnitSearchArrival then K.ClearUnitSearchArrival()end;Save();tab=key;if unit=='targettarget'and(tab=='auras'or tab=='indicators'or tab=='class')then unit='target';if K.SetUnitPreviewContext then K.SetUnitPreviewContext(unit)end end;offset=offsets[tab..':'..unit]or 0;V.Render()end);tabs[i]=b
  end
  clip=CreateFrame('Frame',nil,root);clip:SetPoint('TOPLEFT',0,-48);clip:SetPoint('BOTTOMRIGHT',-18,0);clip:SetClipsChildren(true)
  pane=CreateFrame('Frame',nil,clip);pane:SetWidth(714)
@@ -214,17 +248,27 @@ function K.RefreshUnitOptionValues(...)
 end
 function K.SetUnitSettingsContext(selected)
  if selected=='pet'and not M.Facts().pet then return end
+ if K.ClearUnitSearchArrival then K.ClearUnitSearchArrival()end
  Save();unit=selected;if selected=='targettarget'then tab='position';open.tot=true end;offset=offsets[tab..':'..unit]or 0;if V.active then V.Render()end
 end
-function K.JumpToUnitOption(key)
- local nextTab,id,nextUnit=M.Route(key,unit)
+function K.JumpToUnitOption(key,destination)
+ local nextTab,id,nextUnit
+ if destination then
+  nextTab,id,nextUnit=destination.tab,destination.card,destination.unit
+ else
+  nextTab,id,nextUnit=M.Route(key,unit)
+  if K.ClearUnitSearchArrival then K.ClearUnitSearchArrival()end
+ end
  if nextUnit=='pet'and not M.Facts().pet then return end
  Save();tab,unit=nextTab,nextUnit;open[id]=true;offset=offsets[tab..':'..unit]or 0
  if K.SetUnitPreviewContext then K.SetUnitPreviewContext(unit)end
  if not V.active then return end
  V.Render();local c=cards[id]
  if c then
-  Offset(c.y-8);Rounded(c.frame,true);local token=generation
+  local row=destination and K.UnitOptionPositions[key]
+  Offset(row and row-math.max(8,(clip:GetHeight()-52)/2) or c.y-8)
+  Rounded(c.frame,true);local token=generation
   C_Timer.After(2,function()if V.active and generation==token then Rounded(c.frame,false)end end)
+  return true
  end
 end

@@ -25,5 +25,9 @@
         "KerimAnkaUI_Bags"
       ]
     }
+  },
+  "exactByteFiles": {
+    "KerimAnkaUI_QuestJournal/KerimAnkaUI_QuestJournal.lua": "984bcc08267487824d592c9299bd69127f08394184b563bd5995eaefe88b3ca5",
+    "KerimAnkaUI/ClassicEconomySources.lua": "6005451c12bd947bd1a16728a44edc4e8d6bb5f4ad4aae5bfe673fbc4b729951"
   }
 }

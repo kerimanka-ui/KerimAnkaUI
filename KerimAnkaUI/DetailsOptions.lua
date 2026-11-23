@@ -7,16 +7,18 @@ end
 local function Report(ok,err,id)
  if not ok then print("|cffb6ce96KerimAnka UI:|r "..K.L("dtFailed").." #"..tostring(id).." · "..tostring(err)) end
 end
-function K.DrawDetailsPage(page)
+function K.DrawDetailsPage(page,anchor)
  local api=ForeverDetailsHunterAPI
  if not api or api.version<1 then return false end
  local db=api.GetSettings()
+ if not db then return false end
  local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
  w.Text(page,K.L("dtNote"),8,0,690,13,{.65,.70,.62})
  local y=-74
  for i,f in ipairs({{"showTrim","dtTrim"},{"keepFonts","dtFonts"},{"trimAlpha","dtAlpha",.1,1,.05},{"edgeTop","dmEdgeTop",-24,48,1},{"edgeBottom","dmEdgeBottom",-24,48,1},{"edgeLeft","dmEdgeLeft",-24,48,1},{"edgeRight","dmEdgeRight",-24,48,1}}) do
   local key,label,low,high,step=unpack(f)
   local c=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*96,349,86)
+  if anchor then anchor("details:"..label,c) end
   w.Text(c,K.L(label),14,-12,278,13)
   local help=w.Button(c,"?",311,-10,22,22,function() end); w.Tip(help,label,key:match("^edge") and "dmEdgeHelp" or "dtHelp")
   if low then
@@ -56,6 +58,7 @@ function K.DrawDetailsPage(page)
  for _,window in ipairs(windows) do
   local id=window.id
   local c=w.Box(page,0,y,714,130)
+  if anchor and window==windows[1] then anchor("details:dtWindows",c) end
   w.Text(c,K.L("dtWindow").." "..id,16,-14,680,17)
   w.Text(c,K.L("dtCurrent")..window.skin,16,-43,680,12,{.65,.70,.62})
   local selected=choices[id] or api.skinName
@@ -265,8 +268,11 @@ end)
 
 local meterPage="blizzard"
 local meterContent
-function K.DrawDamageMetersPage(page)
+function K.GetDamageMeterSettingsTab() return meterPage end
+function K.DrawDamageMetersPage(page,destination,anchor)
  local w=K.UnitWidgets
+ if destination and destination.category=="details" then meterPage=destination.tab
+ else anchor=nil end
  for i,item in ipairs({{"blizzard","dmBlizzard"},{"details","dmDetails"},{"tracker","atTab"}}) do
   local code=item[1]
   local b=w.Button(page,K.L(item[2]),(i-1)*244,0,226,34,function() meterPage=code;Refresh() end)
@@ -276,11 +282,11 @@ function K.DrawDamageMetersPage(page)
  meterContent:ClearAllPoints();meterContent:SetPoint("TOPLEFT",page,"TOPLEFT",0,-58)
  meterContent:Show()
  if meterPage=="tracker" and K.DrawActionTrackerPage then
-  K.DrawActionTrackerPage(meterContent);page:SetHeight(meterContent:GetHeight()+58)
+  K.DrawActionTrackerPage(meterContent,anchor);page:SetHeight(meterContent:GetHeight()+58)
   return false
  end
  if meterPage=="details" then
-  if not K.DrawDetailsPage(meterContent) then
+  if not K.DrawDetailsPage(meterContent,anchor) then
    w.Text(meterContent,K.L("dmDetailsMissing"),8,0,690,14);meterContent:SetHeight(80)
   end
   page:SetHeight(meterContent:GetHeight()+58)
@@ -293,6 +299,7 @@ function K.DrawDamageMetersPage(page)
  for i,f in ipairs({{"enabled","dmEnabled"},{"trim","dmTrim"},{"trimAlpha","dmTrimAlpha",1,.05},{"backgroundAlpha","dmBackground",1,.05},{"padding","dmPadding",24,1},{"edgeTop","dmEdgeTop",48,1,-24},{"edgeBottom","dmEdgeBottom",48,1,-24},{"edgeLeft","dmEdgeLeft",48,1,-24},{"edgeRight","dmEdgeRight",48,1,-24}}) do
   local key,label,high,step,low=unpack(f);low=low or 0
   local card=w.Box(meterContent,(i-1)%2*365,y-math.floor((i-1)/2)*96,349,86)
+  if anchor then anchor("blizzard:"..label,card) end
   w.Text(card,K.L(label),14,-12,278,13)
   local help=w.Button(card,"?",311,-10,22,22,function() end);w.Tip(help,label,key:match("^edge") and "dmEdgeHelp" or "dmHelp")
   if high then
@@ -774,11 +781,12 @@ local colorEdits={}
 function K.HideExperienceInputs()
  for _,edit in pairs(colorEdits) do edit:ClearFocus();edit:Hide() end
 end
-local function ColorRow(page,w,y,key,label,id)
+local function ColorRow(page,w,y,key,label,id,anchor)
  local X=K.Experience;local tag=key..":"..(id or "")
  local locked=key=="main" and X.Get("classColor")
  local height=locked and 98 or 78;local controlY=locked and -55 or -35
  local card=w.Box(page,0,y,714,height);card.xpColorTag=tag
+ if anchor then anchor(label,card) end
  if locked then w.Text(card,K.L("xpClassColorActive"),14,-31,680,11,{.64,.64,.59}) end
  w.Text(card,K.L(label),14,-10,620,13)
  if not card.xpColorChip then card.xpColorChip=card:CreateTexture(nil,"OVERLAY") end
@@ -816,6 +824,7 @@ end
 
 local experienceTab='general'
 local experienceGroups={colors=false,textColor=false}
+function K.GetExperienceSettingsTab() return experienceTab end
 function K.OpenExperienceTextSettings(id)
  experienceTab='text';K.Experience.selected=id
  if K.Render then K.Render()end
@@ -825,8 +834,14 @@ local function Repaint()
  K.HideTooltip();K.Render()
  if K.scroll then K.scroll:SetVerticalScroll(math.min(offset,K.scroll:GetVerticalScrollRange()))end
 end
-function K.DrawExperiencePage(page)
+function K.DrawExperiencePage(page,destination,anchor)
  local X=K.Experience;local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
+ if destination and destination.category=='experience' then
+  experienceTab=destination.tab
+  if destination.optionsFold then experienceGroups[destination.optionsFold]=true end
+ else
+  anchor=nil
+ end
  local y=-62;local column=0
  for i,entry in ipairs({{'general','xpPageGeneral'},{'content','xpPageContent'},{'appearance','xpPageAppearance'},{'text','xpPageText'}})do
   local key=entry[1]
@@ -840,6 +855,7 @@ function K.DrawExperiencePage(page)
  end
  local function Toggle(key,label,reader,writer)
   local card=w.Box(page,column*365,y,349,86)
+  if anchor then anchor(label,card) end
   w.Text(card,K.L(label),14,-12,278,14)
   local help=w.Button(card,'?',311,-10,22,22,function()end)
   w.Tip(help,label,key=='texturedBars'and'xpTexturedBarsHelp'or key=='showBackground'and'xpShowBackgroundHelp'or'xpHelp')
@@ -855,6 +871,7 @@ function K.DrawExperiencePage(page)
   for i,entry in ipairs(fields)do
    local key,label,low,high,step,reader,writer=unpack(entry)
    local card=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*96,349,86)
+   if anchor then anchor(label,card) end
    w.Text(card,K.L(label),14,-12,278,14)
    local help=w.Button(card,'?',311,-10,22,22,function()end);w.Tip(help,label,'xpHelp')
    local function Read()return reader and reader()or X.Get(key)end
@@ -900,7 +917,7 @@ function K.DrawExperiencePage(page)
   for _,entry in ipairs({{'trim','xpTrim'},{'showBackground','xpShowBackground'},{'classColor','xpClassColor'},{'texturedBars','xpTexturedBars'}})do Toggle(unpack(entry))end
   Numbers({{'verticalSpace','xpPanelSpace',0,120,2},{'frameSize','xpFrameSize',10,24,1},{'backgroundAlpha','xpBackgroundAlpha',0,1,.05},{'barHeight','xpHeight',8,28,1},{'subHeight','xpSubHeight',8,20,1}})
   Fold('colors','xpColors',function(at)
-   for _,entry in ipairs({{'main','xpColorMain'},{'quest','xpColorQuest'},{'rested','xpColorRested'},{'rep','xpColorRep'},{'pet','xpColorPet'}})do at=ColorRow(page,w,at,entry[1],entry[2])end
+   for _,entry in ipairs({{'main','xpColorMain'},{'quest','xpColorQuest'},{'rested','xpColorRested'},{'rep','xpColorRep'},{'pet','xpColorPet'}})do at=ColorRow(page,w,at,entry[1],entry[2],nil,anchor)end
    return at
   end)
  else
@@ -925,7 +942,7 @@ function K.DrawExperiencePage(page)
    local value=i-1;local button=w.Button(page,K.L(label),(i-1)*243,y,235,32,function()if not K.InCombat()then X.SetLabel(id,'font',value);Repaint()end end)
    w.Selected(button,(X.LabelSettings(id).font or 0)==value);if K.InCombat()then button:Disable()end
   end;y=y-48
-  Fold('textColor','xpTextColor',function(at)return ColorRow(page,w,at,'label','xpTextColor',id)end)
+  Fold('textColor','xpTextColor',function(at)return ColorRow(page,w,at,'label','xpTextColor',id,anchor)end)
   local reset=w.Button(page,K.L('xpResetText'),0,y,714,34,function()if not K.InCombat()then X.ResetLabels();Repaint()end end)
   if K.InCombat()then reset:Disable()end;y=y-50
  end

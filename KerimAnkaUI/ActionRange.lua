@@ -164,13 +164,15 @@ frame:SetScript("OnEvent",function(_,event)
  if event=="PLAYER_REGEN_ENABLED" and not pending then return end
  M.Queue()
 end)
-function K.DrawActionRange(page,w,y)
+function K.DrawActionRange(page,w,y,anchor)
  local card=w.Box(page,0,y,714,124)
+ if anchor then anchor("arEnabled",card) end
  w.Text(card,K.L("arEnabled"),16,-14,540,14)
  local help=w.Button(card,"?",584,-12,22,22,function() end);w.Tip(help,"arEnabled","arHelp")
  w.Switch(card,M.Enabled(),620,-10,function(value) M.SetEnabled(value) end,not InCombatLockdown())
  local r,g,b=M.Color()
  local color=w.Button(card,K.L("arColor"),16,-65,320,36,function() M.OpenColorPicker(function() if K.Render then K.Render() end end) end)
+ if anchor then anchor("arColor",color) end
  if not color.arSwatch then color.arSwatch=color:CreateTexture(nil,"ARTWORK") end
  color.arSwatch:ClearAllPoints();color.arSwatch:SetPoint("RIGHT",-10,0);color.arSwatch:SetSize(18,18);color.arSwatch:SetColorTexture(r,g,b,1);color.arSwatch:Show()
  w.Button(card,K.L("arReset"),350,-65,348,36,function() if M.SetColor(nil) and K.Render then K.Render() end end)

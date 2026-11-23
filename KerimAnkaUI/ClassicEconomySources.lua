@@ -1,24 +1,45 @@
 -- Observe confirmed wallet changes. No protected actions, native overrides or retries.
 local _,K=...;local E=K.ClassicEconomy;if not E then return end
-local receivePrepared={};local receiveHooked=setmetatable({},{__mode="k"});local mailAttempt
+-- PRIVATE MAIL DIAGNOSIS: bounded, opt-in, memory only; not release source.
+local mailDebug={enabled=false,rows={},dropped=0,ids=setmetatable({},{__mode='k'}),serial=0}
+local function DebugValue(v)
+ if issecretvalue and issecretvalue(v)then return '<restricted>'end
+ local kind=type(v)
+ if kind=='string'then return v:gsub('[\r\n|]',' '):sub(1,120)end
+ if kind=='number'or kind=='boolean'or kind=='nil'then return tostring(v)end
+ return '<'..kind..'>'
+end
+local function MailDebug(label,...)
+ if not mailDebug.enabled then return end
+ local row={string.format('%.3f',GetTime()),label}
+ for i=1,select('#',...)do row[#row+1]=DebugValue(select(i,...))end
+ mailDebug.rows[#mailDebug.rows+1]=table.concat(row,' | ')
+ if #mailDebug.rows>6000 then table.remove(mailDebug.rows,1);mailDebug.dropped=mailDebug.dropped+1 end
+end
+local function DebugToken(t)
+ if not mailDebug.enabled or not t then return '-'end
+ if not mailDebug.ids[t]then mailDebug.serial=mailDebug.serial+1;mailDebug.ids[t]=mailDebug.serial end
+ return mailDebug.ids[t]
+end
+local receiveSerial=0;local receiveFailure;local receivePrepared={};local receiveHooked=setmetatable({},{__mode="k"});local mailAttempt
 local trade;local trace={};local buybacks={};local tokens={};local context={};local mailbox={};local mailQueued=false;local outgoing=0;local outgoingCost;local vendorBatch;local vendorSerial=0;local initQueued=false;local sendPlan;local sendHooked=false
-function E.ClearIntents()receivePrepared={};mailAttempt=nil;tokens={};outgoing=0;outgoingCost=nil;sendPlan=nil end
+function E.ClearIntents()MailDebug("clear-intents");receiveFailure=nil;receivePrepared={};mailAttempt=nil;tokens={};outgoing=0;outgoingCost=nil;sendPlan=nil end
 local function Clock()return GetTime()end
-local function Trace(text)trace[#trace+1]=('%.2f '):format(Clock())..text;if #trace>24 then table.remove(trace,1)end end
+local function Trace(text)MailDebug('trace',text);trace[#trace+1]=('%.2f '):format(Clock())..text;if #trace>24 then table.remove(trace,1)end end
 function E.GetTrace()return trace end
-local function Call(fn,...)if type(fn)~='function'then return end;local ok,a,b,c,d,e,f,g,h,i,j,k,l=pcall(fn,...);if ok then return a,b,c,d,e,f,g,h,i,j,k,l end end
+local function Call(fn,...)if type(fn)~='function'then return end;local ok,a,b,c,d,e,f,g,h,i,j,k,l=pcall(fn,...);if ok then return a,b,c,d,e,f,g,h,i,j,k,l end;if fn==GetInboxHeaderInfo or fn==GetInboxInvoiceInfo then MailDebug('api-error',fn==GetInboxHeaderInfo and'header'or'invoice',a)end end
 local function Intent(source,sign,meta,amount)
  if not E.Active()then return end
  if source=='loot'or source=='quest'then for i=#tokens,1,-1 do if tokens[i].source==source then table.remove(tokens,i)end end end
  local t={source=source,sign=sign,meta=meta or{},amount=amount,expires=Clock()+4}
- tokens[#tokens+1]=t;while #tokens>24 do table.remove(tokens,1)end;return t
+ tokens[#tokens+1]=t;MailDebug('intent',DebugToken(t),source,sign,amount,t.meta.kind,t.meta.item,t.meta.refund);while #tokens>24 do MailDebug('capacity-evicted',DebugToken(tokens[1]));table.remove(tokens,1)end;return t
 end
 local function Guard(fn)return function(...)
  if E.fault then return end
  local diag=_G.KerimAnkaDiagnostics;local began=diag and diag.captureScopes and debugprofilestop and debugprofilestop()
  local ok,err=pcall(fn,...)
  if began then diag.RecordScope('Economy.Collector',debugprofilestop()-began)end
- if not ok then E.Fault(err)end
+ if not ok then MailDebug('collector-fault',err);E.Fault(err)end
 end end
 local function Context(key,active)if active then context[key]=true else context[key]=nil end end
 local function TradeFallback(delta)
@@ -40,16 +61,55 @@ local function TradeFallback(delta)
  trade.settling=true;Trace('matched accepted trade snapshot delta='..delta)
  return parts
 end
+local function MailPrefix(delta,alternate)
+ local total,last,count=0,0,0
+ local claims={}
+ for i,t in ipairs(tokens)do
+  local current=t
+  if alternate and t==alternate.suspect then current=alternate.replacement end
+  if current.expires>=Clock()and current.sign==1 and(current.source=='mail'or current.source=='auction')and type(current.amount)=='number'and current.amount>0 then
+   total=total+current.amount;count=count+1;last=i;claims[count]=current
+   if total>=delta then break end
+  end
+ end
+ if count>0 and total==delta then return claims,last end
+end
+local function ReconcileReceiveFailure(delta)
+ local f=receiveFailure;if not f then return true end
+ if f.expires<Clock()then receiveFailure=nil;return true end
+ local found=false
+ for _,t in ipairs(tokens)do if t==f.suspect then found=true;break end end
+ if not found then receiveFailure=nil;return true end
+ local normal=MailPrefix(delta)
+ local alternate=MailPrefix(delta,f)
+ if normal and alternate then
+  if #normal~=#alternate then return false end
+  for i,t in ipairs(normal)do if t~=alternate[i]then return false end end
+ elseif alternate then
+  -- Require the recovered request to participate in the exact ordered sum.
+  local used=false;for _,t in ipairs(alternate)do if t==f.replacement then used=true end end
+  if used then
+   for i,t in ipairs(tokens)do if t==f.suspect then tokens[i]=f.replacement;break end end
+   Trace('mail failed request reconciled by confirmed ordered wallet delta='..delta)
+   receiveFailure=nil
+  end
+ elseif normal then
+  for _,t in ipairs(normal)do if t==f.suspect then receiveFailure=nil;break end end
+ end
+ return true
+end
 local function Resolve(delta)
+ MailDebug('resolve',delta,#tokens)
+ if mailDebug.enabled then for _,t in ipairs(tokens)do MailDebug('candidate',DebugToken(t),t.source,t.sign,t.amount,t.expires-Clock(),t.meta.kind,t.meta.item)end end
  local sign=delta>0 and 1 or -1
  -- Native auto-loot may queue the next letter before reporting money for the
  -- preceding letters. Consume only an exact FIFO prefix of live mail claims;
  -- later claims stay pending for their own wallet confirmation.
- if delta>0 then
+ if delta>0 and ReconcileReceiveFailure(delta)then
   local total,count,last=0,0,0
   for i,t in ipairs(tokens)do
    if t.expires>=Clock()and t.sign==1 and(t.source=='mail'or t.source=='auction')and type(t.amount)=='number'and t.amount>0 then
-    total=total+t.amount;count=count+1;last=i
+    MailDebug('fifo-add',DebugToken(t),t.amount,total,delta);total=total+t.amount;count=count+1;last=i
     if total>=delta then break end
    end
   end
@@ -57,17 +117,18 @@ local function Resolve(delta)
    local parts={}
    for i=last,1,-1 do local t=tokens[i]
     if t.expires>=Clock()and t.sign==1 and(t.source=='mail'or t.source=='auction')and type(t.amount)=='number'and t.amount>0 then
+     for _,other in ipairs(tokens)do if t.receiveSerial and other.receiveTwin==t.receiveSerial then other.receiveTwinSettled=true end end
      local m=t.meta;local refund=type(m.refund)=='number'and math.max(0,math.min(t.amount,m.refund))or 0
      if t.amount-refund>0 then parts[#parts+1]={amount=t.amount-refund,source=t.source,kind=m.kind,peer=m.peer,item=m.item,itemID=m.itemID,itemLink=m.itemLink,batch=m.batch,quantity=m.quantity,evidence='matched'}end
      if refund>0 then parts[#parts+1]={amount=refund,source=t.source,kind='refund',evidence='matched'}end
-     table.remove(tokens,i)
+     MailDebug('fifo-consumed',DebugToken(t));table.remove(tokens,i)
     end
    end
-   Trace('matched combined mail claims count='..count..' delta='..delta);return parts
+   MailDebug('fifo-match',count,total,last);Trace('matched combined mail claims count='..count..' delta='..delta);return parts
   end
  end
  for i=#tokens,1,-1 do local t=tokens[i]
-  if t.expires<Clock()then table.remove(tokens,i)
+  if t.expires<Clock()then MailDebug('expired',DebugToken(t));table.remove(tokens,i)
   elseif not(delta>0 and t.sign==1 and(t.source=='mail'or t.source=='auction')and type(t.amount)=='number'and t.amount>0)and t.sign==sign and(not t.amount or math.abs(delta)==t.amount or math.abs(delta)==t.meta.alternateTotal)and(not t.meta.principal or math.abs(delta)>=t.meta.principal)then
    table.remove(tokens,i);local m=t.meta;if m.sendPlan then m.sendPlan.recorded=true end
    if t.source=='trade'then
@@ -101,16 +162,18 @@ local function Resolve(delta)
  local matched=TradeFallback(delta);if matched then return matched end
  local source
  if context.vendor then source='vendor'elseif context.auction then source='auction'elseif context.mail then source='mail'elseif context.trade then source='trade'elseif context.trainer then source='travel'end
+ MailDebug('unresolved',delta,source)
  return{{amount=delta,source='other',evidence=source and('context-'..source)or'unresolved'}}
 end
 local function Hook(owner,name,fn)
- if type(owner)=='string'then if type(_G[owner])=='function'then hooksecurefunc(owner,Guard(name))end
- elseif owner and type(owner[name])=='function'then hooksecurefunc(owner,name,Guard(fn))end
+ if type(owner)=='string'then if type(_G[owner])=='function'then hooksecurefunc(owner,Guard(function(...)MailDebug('action',owner);name(...)end))end
+ elseif owner and type(owner[name])=='function'then hooksecurefunc(owner,name,Guard(function(...)MailDebug('action',name);fn(...)end))end
 end
-local function Snapshot(index)
+local function Snapshot(index,origin)
  local _,_,sender,_,money,cod,_,attachments=Call(GetInboxHeaderInfo,index)
- if not sender then return end
+ if not sender then if origin then MailDebug("snapshot-empty",origin,index)end;return end
  local invoice,item,_,_,_,deposit,_,_,_,_,quantity=Call(GetInboxInvoiceInfo,index)
+ if origin then MailDebug('snapshot',origin,index,money,cod,invoice,item,quantity,deposit,attachments)end
  return{sender=sender,money=money,cod=cod,attachments=attachments,invoice=invoice,item=item,quantity=quantity,deposit=deposit}
 end
 local function CacheMail()
@@ -118,20 +181,21 @@ local function CacheMail()
  C_Timer.After(.15,Guard(function()
   mailQueued=false;if not context.mail then return end
   local fresh={};local count=math.min(100,Call(GetInboxNumItems)or 0)
-  for i=1,count do fresh[i]=Snapshot(i)end;mailbox=fresh
+  for i=1,count do fresh[i]=Snapshot(i)end;mailbox=fresh;MailDebug('cache',count)
  end))
 end
 local function Mail(index,attachment,before)
+ MailDebug('mail-hook',index,attachment,before,receivePrepared[index]and DebugToken(receivePrepared[index]))
  if before and not context.mail then return end
  local prepared=receivePrepared[index]
  if prepared and prepared.expires>=Clock()then
   -- A native UI pre-observer already armed this exact claim. The post-hook
   -- must not read a shifted inbox index or queue a duplicate after settlement.
   if not before then receivePrepared[index]=nil end
-  return
+  MailDebug('pre-ack',DebugToken(prepared),before);return
  end
  receivePrepared[index]=nil
- local m=Snapshot(index);if not before and(not m or ((m.money or 0)==0 and (m.cod or 0)==0))then m=mailbox[index]end
+ local m=Snapshot(index,before and'pre'or'post');if not before and(not m or ((m.money or 0)==0 and (m.cod or 0)==0))then m=mailbox[index];MailDebug('cache-fallback',index,m and m.money,m and m.invoice,m and m.item)end
  if before and m and((type(m.money)=='number'and m.money>0)or(type(m.cod)=='number'and m.cod>0)or(type(m.attachments)=='number'and m.attachments>0))then mailAttempt={expires=Clock()+4}end
  if not m then return end
  local sender,money,cod,invoice,item,quantity=m.sender,m.money,m.cod,m.invoice,m.item,m.quantity
@@ -141,15 +205,24 @@ local function Mail(index,attachment,before)
  end
  -- Taking an item attachment cannot claim a positive money attachment. After
  -- native index shifts, the fallback cache may still describe an earlier sale.
- if attachment then return end
+ if attachment then MailDebug('attachment-no-money-claim',index,attachment);return end
  if type(money)~='number'or money<=0 then return end
  local claim
  if invoice=='seller'then claim=Intent('auction',1,{kind='sale',item=item,quantity=quantity,refund=m.deposit},money)
  elseif E.IsOwn(sender)then claim=Intent('mail',1,{kind='transfer',peer=sender},money)
  else claim=Intent('mail',1,{peer=sender,kind=invoice and'refund'or nil},money)end
- if before and claim then mailAttempt.claim=claim;receivePrepared[index]=claim;Trace('mail receive pre-snapshot index='..index..' amount='..money)end
+ if before and claim then
+  receiveSerial=receiveSerial+1;claim.receiveSerial=receiveSerial;claim.receiveIndex=index
+  local previous
+  for _,t in ipairs(tokens)do if t~=claim and t.expires>=Clock()and t.sign==1 and(t.source=='mail'or t.source=='auction')then previous=t end end
+  if previous and previous.receiveIndex and previous.receiveIndex~=index and previous.amount==claim.amount and previous.source==claim.source then
+   local a,z=previous.meta,claim.meta
+   if a.kind=='sale'and z.kind=='sale'and type(a.item)=='string'and a.item==z.item and a.quantity==z.quantity and a.refund==z.refund then claim.receiveTwin=previous.receiveSerial end
+  end
+  mailAttempt.claim=claim;receivePrepared[index]=claim;Trace('mail receive pre-snapshot index='..index..' amount='..money)end
 end
 local function InstallReceiveSnapshot()
+ MailDebug('hook-state',OpenMailMoneyButton~=nil,InboxFrame~=nil,InboxFrame and InboxFrame.OpenAllMail~=nil,InboxFrame and InboxFrame.OpenAllMail and type(InboxFrame.OpenAllMail.AdvanceToNextItem))
  -- Read metadata before the native UI resets/removes a money attachment.
  -- Neither the protected action nor the original OnClick script is replaced.
  local button=OpenMailMoneyButton
@@ -166,7 +239,7 @@ local function InstallReceiveSnapshot()
   -- Native AdvanceAndProcessNextItem selects the index first, then calls
   -- ProcessNextItem/TakeInboxMoney. This post-hook observes that boundary.
   hooksecurefunc(bulk,'AdvanceToNextItem',Guard(function(self)
-   if type(self.mailIndex)=='number'then Mail(self.mailIndex,nil,true)end
+   MailDebug('bulk-pre',self.mailIndex,self.attachmentIndex);if type(self.mailIndex)=='number'then Mail(self.mailIndex,nil,true)end
   end))
  end
  for i=1,7 do
@@ -230,7 +303,7 @@ local function Hooks()
  Hook('BuyTrainerService',function()Intent('travel',-1,{kind='training'})end)
  Hook('StartAuction',function()Intent('auction',-1,{kind='deposit'})end)
  if C_AuctionHouse and hooksecurefunc then
-  local function HookAH(name,fn)if type(C_AuctionHouse[name])=='function'then hooksecurefunc(C_AuctionHouse,name,Guard(fn))end end
+  local function HookAH(name,fn)if type(C_AuctionHouse[name])=='function'then hooksecurefunc(C_AuctionHouse,name,Guard(function(...)MailDebug('action','C_AuctionHouse.'..name);fn(...)end))end end
   local function Post(item,duration,quantity)
    local id=Call(C_Item and C_Item.GetItemID,item)
    Intent('auction',-1,{kind='deposit',itemID=id,quantity=quantity})
@@ -321,6 +394,7 @@ end
 local f=CreateFrame('Frame');E.sourceFrame=f
 for _,event in ipairs({'PLAYER_ENTERING_WORLD','PLAYER_MONEY','MERCHANT_SHOW','MERCHANT_UPDATE','MERCHANT_CLOSED','AUCTION_HOUSE_SHOW','AUCTION_HOUSE_CLOSED','MAIL_SHOW','MAIL_CLOSED','TRADE_SHOW','TRADE_CLOSED','TRADE_ACCEPT_UPDATE','TRADE_MONEY_CHANGED','PLAYER_TRADE_MONEY','TRADE_REQUEST_CANCEL','UI_INFO_MESSAGE','UI_ERROR_MESSAGE','TRAINER_SHOW','TRAINER_CLOSED','LOOT_OPENED','LOOT_CLOSED','CHAT_MSG_MONEY','QUEST_TURNED_IN','MAIL_FAILED','QUEST_COMPLETE','MAIL_INBOX_UPDATE','ADDON_LOADED'})do K.ForeverInventoryAdapter.RegisterEvent(f,event)end
 f:SetScript('OnEvent',Guard(function(_,event,...)
+ if mailDebug.enabled and(event=='PLAYER_MONEY'or event:match('^MAIL_')or event=='ADDON_LOADED'or event:match('^AUCTION_HOUSE_'))then MailDebug('event',event)end
  if event=='PLAYER_ENTERING_WORLD'then
   if not initQueued then initQueued=true;C_Timer.After(1,Guard(function()if not E.Ready()then E.Seed(GetMoney())end end))end
  elseif event=='PLAYER_MONEY'then Changed()
@@ -363,12 +437,75 @@ f:SetScript('OnEvent',Guard(function(_,event,...)
   -- Native retrieval commands are serialized, but PLAYER_MONEY can arrive
   -- later for earlier commands. A failed latest request cannot erase those.
   local itemID=...;local attempt=mailAttempt;local failed=not itemID and attempt and attempt.claim;local kept=0
+  MailDebug('failure-attempt',itemID,attempt~=nil,failed and DebugToken(failed));
+  -- MAIL_FAILED may describe an earlier retry after the UI has already
+  -- requested the next mail. Keep one bounded alternative only when a
+  -- still-pending repeat has an already-confirmed predecessor.
+  local suspect
+  if failed and attempt.expires>=Clock()then
+   for _,t in ipairs(tokens)do
+    if t~=failed and t.expires>=Clock()and t.receiveTwinSettled then
+     if suspect then suspect=false;break end;suspect=t
+    end
+   end
+  end
+  if suspect then
+   local previous
+   for _,t in ipairs(tokens)do
+    if t==failed then break end
+    if t.expires>=Clock()and t.sign==1 and(t.source=='mail'or t.source=='auction')then previous=t end
+   end
+   if previous~=suspect then suspect=nil end
+  end
+  if suspect then
+   if receiveFailure then receiveFailure=nil else
+    receiveFailure={suspect=suspect,replacement=failed,expires=math.min(suspect.expires,failed.expires)}
+    Trace('mail failure deferred: confirmed repeat or latest request; waiting for exact ordered wallet delta')
+   end
+  end
   for i=#tokens,1,-1 do local t=tokens[i]
    if attempt and attempt.expires>=Clock()and t~=failed and t.expires>=Clock()and t.sign==1 and(t.source=='mail'or t.source=='auction')and type(t.amount)=='number'and t.amount>0 then kept=kept+1
    else table.remove(tokens,i)end
   end
   if sendPlan then sendPlan.cancelled=true end
-  Trace('mail failed: latest request discarded; earlier receipts kept='..kept)
+  MailDebug('failure-kept',kept);Trace('mail failed: latest request discarded; earlier receipts kept='..kept)
  end
 end))
 Hooks();InstallSendSnapshot();InstallReceiveSnapshot()
+
+-- Explicit private report export. Nothing is written to SavedVariables.
+local debugWindow,debugText
+local function ShowMailReport(text)
+ if not debugWindow then
+  local w=CreateFrame('Frame','KerimAnkaMailDebugReport',UIParent,'BasicFrameTemplateWithInset')
+  w:SetSize(670,440);w:SetPoint('CENTER');w:SetFrameStrata('DIALOG');w:SetClampedToScreen(true)
+  if w.TitleText then w.TitleText:SetText('KA Mail diagnostic report')end
+  local scroll=CreateFrame('ScrollFrame',nil,w,'UIPanelScrollFrameTemplate')
+  scroll:SetPoint('TOPLEFT',14,-36);scroll:SetPoint('BOTTOMRIGHT',-34,30)
+  local box=CreateFrame('EditBox',nil,scroll);box:SetMultiLine(true);box:SetAutoFocus(false);box:SetWidth(610)
+  box:SetFontObject(GameFontHighlightSmall);if K.ApplyTextFont then K.ApplyTextFont(box)end
+  box:SetScript('OnEscapePressed',function(self)self:ClearFocus();w:Hide()end)
+  scroll:SetScrollChild(box)
+  local hint=w:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');hint:SetPoint('BOTTOMLEFT',14,12);hint:SetText('Ctrl+A / Ctrl+C');if K.ApplyTextFont then K.ApplyTextFont(hint)end
+  debugWindow,debugText=w,box
+ end
+ debugText:SetText(text);debugWindow:Show();debugText:SetFocus();debugText:HighlightText()
+end
+function E.MailDebug(command)
+ command=(command or''):lower():match('^%s*(%S+)')or'report'
+ if command=='on'then
+  mailDebug.rows={};mailDebug.dropped=0;mailDebug.serial=0;mailDebug.ids=setmetatable({},{__mode='k'});mailDebug.enabled=true
+  MailDebug('start',K.version,E.Ready(),E.Baseline(),E.Active(),E.fault);MailDebug('wall',date('%Y-%m-%d %H:%M:%S'), 'limit=6000')
+  InstallReceiveSnapshot();print('KA mail debug ON; /kamaildebug report after collection.');return true
+ elseif command=='off'then mailDebug.enabled=false;print('KA mail debug OFF');return true
+ elseif command=='report'or command=='text'then
+  MailDebug('report',E.Ready(),E.Baseline(),E.Active(),E.fault)
+  mailDebug.enabled=false
+  local header='KA MAIL INCOME test5\nversion='..DebugValue(K.version)..' dropped='..mailDebug.dropped..'\nNo mail body or sender names collected.\n'
+  local text=header..table.concat(mailDebug.rows,'\n')
+  if command=='report'then ShowMailReport(text)end
+  return text
+ end
+end
+SLASH_KERIMANKAMAILDEBUG1='/kamaildebug'
+SlashCmdList.KERIMANKAMAILDEBUG=E.MailDebug

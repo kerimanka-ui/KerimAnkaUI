@@ -5,6 +5,9 @@ manual-changelog:
   filename: CHANGELOG.md
   markup-type: markdown
 ignore:
+  - KerimAnkaUI_QuestCallLab
+  - KerimAnkaPrivateDiagnostics
+  - '!KerimAnkaCaptureBoot'
   - KerimAnkaUI-Suite.toc
   - docs
   - tools

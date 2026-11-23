@@ -20,6 +20,14 @@ end
 local function C(id,tab,title,keys,enable,full,shared)
  return{id=id,tab=tab,title=title,keys=keys,enable=enable,full=full,shared=shared}
 end
+function M.Enabled(key,unit)
+ local db=ForeverLeatherUnitsAPI.GetSettings()
+ if key==unit..'AuraSwapSides' then return db[unit..'AuraSplit']==true end
+ if key==unit..'AuraBelow' then return not db[unit..'AuraSplit'] end
+ if key==unit..'AuraColumns' then return not db[unit..'AuraSingleRow'] end
+ return true
+end
+
 function M.Cards(unit)
  local u=unit;return{
  C('module','general','usModule',{'enabled','hideNative','locked'},'enabled',true,true),
@@ -27,7 +35,7 @@ function M.Cards(unit)
  C('auraCommon','auras','usAuraCommon',{'auraCooldown','auraStacks'},nil,true,true),
  C('buff:'..u,'auras','upBuffs',{u..'Buffs',u..'BuffX',u..'BuffY'},u..'Buffs'),
  C('debuff:'..u,'auras','upDebuffs',{u..'Debuffs',u..'DebuffX',u..'DebuffY'},u..'Debuffs'),
- C('layout:'..u,'auras','usAuraLayout',{u..'AuraBelow',u..'AuraSingleRow',u..'AuraSize',u..'AuraGap',u..'AuraColumns',u..'AuraMax'},nil,true),
+ C('layout:'..u,'auras','usAuraLayout',{u..'AuraBelow',u..'AuraSingleRow',u..'AuraColumns',u..'AuraMax',u..'AuraSize',u..'AuraGap',u~='pet' and u..'AuraSplit' or nil,u~='pet' and u..'AuraSwapSides' or nil,u~='pet' and u..'AuraDebuffPriority' or nil},nil,true),
  C('combat','indicators','ufPortraitCombat',{u=='pet'and'portraitCombatPet'or'portraitCombatPlayer','portraitCombatSize'},u=='pet'and'portraitCombatPet'or'portraitCombatPlayer',true,true),
  C('quest','indicators','ufQuestie',{'questieTargetIcon','questieIconSize','questieIconX','questieIconY'},'questieTargetIcon',true),
  C('cast','indicators','ufCast',{'targetCastEnabled','castIcon','castWidth','castHeight','castFontSize','castX','castY'},'targetCastEnabled',true),
@@ -66,9 +74,9 @@ end
 function M.Route(key,unit)
  local u=key:match('^(player)')or key:match('^(pet)')or key:match('^(target)')or unit
  if key:match('^targettarget')or key:match('^tot')or key=='showToT'then return'position','tot','targettarget'end
+ if key:find('Aura',1,true)then return'auras','layout:'..u,u end
  if key:find('Debuff',1,true)then return'auras','debuff:'..u,u end
  if key:find('Buff',1,true)then return'auras','buff:'..u,u end
- if key:find('Aura',1,true)then return'auras','layout:'..u,u end
  if key=='auraCooldown'or key=='auraStacks'then return'auras','auraCommon',unit end
  if key:match('^cast')or key=='targetCastEnabled'then return'indicators','cast','target'end
  if key:match('^questie')then return'indicators','quest','target'end

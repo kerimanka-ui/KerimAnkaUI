@@ -38,7 +38,8 @@ def canonical_content(name, data):
         return data.removeprefix(b'\xef\xbb\xbf').replace(b'\r\n', b'\n')
     return data
 
-def collect(root, roots):
+def collect(root, roots, exact_byte_files=None):
+    exact_byte_files = exact_byte_files or {}
     entries = {}
     for folder in roots:
         if folder not in SUITE_ROOTS | {BAG_ROOT}:
@@ -55,7 +56,13 @@ def collect(root, roots):
                 rel = p.relative_to(root).as_posix()
                 if any(v.startswith('.') for v in p.relative_to(source).parts):
                     raise ValueError('Unexpected hidden file: ' + rel)
-                entries[rel] = canonical_content(rel, p.read_bytes())
+                data = p.read_bytes()
+                if rel in exact_byte_files:
+                    if hashlib.sha256(data).hexdigest() != exact_byte_files[rel]:
+                        raise ValueError("Pinned game-approved file changed: " + rel)
+                    entries[rel] = data
+                else:
+                    entries[rel] = canonical_content(rel, data)
     return entries
 
 def validate_bags(entries):
@@ -96,7 +103,9 @@ def build(root, output, product, release=False):
             source = Path(temp)
             subprocess.run([sys.executable, str(root / spec['generator']),
                             '--source', str(root), '--output', str(source / BAG_ROOT)], check=True)
-        entries = collect(source, spec['roots'])
+        entries = collect(source, spec['roots'], config.get('exactByteFiles', {}) if product == 'suite' else {})
+        if release and product == 'suite' and set(config.get('exactByteFiles', {})) - set(entries):
+            raise ValueError('Missing pinned game-approved file')
         validate_members(product, entries)
         if product == 'bags':
             validate_bags(entries)

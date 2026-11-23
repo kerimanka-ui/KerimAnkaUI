@@ -13,8 +13,10 @@ local function ViewError(err)
  V.error=tostring(err)
  if V.lastError~=V.error then print('KA Economy UI: '..V.error);V.lastError=V.error end
 end
-local function Money(value)
+local function Money(value,size)
  local prefix=value<0 and '-'or'';value=math.floor(math.abs(value))
+ local formatCoin=C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureString or GetCoinTextureString
+ if formatCoin then return prefix..formatCoin(value,math.max(9,math.floor((size or 12)*.8+.5)))end
  return prefix..math.floor(value/10000)..'g '..math.floor(value%10000/100)..'s '..(value%100)..'c'
 end
 local function Label(value,x,y,width,size,color)
@@ -390,16 +392,16 @@ function V.Render(keepPosition)
  record:SetScript('OnEnter',function()Tip(record,E.L(active and'on'or'paused'),E.L('recordHelp'))end);record:SetScript('OnLeave',HideTip)
  for i,days in ipairs({1,7,30,90,180,270,365,0})do Button(E.L('day'..days),8+(i-1)*86.5,-40,82.5,27,function()period=days;Rerender()end,period==days)end
  Symbol(pane,'balance',8,79,gold)
- Label(E.L('balance')..': '..Money(report.balance),32,-80,666,17,gold)
+ Label(E.L('balance')..': '..Money(report.balance,17),32,-80,666,17,gold)
  for i,entry in ipairs({{'income',report.income,green},{'expense',report.expense,red},{'net',report.net,gold}})do
   local x=8+(i-1)*234;local card=Panel(x,-110,222,70,entry[3])
   Symbol(card,entry[1],8,9,entry[3])
   local title=Label(E.L(entry[1]),x+32,-120,180,11,entry[3]);title:SetHeight(25);title:SetWordWrap(true)
-  Label(Money(entry[2]),x+12,-148,198,18,entry[3])
+  Label(Money(entry[2],18),x+12,-148,198,18,entry[3])
  end
- Label(E.L('cashChange')..': '..Money(report.cashChange),8,-192,690,13,gold)
- Label(E.L('transfer')..': '..Money(report.transfer),8,-214,690,11)
- Label(E.L('transferIn')..': '..Money(report.transferIn)..'   |   '..E.L('transferOut')..': '..Money(report.transferOut),8,-233,690,11)
+ Label(E.L('cashChange')..': '..Money(report.cashChange,13),8,-192,690,13,gold)
+ Label(E.L('transfer')..': '..Money(report.transfer,11),8,-214,690,11)
+ Label(E.L('transferIn')..': '..Money(report.transferIn,11)..'   |   '..E.L('transferOut')..': '..Money(report.transferOut,11),8,-233,690,11)
  Label(E.L(report.productPartial and'productPartial'or'detailLimit'),8,-252,690,11,report.productPartial and gold or muted)
  Label(E.L('localTimeHelp'),8,-270,690,10)
  local sourceKeys={'reset'};for _,source in ipairs(E.sources)do sourceKeys[#sourceKeys+1]=source end
@@ -427,7 +429,7 @@ function V.Render(keepPosition)
   local elapsed=math.max(1,math.floor(E.Now()/86400)-math.floor((report.started or E.Now())/86400)+1)
   local divisor=period>0 and math.min(period,elapsed)or elapsed
   for i,stat in ipairs({{'bigIn',biggestIn},{'bigOut',biggestOut},{'average',report.net/divisor}})do
-   local x=8+(i-1)*234;Label(E.L(stat[1]),x,y,222,12);Label(Money(stat[2]),x,y-20,222,15,gold)
+   local x=8+(i-1)*234;Label(E.L(stat[1]),x,y,222,12);Label(Money(stat[2],15),x,y-20,222,15,gold)
   end;y=y-45;Label(E.L('rankLimit'),8,y,690,11);y=y-40
   -- Full retained/lifetime source aggregates, unlike item rankings, survive row eviction.
   for _,flow in ipairs({'income','expense'})do
@@ -452,7 +454,7 @@ function V.Render(keepPosition)
    local totals=FilteredTotals(items,isRecent,flow)
    Label(E.L('filteredTotal'),8,y,690,11,gold);y=y-22
    Label(E.L('income')..': '..Money(totals.income)..'   |   '..E.L('expense')..': '..Money(totals.expense),8,y,690,12);y=y-30
-   if totals.transfer~=0 then Label(E.L('transfer')..': '..Money(totals.transfer),8,y,690,11);y=y-25 end
+   if totals.transfer~=0 then Label(E.L('transfer')..': '..Money(totals.transfer,11),8,y,690,11);y=y-25 end
   end
   if range and isRecent then Button(Date(range.first)..' - '..Date(range.last)..'   X',8,y,690,28,function()range=nil;pageIndex=1;V.Render()end,true);y=y-37 end
   local product=not isRecent and grouping=='products'

@@ -268,8 +268,9 @@ function P.Set(value)
  P.reason=T(value and'Idle'or'Off')
  return true
 end
-function P.DrawSettings(page,w,y)
+function P.DrawSettings(page,w,y,anchor)
  local box=w.Box(page,0,y,714,172)
+ if anchor then anchor('lsTitle',box) end
  w.Text(box,T('Title'),16,-15,566,14)
  local help=w.Text(box,T('Help'),16,-48,680,12,{.65,.70,.62})
  help:SetWordWrap(true);help:SetHeight(108)

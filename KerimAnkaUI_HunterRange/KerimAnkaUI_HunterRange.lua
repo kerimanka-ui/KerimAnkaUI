@@ -1,6 +1,7 @@
 local ADDON, ns = ...
 local MEDIA = "Interface\\AddOns\\" .. ADDON .. "\\Media\\"
 local AUTO_SHOT = 75
+local SCATTER_SHOT = 19503
 local function Hint(key,fallback)
     local api=KerimAnkaUITextAPI
     return api and api.Hint and api.Hint(key) or fallback
@@ -15,12 +16,20 @@ local states = {
     unknown = {"RANGE ?", .70, .73, .75},
     preview = {"RANGED", .42, 1, .30},
 }
-local defaults = {enabled=false, locked=true, width=230, height=36, fontSize=14,
+local defaults = {enabled=false, locked=true, showNumericRange=false, showEstimatedRange=false, width=230, height=36, fontSize=14,
     x=0, y=-190, coloredText=true, outline=true, shadow=true}
 local db, bar, label, dot, group, hint, panel, SyncPanel
 local preview, currentState, dragging
 local hubPreview=false
 local lastSwing, swingLength = -100, 0
+local estimateTrack, lastEstimate
+local rangesPrepared, followRange
+local followRangeByRace = {Tauren = 25, Scourge = 27}
+-- Classic hostile-unit item checks, also used by Forever range addons.
+local itemRanges = {
+    {5, 8149, 16114}, {10, 17626, 9606}, {15, 4559}, {20, 10645, 1191},
+    {25, 13289}, {30, 835, 7734}, {35, 18904, 1399}, {40, 4945, 8348}, {45, 221316},
+}
 local function Secret(value) return issecretvalue and issecretvalue(value) end
 local function Say(text) print("|cff9bd478Forever Hunter Range:|r " .. text) end
 
@@ -56,6 +65,107 @@ local function Observe()
     return ns.Classify(shoot, near, melee, recentSwing)
 end
 
+local function SpellBounds(spellID)
+    local ok, info = pcall(C_Spell.GetSpellInfo, spellID)
+    if not ok or Secret(info) or type(info) ~= "table" then return end
+    local low, high = info.minRange, info.maxRange
+    if Secret(low) or Secret(high) then return end
+    if type(low) == "number" and type(high) == "number"
+        and low >= 0 and low < high and high < math.huge then
+        return low, high
+    end
+end
+
+local function NumericRange()
+    if Ask(UnitIsPlayer, "target") ~= false or not C_Spell then return end
+    local scatter = Ask(C_Spell.IsSpellInRange, SCATTER_SHOT, "target")
+    if scatter == nil then return end
+    local shotMin, shotMax = SpellBounds(AUTO_SHOT)
+    local scatterMin, scatterMax = SpellBounds(SCATTER_SHOT)
+    if not shotMin or scatterMin ~= 0 or scatterMax <= shotMin or scatterMax >= shotMax then return end
+    -- These are nominal spell thresholds. Combat reach can move the actual boundaries.
+    if scatter then return string.format("%.6g–%.6g yd", shotMin, scatterMax) end
+    return string.format("%.6g–%.6g yd", scatterMax, shotMax)
+end
+
+local function PublicNumber(value)
+    return not Secret(value) and type(value) == "number" and math.abs(value) < math.huge and value or nil
+end
+
+local function ReadRangeNumbers(api, unit)
+    if not api then return end
+    local ok, x, y = pcall(api, unit)
+    if ok then return PublicNumber(x), PublicNumber(y) end
+end
+
+local function EstimateBounds(state)
+    local low, high = 0, math.huge
+    if C_Item then
+        if not rangesPrepared and C_Item.RequestLoadItemDataByID then
+            for _, step in ipairs(itemRanges) do
+                for index = 2, #step do pcall(C_Item.RequestLoadItemDataByID, step[index]) end
+            end
+            rangesPrepared = true
+        end
+        for _, step in ipairs(itemRanges) do
+            local answer
+            for index = 2, #step do
+                local item = step[index]
+                local cached = not C_Item.IsItemDataCachedByID or Ask(C_Item.IsItemDataCachedByID, item) == true
+                local result
+                if cached then result = Ask(C_Item.IsItemInRange, item, "target") end
+                if result ~= nil then
+                    if answer ~= nil and answer ~= result then answer = nil; break end
+                    answer = result
+                end
+            end
+            if answer == true then high = math.min(high, step[1])
+            elseif answer == false then low = math.max(low, step[1]) end
+        end
+    end
+    if followRange then
+        local follow = Ask(CheckInteractDistance, "target", 4)
+        if follow == true then high = math.min(high, followRange)
+        elseif follow == false then low = math.max(low, followRange) end
+    end
+    if C_Spell then
+        local scatterMin, scatterMax = SpellBounds(SCATTER_SHOT)
+        if scatterMin == 0 then
+            local scatter = Ask(C_Spell.IsSpellInRange, SCATTER_SHOT, "target")
+            if scatter == true then high = math.min(high, scatterMax)
+            elseif scatter == false then low = math.max(low, scatterMax) end
+        end
+        local shotMin, shotMax = SpellBounds(AUTO_SHOT)
+        if shotMin and state == "ranged" then
+            low, high = math.max(low, shotMin), math.min(high, shotMax)
+        elseif shotMin and high <= shotMax and Ask(C_Spell.IsSpellInRange, AUTO_SHOT, "target") == false then
+            high = math.min(high, shotMin)
+        end
+    end
+    if low < high and (high < math.huge or low > 0) then return low, high end
+end
+
+local function EstimatedRange(state)
+    if state and state ~= "preview" and state ~= "unknown" and Ask(UnitIsPlayer, "target") == false then
+        local low, high = EstimateBounds(state)
+        if low then
+            local x, y = ReadRangeNumbers(UnitPosition, "player")
+            if not y then x = nil end
+            local playerSpeed = ReadRangeNumbers(GetUnitSpeed, "player")
+            local targetSpeed = ReadRangeNumbers(GetUnitSpeed, "target")
+            local distance
+            estimateTrack, distance = ns.EstimateRange(estimateTrack or {}, GetTime(), low, high, x, y, playerSpeed, targetSpeed)
+            if estimateTrack then
+                local interval = high < math.huge and string.format("%.6g–%.6g yd", low, high) or nil
+                lastEstimate = interval
+                if distance then return string.format("%d yd", math.floor(distance + 0.5)) end
+                return interval
+            end
+        end
+    end
+    estimateTrack, lastEstimate = nil, nil
+end
+
 local function Text(mode)
  if mode=="preview" then mode="ranged" end
  local api=KerimAnkaUITextAPI
@@ -63,7 +173,11 @@ local function Text(mode)
  return api and api.HunterText("range",mode,value) or (value and value~="" and value or (states[mode] or states.unknown)[1])
 end
 local function Render()
-    if not db or not db.enabled then if bar then bar:Hide() end; return end
+    if not db or not db.enabled then
+        estimateTrack, lastEstimate = nil, nil
+        if bar then bar:Hide() end
+        return
+    end
     local state
     if preview then
         state = preview
@@ -73,11 +187,20 @@ local function Render()
         if not ok then state = "unknown" end
         if not state and not db.locked then state = "preview" end
     end
+    local estimate
+    if db.showEstimatedRange and not preview then estimate = EstimatedRange(state)
+    else estimateTrack, lastEstimate = nil, nil end
     if not state then bar:Hide(); currentState=nil; return end
     local style = states[state] or states.unknown
     currentState = state
     dot:SetVertexColor(style[2],style[3],style[4],1)
     local caption=Text(state)
+    if estimate then
+        caption = caption .. " · ≈" .. estimate
+    elseif db.showNumericRange and not preview and state == "ranged" then
+        local interval = NumericRange()
+        if interval then caption = caption .. " · ≈" .. interval end
+    end
     label:SetText(caption)
     local key=caption..":"..tostring(KerimAnkaUIDB and KerimAnkaUIDB.language)..":"..db.fontSize..":"..db.width..":"..db.height..":"..tostring(db.outline)
     if bar.captionKey~=key then
@@ -165,7 +288,7 @@ end
 
 local function BuildPanel()
     panel=CreateFrame("Frame","ForeverHunterRangeOptions",UIParent,"BackdropTemplate")
-    panel:SetSize(440,490); panel:SetPoint("CENTER"); panel:SetFrameStrata("DIALOG")
+    panel:SetSize(440,522); panel:SetPoint("CENTER"); panel:SetFrameStrata("DIALOG")
     panel:SetClampedToScreen(true); panel:EnableMouse(true)
     panel:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
     panel:SetBackdropColor(.025,.035,.025,1); panel:SetBackdropBorderColor(.4,.32,.18,1)
@@ -187,6 +310,8 @@ local function BuildPanel()
     Check("coloredText","Yazı rengi de durumla birlikte değişsin",-112)
     Check("outline","Yazı kenarlığı (outline)",-144)
     Check("shadow","Yazı gölgesi",-176)
+    Check("showNumericRange","PvE yaklaşık menzil aralığını göster",-208)
+    Check("showEstimatedRange","PvE yaklaşık mesafeyi tek sayı göster",-240)
     local function Stepper(key,text,y,step,minimum,maximum)
         local caption=panel:CreateFontString(nil,"OVERLAY","GameFontHighlight")
         caption:SetPoint("TOPLEFT",22,y-6); labels[key]={caption,text}
@@ -199,19 +324,19 @@ local function BuildPanel()
             end)
         end
     end
-    Stepper("width","Genişlik",-220,10,150,420)
-    Stepper("height","Yükseklik",-252,2,28,60)
-    Stepper("fontSize","Yazı boyutu",-284,1,10,24)
+    Stepper("width","Genişlik",-276,10,150,420)
+    Stepper("height","Yükseklik",-308,2,28,60)
+    Stepper("fontSize","Yazı boyutu",-340,1,10,24)
     local order={"ranged","dead","melee","far","close","unknown"}
     local index=0
     local test=CreateFrame("Button",nil,panel,"UIPanelButtonTemplate")
-    test:SetSize(190,26); test:SetPoint("TOPLEFT",18,-328); test:SetText("Durumları önizle")
+    test:SetSize(190,26); test:SetPoint("TOPLEFT",18,-384); test:SetText("Durumları önizle")
     test:SetScript("OnClick",function() hubPreview=false; index=index%#order+1; preview=order[index]; Render(); SyncPanel() end)
     local live=CreateFrame("Button",nil,panel,"UIPanelButtonTemplate")
-    live:SetSize(190,26); live:SetPoint("TOPLEFT",230,-328); live:SetText("Canlı takibe dön")
+    live:SetSize(190,26); live:SetPoint("TOPLEFT",230,-384); live:SetText("Canlı takibe dön")
     live:SetScript("OnClick",function() hubPreview=false; preview=nil; Render(); SyncPanel() end)
     local note=panel:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
-    note:SetPoint("TOPLEFT",18,-373); note:SetWidth(400); note:SetJustifyH("LEFT")
+    note:SetPoint("TOPLEFT",18,-429); note:SetWidth(400); note:SetJustifyH("LEFT")
     note:SetText("Kilidi açıp barı swing timer'ın üstüne sürükle.\nArka plan opak siyahtır. Renkler ve yazı birlikte değişir.\nTOO CLOSE: yakınsın, kesin melee/dead zone ayrımı yok.\nRANGE ?: oyun menzil bilgisini vermiyor.\nÖnizleme gerçek hedef ölçümü değildir.")
     SyncPanel=function()
         for key,button in pairs(checks) do button:SetChecked(db[key]) end
@@ -233,6 +358,8 @@ events:RegisterEvent("PLAYER_LOGIN")
 events:SetScript("OnEvent",function(self,event,...)
     if event=="PLAYER_LOGIN" then
         if select(2,UnitClass("player"))~="HUNTER" then self:UnregisterAllEvents(); return end
+        local race = UnitRace and select(2, UnitRace("player"))
+        if not Secret(race) and type(race) == "string" then followRange = followRangeByRace[race] or 28 end
         if type(ForeverHunterRangeDB)~="table" then ForeverHunterRangeDB={} end
         db=ForeverHunterRangeDB
         for key,value in pairs(defaults) do if type(db[key])~=type(value) then db[key]=value end end
@@ -250,6 +377,7 @@ events:SetScript("OnEvent",function(self,event,...)
         C_Timer.NewTicker(.15,function() if not dragging and db.enabled then Render() end end)
     elseif event=="PLAYER_TARGET_CHANGED" or event=="PLAYER_ENTERING_WORLD" then
         lastSwing,swingLength=-100,0
+        estimateTrack,lastEstimate=nil,nil
         Render()
     elseif event=="PLAYER_SWING" then
         local length,weapon=...
@@ -269,12 +397,14 @@ SlashCmdList.FOREVERHUNTERRANGE=function(input)
     elseif command=="unlock" then db.locked=false; Apply()
     elseif command=="live" then hubPreview=false; preview=nil; Render()
     elseif command=="test" then hubPreview=false; preview="ranged"; Render()
+    elseif command=="estimate" then ForeverHunterRangeAPI.Set("showEstimatedRange",not db.showEstimatedRange)
     elseif command=="status" then
         Say("Durum: "..(currentState or "hidden").." • swing olayı: "..(ns.swingEventSupported and "var" or "yok"))
     elseif command=="probe" then
         Say("Auto Shot="..tostring(Ask(C_Spell and C_Spell.IsSpellInRange,AUTO_SHOT,"target"))
             .." • yakın28="..tostring(Ask(CheckInteractDistance,"target",4))
-            .." • melee5="..tostring(Ask(C_Item and C_Item.IsItemInRange or IsItemInRange,37727,"target")))
+            .." • melee5="..tostring(Ask(C_Item and C_Item.IsItemInRange or IsItemInRange,37727,"target"))
+            .." • estimate="..(db.showEstimatedRange and (lastEstimate or "?") or "off"))
     else OpenPanel() end
     if SyncPanel then SyncPanel() end
 end

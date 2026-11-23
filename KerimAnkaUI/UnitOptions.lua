@@ -64,7 +64,10 @@ local fields={
  {[1]="playerBuffs",[2]="",[3]="",[4]=""},
  {[1]="playerDebuffs",[2]="",[3]="",[4]=""},
  {[1]="playerAuraBelow",[2]="",[3]="",[4]=""},
+ {[1]="playerAuraSplit",[2]="",[3]="",[4]=""},
+ {[1]="playerAuraSwapSides",[2]="",[3]="",[4]=""},
  {[1]="playerAuraSingleRow",[2]="",[3]="",[4]=""},
+ {[1]="playerAuraDebuffPriority",[2]="",[3]="",[4]=""},
  {[1]="playerAuraSize",[2]="",[3]="",[4]="",[5]=12,[6]=48,[7]=1},
  {[1]="playerAuraGap",[2]="",[3]="",[4]="",[5]=0,[6]=16,[7]=1},
  {[1]="playerAuraColumns",[2]="",[3]="",[4]="",[5]=2,[6]=16,[7]=1},
@@ -76,7 +79,10 @@ local fields={
  {[1]="targetBuffs",[2]="",[3]="",[4]=""},
  {[1]="targetDebuffs",[2]="",[3]="",[4]=""},
  {[1]="targetAuraBelow",[2]="",[3]="",[4]=""},
+ {[1]="targetAuraSplit",[2]="",[3]="",[4]=""},
+ {[1]="targetAuraSwapSides",[2]="",[3]="",[4]=""},
  {[1]="targetAuraSingleRow",[2]="",[3]="",[4]=""},
+ {[1]="targetAuraDebuffPriority",[2]="",[3]="",[4]=""},
  {[1]="targetAuraSize",[2]="",[3]="",[4]="",[5]=12,[6]=48,[7]=1},
  {[1]="targetAuraGap",[2]="",[3]="",[4]="",[5]=0,[6]=16,[7]=1},
  {[1]="targetAuraColumns",[2]="",[3]="",[4]="",[5]=2,[6]=16,[7]=1},
@@ -121,6 +127,14 @@ function K.UnitOptionApplies(unit,key)
  return visible and true or false
 end
 
+-- Player and target Y settings store signed offsets. The controls show outward distance.
+function K.UnitAuraYDirection(db,key)
+ local unit,kind=key:match("^(player)(%a+)Y$")
+ if not unit then unit,kind=key:match("^(target)(%a+)Y$") end
+ if not unit or (kind~="Buff" and kind~="Debuff") then return end
+ return ForeverUnitsCombatWidgets.AuraBelowFor(db,unit,kind) and -1 or 1
+end
+
 function K.SetUnitOption(key,value)
   if K.InCombat() then return false end
   local api=ForeverLeatherUnitsAPI;local db=api and api.GetSettings()
@@ -131,6 +145,8 @@ function K.SetUnitOption(key,value)
   if spec[5]then
    if type(value)~='number'or value~=value or math.abs(value)==math.huge then return false end
    value=math.max(spec[5],math.min(spec[6],value))
+   local direction=K.UnitAuraYDirection(db,key)
+   if direction and value*direction<0 then value=0 end
   elseif type(value)~='boolean'then return false end
   local unit,axis=key:match("^(%w+)%.([xy])$")
   if unit then
@@ -138,16 +154,34 @@ function K.SetUnitOption(key,value)
    if unit=="pet" or unit=="targettarget" then db[unit].detached=true end
   else
    if key=='textScale'and db.totNameScale==nil then db.totNameScale=db.textScale or 1 end
+   local auraUnit=key:match("^(%w+)AuraBelow$") or key:match("^(%w+)AuraSplit$") or key:match("^(%w+)AuraSwapSides$")
+   local widgets=ForeverUnitsCombatWidgets
+   local oldSides
+   if widgets and auraUnit and auraUnit~="pet" and db[key]~=value then
+    oldSides={Buff=widgets.AuraBelowFor(db,auraUnit,"Buff"),Debuff=widgets.AuraBelowFor(db,auraUnit,"Debuff")}
+   end
    db[key]=value
-   local auraUnit=key:match("^(%w+)AuraBelow$")
-   if auraUnit then
+   if oldSides then
+    for _,kind in ipairs({"Buff","Debuff"}) do
+     local below=widgets.AuraBelowFor(db,auraUnit,kind)
+     if below~=oldSides[kind] then
+      local offset=auraUnit..kind.."Y"
+      local sign=below and -1 or 1
+      db[offset]=sign*math.max(0,-sign*db[offset])
+     end
+    end
+   elseif auraUnit=="pet" then
     local rows=math.ceil(db[auraUnit.."AuraMax"]/db[auraUnit.."AuraColumns"])
     if db[auraUnit.."AuraSingleRow"] then rows=1 end
     db[auraUnit.."BuffY"]=value and -8 or 10
     db[auraUnit.."DebuffY"]=db[auraUnit.."BuffY"]+(value and -1 or 1)*rows*(db[auraUnit.."AuraSize"]+db[auraUnit.."AuraGap"])
    end
+   local yUnit=key:match("^(%w+)BuffY$") or key:match("^(%w+)DebuffY$")
+   if yUnit and yUnit~="pet" and not db[yUnit.."AuraSplit"] and db[yUnit.."Buffs"] and db[yUnit.."Debuffs"] then
+    db[yUnit.."BuffY"],db[yUnit.."DebuffY"]=value,value
+   end
    local changedUnit=key:match("^(%w+)Buffs$") or key:match("^(%w+)Debuffs$")
-   if changedUnit and db[changedUnit.."Buffs"] and db[changedUnit.."Debuffs"]
+   if changedUnit=="pet" and db[changedUnit.."Buffs"] and db[changedUnit.."Debuffs"]
        and db[changedUnit.."BuffX"]==db[changedUnit.."DebuffX"] and db[changedUnit.."BuffY"]==db[changedUnit.."DebuffY"] then
     local rows=db[changedUnit.."AuraSingleRow"] and 1 or math.ceil(db[changedUnit.."AuraMax"]/db[changedUnit.."AuraColumns"])
     db[changedUnit.."DebuffY"]=db[changedUnit.."BuffY"]+(db[changedUnit.."AuraBelow"] and -1 or 1)*rows*(db[changedUnit.."AuraSize"]+db[changedUnit.."AuraGap"])

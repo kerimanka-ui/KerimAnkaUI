@@ -1,5 +1,38 @@
 -- Classic Era/Hardcore only: no execution in Forever or Retail.
 local _,K=...
+local rangeLabels={
+ en={"Approximate PvE range", "Uses spell range thresholds. Actual attack boundaries can vary with combat reach."},
+ de={"Ungefähre PvE-Reichweite", "Zeigt die Reichweitengrenzen der Fähigkeiten. Die tatsächlichen Grenzen können durch die Kampfreichweite abweichen."},
+ tr={"Yaklaşık PvE menzil aralığı", "Yetenek menzil eşiklerini gösterir. Gerçek sınırlar hedefin vuruş mesafesine göre değişebilir."},
+ zhCN={"PvE 大致射程", "显示技能射程阈值。实际界限可能因战斗触及距离而异。"},
+ frFR={"Portée JcE approximative", "Affiche les seuils de portée des techniques. Les limites réelles peuvent varier selon la portée de combat."},
+ itIT={"Portata PvA approssimativa", "Mostra le soglie di portata delle abilità. I limiti effettivi possono variare in base alla portata in combattimento."},
+ esES={"Alcance JcE aproximado", "Muestra los umbrales de alcance de las facultades. Los límites reales pueden variar según el alcance de combate."},
+ ptBR={"Alcance JxA aproximado", "Mostra os limites de alcance das habilidades. Os limites reais podem variar com o alcance de combate."},
+ ruRU={"Примерная дальность в PvE", "Показывает пороги дальности способностей. Фактические границы могут меняться в зависимости от боевой досягаемости."},
+}
+for code,labels in pairs(rangeLabels) do
+ local entries=K.locales[code] or {}
+ K.locales[code]=entries
+ entries.hr_showNumericRange=labels[1]
+ entries.hr_showNumericRangeHelp=labels[2]
+end
+local estimateLabels={
+ en={"Estimated PvE distance", "Shows one approximate number when two checks give a narrow range."},
+ de={"Geschätzte PvE-Distanz", "Zeigt einen ungefähren Wert, wenn zwei Prüfungen die Entfernung eng eingrenzen."},
+ tr={"Yaklaşık PvE mesafesi", "İki kontrol dar bir menzil aralığı verirse yaklaşık tek sayı gösterir."},
+ zhCN={"PvE 估算距离", "两项检测能将距离限定在较窄区间时，显示一个估算数值。"},
+ frFR={"Distance JcE estimée", "Affiche une valeur approximative lorsque deux tests délimitent une plage étroite."},
+ itIT={"Distanza PvA stimata", "Mostra un valore approssimativo quando due controlli delimitano un intervallo ristretto."},
+ esES={"Distancia JcE estimada", "Muestra un valor aproximado cuando dos comprobaciones delimitan un intervalo estrecho."},
+ ptBR={"Distância JxA estimada", "Mostra um valor aproximado quando duas verificações delimitam um intervalo estreito."},
+ ruRU={"Оценка дистанции в PvE", "Показывает приблизительное значение, когда две проверки дают узкий диапазон."},
+}
+for code,labels in pairs(estimateLabels) do
+ local entries=K.locales[code]
+ entries.hr_showEstimatedRange=labels[1]
+ entries.hr_showEstimatedRangeHelp=labels[2]
+end
 local modes={"ranged","dead","melee","far","close","unknown"}
 local edits={}
 function K.HideRangeInputs() for _,edit in pairs(edits) do edit:ClearFocus();edit:Hide() end end
@@ -33,11 +66,13 @@ local fields={
  {[1]="fontSize",[2]="",[3]="",[4]="",[5]=10,[6]=24,[7]=1},
  {[1]="x",[2]="",[3]="",[4]="",[5]=-2000,[6]=2000,[7]=5},
  {[1]="y",[2]="",[3]="",[4]="",[5]=-1200,[6]=1200,[7]=5},
+ {[1]="showNumericRange",[2]="",[3]="",[4]=""},
+ {[1]="showEstimatedRange",[2]="",[3]="",[4]=""},
 }
 function K.EndRangePreview()
  if ForeverHunterRangeAPI then ForeverHunterRangeAPI.EndPreview() end
 end
-function K.DrawRangePage(page)
+function K.DrawRangePage(page,anchor)
  local api=ForeverHunterRangeAPI
  if not api or api.version<1 then return false end
  local db=api.GetSettings()
@@ -63,11 +98,16 @@ function K.DrawRangePage(page)
  local sample=api.GetPreview()
  w.Text(page,K.L("hrMode")..(sample and K.L("hrSample")..(api.GetText and api.GetText(sample) or K.L("hunterRange_"..sample)) or K.L("hrLiveMode")),365,y-8,349,12,{.65,.70,.62})
  y=y-58
- for i,f in ipairs(fields) do
+ local fieldCount=db.showEstimatedRange~=nil and #fields or db.showNumericRange~=nil and #fields-1 or #fields-2
+ for i=1,fieldCount do
+  local f=fields[i]
   local key=f[1]; local low,high,step=f[5],f[6],f[7]
   local c=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*96,349,86)
+  if anchor then anchor("hr_"..key,c) end
   w.Text(c,K.L("hr_"..key),14,-12,278,13)
-  local tip=w.Button(c,"?",311,-10,22,22,function() end); w.Tip(tip,"hr_"..key,"hrHelp")
+  local tip=w.Button(c,"?",311,-10,22,22,function() end)
+  local helpKey=(key=="showNumericRange" or key=="showEstimatedRange") and "hr_"..key.."Help" or "hrHelp"
+  w.Tip(tip,"hr_"..key,helpKey)
   if low then
    local value=w.Text(c,string.format("%.0f",db[key]),14,-54,150,15)
    local function change(delta)
@@ -79,12 +119,13 @@ function K.DrawRangePage(page)
    w.Button(c,"+",297,-47,36,32,function() change(1) end)
   else w.Switch(c,db[key],255,-48,function(value) if not K.InCombat() then api.Set(key,value) end end,not K.InCombat()) end
  end
- y=y-math.ceil(#fields/2)*96
+ y=y-math.ceil(fieldCount/2)*96
  if api.SetText and api.GetText then
   w.Text(page,K.L("hunterTextTitle"),8,y,690,18,{.73,.62,.41});y=y-34
   w.Text(page,K.L("hunterTextHelp"),8,y,690,13,{.65,.70,.62});y=y-90
   for i,mode in ipairs(modes) do
    local c=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*136,349,124)
+   if anchor then anchor("hunterRange_"..mode,c) end
    w.Text(c,K.L("hunterRange_"..mode),14,-12,321,13)
    Input(c,mode,api)
    w.Button(c,K.L("hunterTextReset"),14,-82,321,28,function()

@@ -257,13 +257,14 @@ events:SetScript('OnEvent',function(_,event,unit,castGUID,spellID)
  elseif event=='PLAYER_SWING'then Swing(unit,castGUID)
  elseif event=='SPELL_UPDATE_COOLDOWN'then UpdateGCD(true)end
 end)
-function K.DrawActionTrackerPage(page)
+function K.DrawActionTrackerPage(page,anchor)
  local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
  local function Refresh()if K.window and K.window:IsShown()then K.Render()end end
  local available=not Combat()
  w.Text(page,K.L('atIntro'),8,0,698,13,{.65,.70,.62}):SetHeight(72)
  local function Toggle(key,label,y)
   local c=w.Box(page,0,y,714,62);w.Text(c,K.L(label),14,-12,565,14):SetHeight(38)
+  if anchor then anchor('tracker:'..label,c) end
   w.Switch(c,M.Get(key),620,-17,function(v)M.Set(key,v)end,available)
  end
  Toggle('enabled','atEnable',-84)
@@ -274,10 +275,12 @@ function K.DrawActionTrackerPage(page)
  for i,key in ipairs({'atRight','atLeft','atDown','atUp'})do
   local dir=i
   local b=w.Button(page,K.L(key),(i-1)*182,-414,168,34,function()M.Set('direction',dir);Refresh()end)
+  if anchor then anchor('tracker:'..key,b) end
   w.Selected(b,M.Get('direction')==i);if not available then b:Disable()end
  end
  local function NumberControl(key,label,x,y,step,percent)
   local c=w.Box(page,x,y,349,84);w.Text(c,K.L(label),14,-10,318,14)
+  if anchor then anchor('tracker:'..label,c) end
   local value=M.Get(key);w.Text(c,string.format('%.0f%s',percent and value*100 or value,percent and' %'or''),14,-46,210,17)
   for i,delta in ipairs({-1,1})do
    local d=delta

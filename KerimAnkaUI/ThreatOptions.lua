@@ -63,15 +63,21 @@ local function Repaint()
  local offset=K.scroll:GetVerticalScroll();K.HideThreatFontMenu();K.HideTooltip();K.Render()
  K.scroll:SetVerticalScroll(math.min(offset,K.scroll:GetVerticalScrollRange()))
 end
-function K.DrawThreatPage(page)
+function K.DrawThreatPage(page,destination,anchor)
  local api=ForeverThreatAPI;local db=api and api.GetSettings()
  if not db then return false end
+ if destination and destination.category=='threat' then
+  if destination.optionsFold then groups[destination.optionsFold]=true end
+ else
+  anchor=nil
+ end
  local w=K.CompactSettingsWidgets and K.CompactSettingsWidgets()or K.UnitWidgets
  local y=0
  local function Disabled(button)if K.InCombat()then button:Disable()end;return button end
  local function Toggles(keys)
   for i,key in ipairs(keys)do
    local card=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*74,349,64)
+   if anchor then anchor('ft_'..key,card) end
    local title=w.Text(card,K.L('ft_'..key),13,-11,207,14);title:SetHeight(44)
    local help=w.Button(card,'?',225,-20,22,22,function()end);w.Tip(help,'ft_'..key,'ftHelp')
    w.Switch(card,db[key],259,-19,function(value)if not K.InCombat()then api.Set(key,value)end end,not K.InCombat())
@@ -83,6 +89,7 @@ function K.DrawThreatPage(page)
    local field;for _,f in ipairs(fields)do if f[1]==key then field=f;break end end
    local low,high,step,factor=field[5],field[6],field[7],field[8]or 1
    local card=w.Box(page,(i-1)%2*365,y-math.floor((i-1)/2)*96,349,86)
+   if anchor then anchor('ft_'..key,card) end
    w.Text(card,K.L('ft_'..key),14,-12,278,14)
    local help=w.Button(card,'?',311,-10,22,22,function()end);w.Tip(help,'ft_'..key,'ftHelp')
    local function Number()return string.format('%.0f',db[key]*factor)end
@@ -107,6 +114,7 @@ function K.DrawThreatPage(page)
  Fold('general','ftGroupGeneral',function()Toggles({'enabled','locked','raw','showPercent'})end)
  Fold('appearance','ftGroupAppearance',function()
   local card=w.Box(page,0,y,714,94)
+  if anchor then anchor('ftFont',card) end
   w.Text(card,K.L('ftFont'),16,-16,620,15)
   local help=w.Button(card,'?',676,-13,22,22,function()end);w.Tip(help,'ftFont','ftFontHelp')
   local choose=Disabled(w.Button(card,FontName(db.font)..'  ▾',16,-48,682,32,function(self)if not K.InCombat()then OpenFonts(self,api)end end))
@@ -117,6 +125,7 @@ function K.DrawThreatPage(page)
    local button=Disabled(w.Button(page,K.L(color[1]),(i-1)*144,y,138,34,function()
     if not K.InCombat()and api.SetColor(color[2],color[3],color[4])then Refresh()end
    end))
+   if anchor then anchor(color[1],button) end
    button.label:SetTextColor(color[2],color[3],color[4],1);w.Tip(button,'ftColors','ftColorHelp')
   end
   y=y-46

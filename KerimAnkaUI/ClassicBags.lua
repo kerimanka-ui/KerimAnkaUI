@@ -258,7 +258,8 @@ function M.GetSpendableMoney()
 end
 local function Money()
  local value=M.GetSpendableMoney()
- if GetCoinTextureString then return GetCoinTextureString(value) end
+ local formatCoin=C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureString or GetCoinTextureString
+ if formatCoin then return formatCoin(value)end
  return string.format('%dg %ds %dc',math.floor(value/10000),math.floor(value/100)%100,value%100)
 end
 -- Account-wide Classic snapshots; deliberately outside character UI profiles.
@@ -307,7 +308,8 @@ function M.MoneyRecords()
  return list,total
 end
 local function Coin(value)
- if GetCoinTextureString then return GetCoinTextureString(value) end
+ local formatCoin=C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureString or GetCoinTextureString
+ if formatCoin then return formatCoin(value)end
  return string.format('%dg %ds %dc',math.floor(value/10000),math.floor(value/100)%100,value%100)
 end
 local function CharacterLabel(v,realm)
@@ -567,6 +569,33 @@ end
 -- Keep Blizzard split/purchase dialogs above our inventory windows, without
 -- changing their owners, values, scripts or the actual item operation.
 M.PaintInventoryButton=Paint
+local function CanChangeWindow(window)
+ return window and not(Combat()and window.IsProtected and window:IsProtected())
+end
+local lootLayers=setmetatable({},{__mode='k'})
+local lootHooks=setmetatable({},{__mode='k'})
+local function RestoreLootLayer(loot)
+ local saved=loot and lootLayers[loot]
+ if not saved or not CanChangeWindow(loot)then return end
+ loot:SetFrameStrata(saved.strata);loot:SetFrameLevel(saved.level);lootLayers[loot]=nil
+end
+function M.UpdateLootLayer()
+ local loot=LootFrame
+ if not loot then return end
+ if not M.Enabled()or not frame or not frame:IsShown()or not loot:IsShown()then RestoreLootLayer(loot);return end
+ if not CanChangeWindow(loot)then return end
+ if not lootLayers[loot]then lootLayers[loot]={strata=loot:GetFrameStrata(),level=loot:GetFrameLevel()}end
+ loot:SetFrameStrata('FULLSCREEN_DIALOG')
+ loot:SetFrameLevel(math.max(loot:GetFrameLevel(),frame:GetFrameLevel()+40))
+end
+function M.InstallLootLayerHook()
+ local loot=LootFrame
+ if Combat()or not M.Enabled()or not loot or lootHooks[loot]then return end
+ lootHooks[loot]=true
+ loot:HookScript('OnShow',M.UpdateLootLayer)
+ loot:HookScript('OnHide',RestoreLootLayer)
+ M.UpdateLootLayer()
+end
 local dialogStates=setmetatable({},{__mode='k'})
 local function RestoreDialog(dialog)
  local state=dialogStates[dialog]
@@ -1005,12 +1034,15 @@ local function Ensure()
  frame:SetFrameStrata('DIALOG');frame:SetMovable(true);frame:SetClampedToScreen(true);frame:EnableMouse(true);frame:RegisterForDrag('LeftButton')
  frame:SetBackdrop({bgFile='Interface\\Buttons\\WHITE8X8',edgeFile='Interface\\Buttons\\WHITE8X8',edgeSize=2})
  frame:SetBackdropColor(.045,.05,.04,.97);frame:SetBackdropBorderColor(.63,.49,.25,1)
- frame:SetScript('OnDragStart',function(self) if not Combat() then self:StartMoving() end end)
+ frame:SetScript('OnDragStart',function(self)if CanChangeWindow(self)then self:StartMoving()end end)
  frame:SetScript('OnDragStop',function(self)
+  if not CanChangeWindow(self)then return end
   self:StopMovingOrSizing();local x,y=self:GetCenter();local px,py=UIParent:GetCenter()
   K.InventoryPresentation.SavePosition(self)
   Position()
  end)
+ frame:HookScript('OnShow',M.UpdateLootLayer)
+ frame:HookScript('OnHide',M.UpdateLootLayer)
  local close=K.ClassicBagDesigns.NewButton('KerimAnkaUIClassicBagClose',frame,'close');close:SetSize(26,26);close:SetPoint('TOPRIGHT',-10,-10)
  close:SetScript('OnClick',function() frame:Hide() end)
  local settings=K.ClassicBagDesigns.NewButton('KerimAnkaUIClassicBagSettings',frame,'settings')
@@ -1360,6 +1392,7 @@ end
 QueueNativeHandoff=function() Schedule(false) end
 function M.PrepareBags()
  M.InstallSplitHook()
+ M.InstallLootLayerHook()
  M.InstallBagCallHooks();M.InstallNativeBagHooks()
  if M.Enabled() then if Ensure()then M.PrepareItemButtons()end else M.RestoreNativeBagAlpha() end
 end
@@ -1408,8 +1441,10 @@ events:SetScript('OnUpdate',function(_,elapsed)
  hookElapsed=hookElapsed+elapsed;if hookElapsed<1 then return end;hookElapsed=0
  if M.Enabled() then M.InstallBagCallHooks();M.InstallNativeBagHooks() end
 end)
-for _,event in ipairs({'QUEST_LOG_UPDATE','BAG_UPDATE_DELAYED','PLAYER_EQUIPMENT_CHANGED','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','PLAYER_MONEY','PLAYER_TRADE_MONEY','TRADE_SHOW','TRADE_CLOSED','SEND_MAIL_MONEY_CHANGED','CURSOR_CHANGED','GET_ITEM_INFO_RECEIVED','PLAYER_REGEN_ENABLED','PLAYER_REGEN_DISABLED','PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_LOGOUT','ADDON_LOADED','ADDON_ACTION_BLOCKED','ADDON_ACTION_FORBIDDEN'}) do K.ForeverInventoryAdapter.RegisterEvent(events,event) end
+for _,event in ipairs({'QUEST_LOG_UPDATE','BAG_UPDATE_DELAYED','PLAYER_EQUIPMENT_CHANGED','ITEM_LOCK_CHANGED','BAG_UPDATE_COOLDOWN','PLAYER_MONEY','PLAYER_TRADE_MONEY','TRADE_SHOW','TRADE_CLOSED','SEND_MAIL_MONEY_CHANGED','CURSOR_CHANGED','GET_ITEM_INFO_RECEIVED','PLAYER_REGEN_ENABLED','PLAYER_REGEN_DISABLED','PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_LOGOUT','ADDON_LOADED','ADDON_ACTION_BLOCKED','ADDON_ACTION_FORBIDDEN','LOOT_OPENED','LOOT_CLOSED'}) do K.ForeverInventoryAdapter.RegisterEvent(events,event) end
 events:SetScript('OnEvent',function(_,event,initialLogin,isReloadingUi)
+ if event=='LOOT_OPENED'or event=='LOOT_CLOSED'then C_Timer.After(0,M.UpdateLootLayer);return end
+ if event=='PLAYER_REGEN_ENABLED'then M.UpdateLootLayer()end
  if event=='ADDON_ACTION_BLOCKED'or event=='ADDON_ACTION_FORBIDDEN'then
   -- One local observation, no disk/chat spam and no retry of a protected action.
   if initialLogin=='KerimAnkaUI'then diagnostic.lastBlocked=event..' '..tostring(isReloadingUi)..' @'..tostring(math.floor(GetTime()))end
@@ -1433,7 +1468,7 @@ events:SetScript('OnEvent',function(_,event,initialLogin,isReloadingUi)
   startupGeneration=startupGeneration+1
  end
  if event=='ADDON_LOADED' then C_Timer.After(0,function() M.PrepareBags() end) end
- if event=='PLAYER_REGEN_DISABLED' then M.StopSort();if frame then frame:StopMovingOrSizing() end end
+ if event=='PLAYER_REGEN_DISABLED' then M.StopSort()end
  if event=='PLAYER_REGEN_ENABLED'or event=='BAG_UPDATE_DELAYED'or event=='PLAYER_EQUIPMENT_CHANGED'then
   if not Combat()then M.PrepareBags()end
  end
